@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import { roadPoint, roadYaw, EDGE } from '../track.js';
 import { hashRand } from '../rng.js';
 import { concreteTexture, signTexture, boardTexture } from '../textures.js';
+import { t } from '../i18n.js';
 import { terrainHeight } from './road.js';
 
 const FIRST_STATION = 1500;
@@ -132,6 +133,17 @@ function buildPump(mat) {
   return g;
 }
 
+/** The texts painted on a station's signage, in the current language. */
+function totemTexture() {
+  return signTexture([t('sign.totem1'), t('sign.totem2')], { bg: '#c8382f' });
+}
+
+function priceTexture(index) {
+  return boardTexture(t('sign.board'), t('sign.boardSub', {
+    miles: 60 + (index % 7) * 5,
+  }));
+}
+
 function buildStationModel(index) {
   const mat = materials();
   const root = new THREE.Group();
@@ -193,39 +205,30 @@ function buildStationModel(index) {
   sign.position.set(2.2, 0, 20);
   root.add(sign);
   sign.add(box(0.55, 9, 0.55, mat.steel, 0, 4.5, 0));
+  const faceMaterial = () =>
+    new THREE.MeshStandardMaterial({
+      map: totemTexture(),
+      emissive: '#5a1410',
+      emissiveIntensity: 0.55,
+      roughness: 0.6,
+    });
+  const totemFaces = [faceMaterial(), faceMaterial()];
   const face = new THREE.Mesh(
     new THREE.BoxGeometry(0.35, 4.2, 4.2),
-    [
-      new THREE.MeshStandardMaterial({
-        map: signTexture(['FUEL', 'STOP'], { bg: '#c8382f' }),
-        emissive: '#5a1410',
-        emissiveIntensity: 0.55,
-        roughness: 0.6,
-      }),
-      new THREE.MeshStandardMaterial({
-        map: signTexture(['FUEL', 'STOP'], { bg: '#c8382f' }),
-        emissive: '#5a1410',
-        emissiveIntensity: 0.55,
-        roughness: 0.6,
-      }),
-      mat.white,
-      mat.white,
-      mat.white,
-      mat.white,
-    ]
+    [...totemFaces, mat.white, mat.white, mat.white, mat.white]
   );
   face.position.set(0, 9.5, 0);
   face.castShadow = true;
   sign.add(face);
   const price = new THREE.Mesh(
     new THREE.BoxGeometry(0.3, 2.0, 3.6),
-    new THREE.MeshStandardMaterial({
-      map: boardTexture('LAST GAS', `${60 + (index % 7) * 5} MI`),
-      roughness: 0.7,
-    })
+    new THREE.MeshStandardMaterial({ map: priceTexture(index), roughness: 0.7 })
   );
   price.position.set(0, 6.2, 0);
   sign.add(price);
+
+  // Kept so the signage can be repainted when the language changes.
+  root.userData.signs = { index, totemFaces, price };
 
   root.traverse((o) => {
     if (o.isMesh) {
@@ -245,13 +248,14 @@ function buildAdvanceSign() {
   const board = new THREE.Mesh(
     new THREE.BoxGeometry(3.2, 2.2, 0.16),
     new THREE.MeshStandardMaterial({
-      map: boardTexture('FUEL', '500 M'),
+      map: boardTexture(t('sign.advance'), t('sign.advanceSub')),
       roughness: 0.65,
     })
   );
   board.position.set(0, 4.0, 0);
   board.castShadow = true;
   g.add(board);
+  g.userData.board = board;
   return g;
 }
 
@@ -271,6 +275,22 @@ export class GasStations {
       this.slots.push({ index: -1, model, advance });
     }
     this.tmp = { x: 0, y: 0, z: 0 };
+  }
+
+  /** Repaints every roadside sign after a language change. */
+  retranslate() {
+    for (const slot of this.slots) {
+      const signs = slot.model.userData.signs;
+      for (const m of signs.totemFaces) {
+        m.map = totemTexture();
+        m.needsUpdate = true;
+      }
+      signs.price.material.map = priceTexture(signs.index);
+      signs.price.material.needsUpdate = true;
+      const board = slot.advance.userData.board;
+      board.material.map = boardTexture(t('sign.advance'), t('sign.advanceSub'));
+      board.material.needsUpdate = true;
+    }
   }
 
   /** Keeps the three nearest stations built and positioned. */

@@ -14,6 +14,7 @@ import { Vehicle, SURFACE } from './vehicle.js';
 import { Traffic } from './traffic.js';
 import { DustSystem } from './effects.js';
 import { roadPoint, roadYaw } from './track.js';
+import { onLanguageChange } from './i18n.js';
 import { terrainHeight } from './world/road.js';
 
 const REFUEL_RATE = 14; // litres per second
@@ -69,6 +70,7 @@ export class Game {
     this.props = new PropField(this.scene, this.road.slotCount);
     this.road.addListener(this.props);
     this.stations = new GasStations(this.scene);
+    onLanguageChange(() => this.stations.retranslate());
     this.traffic = new Traffic(this.scene);
     this.dust = new DustSystem(this.scene);
 
@@ -182,13 +184,14 @@ export class Game {
     this.snapCamera();
   }
 
-  gameOver(title, text) {
+  gameOver(titleKey, textKey, textParams) {
     if (this.state === 'over') return;
     this.state = 'over';
     this.audio.fail();
     this.ui.showGameOver({
-      title,
-      text,
+      titleKey,
+      textKey,
+      textParams,
       distance: this.vehicle.distance,
       stops: this.stops.size,
     });
@@ -270,11 +273,7 @@ export class Game {
             color: [0.35, 0.33, 0.32],
           });
         }
-        this.flash(
-          severity > 0.55 ? 'BIG HIT!' : 'CRASH!',
-          'danger',
-          1.4
-        );
+        this.flash(severity > 0.55 ? 'msg.bigCrash' : 'msg.crash', 'danger', 1.4);
       }
     }
   }
@@ -308,7 +307,7 @@ export class Game {
   completeStop(index) {
     this.stops.add(index);
     this.audio.fanfare();
-    this.flash('TANK FULL — HIT THE ROAD', 'good', 2.2);
+    this.flash('msg.tankFull', 'good', 2.2);
   }
 
   handleStationBookkeeping() {
@@ -322,29 +321,25 @@ export class Game {
     ) {
       this.skipped.add(idx);
       this.audio.warn();
-      this.flash('YOU SKIPPED A FUEL STOP', 'danger', 3);
+      this.flash('msg.skipped', 'danger', 3);
     }
   }
 
   checkGameOver() {
     const v = this.vehicle;
     if (v.damage >= 100) {
-      this.gameOver(
-        'WRECKED',
-        `You folded ${this.spec.name} around somebody's front bumper after ${(
-          v.distance / 1000
-        ).toFixed(2)} km.`
-      );
+      this.gameOver('over.title.wrecked', 'over.text.wrecked', {
+        car: this.spec.name,
+        km: (v.distance / 1000).toFixed(2),
+      });
       return;
     }
     if (v.fuel <= 0 && Math.abs(v.speed) < 0.6) {
       const idx = nextStationIndex(v.s);
       const short = stationDistance(idx) - v.s;
-      this.gameOver(
-        'OUT OF FUEL',
-        `The engine died ${(short / 1000).toFixed(2)} km short of the next pumps. ` +
-          `Nothing out here but heat and buzzards.`
-      );
+      this.gameOver('over.title.fuel', 'over.text.fuel', {
+        km: (short / 1000).toFixed(2),
+      });
     }
   }
 
@@ -378,8 +373,9 @@ export class Game {
     }
   }
 
-  flash(text, level, duration) {
-    this.tempMessage = { text, level };
+  /** Shows a translation key for a few seconds, above the ambient messages. */
+  flash(key, level, duration) {
+    this.tempMessage = { key, level };
     this.messageTimer = duration;
   }
 
@@ -410,22 +406,22 @@ export class Game {
     // Message priority: temporary flashes, then situational advice.
     if (this.messageTimer > 0) {
       this.messageTimer -= dt;
-      this.ui.message(this.tempMessage.text, this.tempMessage.level);
+      this.ui.message(this.tempMessage.key, this.tempMessage.level);
       return;
     }
 
     if (this.refuelling) {
-      this.ui.message('FILLING UP…', 'good');
+      this.ui.message('msg.filling', 'good');
     } else if (this.inZone >= 0 && Math.abs(v.speed) >= REFUEL_SPEED_LIMIT) {
-      this.ui.message('STOP AT THE PUMPS TO REFUEL', 'warn');
+      this.ui.message('msg.stopToRefuel', 'warn');
     } else if (!v.engineOn) {
-      this.ui.message('OUT OF FUEL', 'danger');
+      this.ui.message('msg.outOfFuel', 'danger');
     } else if (toStation > rangeLeft) {
-      this.ui.message("YOU WON'T MAKE THE NEXT STATION", 'danger');
+      this.ui.message('msg.wontMakeIt', 'danger');
     } else if (toStation < 260 && !this.stops.has(idx)) {
-      this.ui.message('FUEL STOP AHEAD — PULL RIGHT', 'warn');
+      this.ui.message('msg.stationAhead', 'warn');
     } else if (v.fuel / spec.tank < 0.25) {
-      this.ui.message('LOW FUEL', 'warn');
+      this.ui.message('msg.lowFuel', 'warn');
     } else {
       this.ui.message('');
     }

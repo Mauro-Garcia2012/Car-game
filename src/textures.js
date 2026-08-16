@@ -301,10 +301,10 @@ export function boardTexture(text, sub = '') {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.font = 'bold 70px Arial, sans-serif';
-      ctx.fillText(text, size / 2, sub ? size / 2 - 26 : size / 2, size - 40);
+      ctx.fillText(text, size / 2, sub ? size / 2 - 26 : size / 2, size - 58);
       if (sub) {
         ctx.font = 'bold 42px Arial, sans-serif';
-        ctx.fillText(sub, size / 2, size / 2 + 44, size - 40);
+        ctx.fillText(sub, size / 2, size / 2 + 44, size - 58);
       }
     })
   );

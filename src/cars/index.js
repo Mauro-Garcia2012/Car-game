@@ -10,7 +10,7 @@ export const CARS = [
   {
     id: 'sport',
     name: 'VIPERA GT',
-    tagline: 'Mid-engine road weapon',
+    taglineKey: 'car.sport.tagline',
     color: '#d81f2a',
     build: buildSportCar,
     topSpeed: 82, // m/s
@@ -30,7 +30,7 @@ export const CARS = [
   {
     id: 'race',
     name: 'FALCON R1',
-    tagline: 'GT prototype, thirsty and vicious',
+    taglineKey: 'car.race.tagline',
     color: '#1c6fd8',
     build: buildRaceCar,
     topSpeed: 95,
@@ -50,7 +50,7 @@ export const CARS = [
   {
     id: '4x4',
     name: 'RIDGEBACK 4X4',
-    tagline: 'Slow, unstoppable, huge tank',
+    taglineKey: 'car.4x4.tagline',
     color: '#c8791f',
     build: build4x4,
     topSpeed: 58,

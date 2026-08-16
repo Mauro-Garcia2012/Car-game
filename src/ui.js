@@ -1,5 +1,11 @@
 /** All DOM: menu, HUD, overlays. The 3D side never touches the document. */
 import { CARS, carRange } from './cars/index.js';
+import {
+  t,
+  applyStaticTranslations,
+  bindLanguageButtons,
+  onLanguageChange,
+} from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 const BEST_KEY = 'desert-run.best';
@@ -47,8 +53,12 @@ export class UI {
 
     this.selected = CARS[0].id;
     this.best = Number(localStorage.getItem(BEST_KEY) || 0);
-    this.lastMessage = null;
+    this.message_ = { key: '', level: '' };
+    this.lastResult = null;
 
+    applyStaticTranslations();
+    bindLanguageButtons();
+    onLanguageChange(() => this.retranslate());
     this.buildPicker();
     this.bindButtons();
 
@@ -66,7 +76,7 @@ export class UI {
       card.innerHTML = `
         <div class="swatch" style="background:${car.color}"></div>
         <h3>${car.name}</h3>
-        <p>${car.tagline}</p>`;
+        <p>${t(car.taglineKey)}</p>`;
       card.addEventListener('click', () => this.selectCar(car.id));
       this.el.picker.appendChild(card);
     }
@@ -86,19 +96,29 @@ export class UI {
         <b>${text}</b>
       </div>`;
     this.el.specs.innerHTML = [
-      row('Top speed', car.stats.speed, `${Math.round(car.topSpeed * 3.6)}`),
-      row('Acceleration', car.stats.accel, `${car.power.toFixed(1)}`),
-      row('Grip', car.stats.grip, `${car.grip.toFixed(2)}`),
-      row('Off-road', car.offroadGrip, `${Math.round(car.offroadGrip * 100)}%`),
-      row('Tank', car.stats.range, `${car.tank} L`, 'range'),
+      row(t('spec.topSpeed'), car.stats.speed, `${Math.round(car.topSpeed * 3.6)}`),
+      row(t('spec.accel'), car.stats.accel, `${car.power.toFixed(1)}`),
+      row(t('spec.grip'), car.stats.grip, `${car.grip.toFixed(2)}`),
+      row(t('spec.offroad'), car.offroadGrip, `${Math.round(car.offroadGrip * 100)}%`),
+      row(t('spec.tank'), car.stats.range, `${car.tank} L`, 'range'),
       row(
-        'Range',
+        t('spec.range'),
         Math.min(1, carRange(car) / 4500),
         `${(carRange(car) / 1000).toFixed(1)} km`,
         'range'
       ),
     ].join('');
     if (!silent) this.h.onSelectCar(id);
+  }
+
+  /** Re-renders every string the UI generated itself. */
+  retranslate() {
+    applyStaticTranslations();
+    this.buildPicker();
+    const { key, level } = this.message_;
+    this.message_ = { key: null, level: null }; // force a repaint
+    this.message(key, level);
+    if (this.lastResult) this.showGameOver(this.lastResult);
   }
 
   bindButtons() {
@@ -121,6 +141,7 @@ export class UI {
   }
 
   showHud() {
+    this.lastResult = null;
     this.el.menu.classList.add('hidden');
     this.el.pause.classList.add('hidden');
     this.el.gameover.classList.add('hidden');
@@ -132,24 +153,28 @@ export class UI {
     this.el.pause.classList.toggle('hidden', !paused);
   }
 
-  showGameOver({ title, text, distance, stops }) {
+  /** @param {{titleKey:string, textKey:string, textParams:object,
+   *           distance:number, stops:number}} result */
+  showGameOver(result) {
+    const { titleKey, textKey, textParams, distance, stops } = result;
+    this.lastResult = result;
     this.best = Math.max(this.best, distance);
     localStorage.setItem(BEST_KEY, String(Math.round(this.best)));
-    this.el.overTitle.textContent = title;
-    this.el.overText.textContent = text;
+    this.el.overTitle.textContent = t(titleKey);
+    this.el.overText.textContent = t(textKey, textParams);
     this.el.overDistance.textContent = km(distance);
     this.el.overStops.textContent = String(stops);
     this.el.overBest.textContent = km(this.best);
     this.el.gameover.classList.remove('hidden');
   }
 
-  message(text, level = '') {
-    const key = `${text}|${level}`;
-    if (key === this.lastMessage) return;
-    this.lastMessage = key;
+  /** Shows a HUD message by translation key, so it survives a language swap. */
+  message(key, level = '') {
+    if (key === this.message_.key && level === this.message_.level) return;
+    this.message_ = { key, level };
     const el = this.el.message;
-    el.className = `hud-message ${level} ${text ? 'show' : ''}`;
-    el.textContent = text;
+    el.className = `hud-message ${level} ${key ? 'show' : ''}`;
+    el.textContent = key ? t(key) : '';
   }
 
   /**
@@ -161,7 +186,11 @@ export class UI {
   update(s) {
     const e = this.el;
     e.speed.textContent = String(Math.round(s.speedKmh));
-    e.gear.textContent = s.engineOn ? (s.speedKmh < 1 ? 'N' : String(s.gear)) : '—';
+    e.gear.textContent = s.engineOn
+      ? s.speedKmh < 1
+        ? t('hud.neutral')
+        : String(s.gear)
+      : '—';
 
     const ratio = Math.min(1, s.speedKmh / s.topKmh);
     e.speedArc.style.strokeDashoffset = String(251 - 251 * ratio);

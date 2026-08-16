@@ -157,6 +157,59 @@ body {
   color: var(--amber);
 }
 
+.lang-switch {
+  position: absolute;
+  top: clamp(18px, 3vw, 40px);
+  right: clamp(18px, 3vw, 40px);
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+}
+
+.lang-switch.centred {
+  position: static;
+  justify-content: center;
+  margin: 16px auto 0;
+  width: max-content;
+}
+
+.lang-switch button {
+  min-width: 40px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--sand);
+  font-family: var(--display);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.lang-switch button:hover {
+  opacity: 1;
+}
+
+.lang-switch button.active {
+  background: linear-gradient(180deg, var(--amber), var(--amber-hot));
+  color: #2a1405;
+  opacity: 1;
+}
+
+.menu-panel header {
+  position: relative;
+}
+
+.controls-hint i,
+.fuel-foot i {
+  font-style: normal;
+}
+
 .car-picker {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -223,11 +276,11 @@ body {
 
 .spec-row {
   display: grid;
-  grid-template-columns: 92px 1fr 58px;
+  grid-template-columns: 112px 1fr 58px;
   align-items: center;
   gap: 10px;
-  font-size: 12px;
-  letter-spacing: 0.08em;
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 

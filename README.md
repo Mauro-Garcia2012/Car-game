@@ -10,6 +10,10 @@ Built with [three.js](https://threejs.org/) and nothing else: no build step, no
 downloads, no art assets. Every texture, car, cactus and mesa is generated in
 code at load time.
 
+**English and Spanish** — the game picks your browser's language and there is an
+EN/ES switch in the garage and on the pause screen. *(Español: ver
+[abajo](#español).)*
+
 ## Play
 
 The game is plain ES modules, so it needs to be served over HTTP (opening
@@ -58,6 +62,15 @@ automatically.
 
 The HUD's green bar is your remaining range and the white tick on it is the
 next station. **When the tick turns red, you are already out of road.**
+
+## Language
+
+Every string lives in `src/i18n.js`, keyed by id. The language is detected from
+the browser, remembered in `localStorage`, and can be changed at any time from
+the switcher in the garage or the pause screen — the menu, the HUD, the endings
+and even the painted roadside signage (`FUEL STOP` → `PARADA GASOLINA`) are
+repainted on the spot. Adding another language means adding one more block of
+strings to `STRINGS` and one more entry to `LANGUAGES`.
 
 ## The cars
 
@@ -111,6 +124,65 @@ A few things worth knowing if you want to poke at it:
   extruded across the car, then squeezed laterally by a `bodySculpt()` function
   that pinches the nose and tail and adds tumblehome. That is what turns a slab
   into something car-shaped without any modelling tools.
+
+## Español
+
+**Desert Run — Gasolina o Muerte.** Un juego de conducción 3D por una carretera
+del desierto americano. Elige coche, vigila la aguja y **para en todas las
+gasolineras**: el depósito nunca da para saltarse una.
+
+### Jugar
+
+Necesita servirse por HTTP (los módulos ES no funcionan abriendo el archivo
+directamente):
+
+```bash
+python3 -m http.server 8080      # o: npx http-server -p 8080
+```
+
+Abre <http://localhost:8080>. El juego detecta el idioma del navegador; también
+puedes cambiarlo con el selector **EN / ES** del garaje o de la pantalla de
+pausa.
+
+### Controles
+
+| Acción | Teclado | Mando |
+| --- | --- | --- |
+| Acelerar | `W` / `↑` | Gatillo derecho |
+| Frenar / marcha atrás | `S` / `↓` | Gatillo izquierdo |
+| Girar | `A` `D` / `←` `→` | Stick izquierdo |
+| Freno de mano | `Espacio` / `Shift` | `A` |
+| Cámara (persecución / capó / órbita) | `C` | |
+| Pausa | `P` o `Esc` | |
+| Reiniciar | `R` | |
+| Silencio | `M` | |
+
+En móviles y tablets aparecen pedales y botones de dirección en pantalla.
+
+### Las reglas
+
+- Las gasolineras están a **1,95–2,47 km** unas de otras y un depósito lleno da
+  para **3,0–3,7 km** conduciendo fuerte: llegas a la siguiente, nunca a la de
+  después.
+- Para repostar hay que **salir del asfalto, entrar en la explanada de los
+  surtidores y detenerse** (por debajo de ~12 km/h). Es gratis y tarda entre
+  tres y siete segundos.
+- La arena es lenta y gasta un **70% más** de gasolina; el arcén, un 25% más.
+  Parado también gastas: el motor sigue al ralentí.
+- El tráfico es real: si chocas contra una camioneta o un camión pierdes
+  velocidad, gasolina y chapa. Al 100% de daños se acabó la partida.
+- La barra verde del HUD es tu autonomía y la marca blanca es la próxima
+  gasolinera. **Cuando la marca se pone roja, ya no llegas.**
+
+### Los coches
+
+| | Vipera GT | Falcon R1 | Ridgeback 4x4 |
+| --- | --- | --- | --- |
+| Tipo | Superdeportivo | Prototipo GT | Camioneta elevada |
+| Vel. máxima | 295 km/h | 342 km/h | 209 km/h |
+| Depósito | 55 L | 46 L | 95 L |
+| Autonomía | ~3,4 km | ~3,3 km | ~4,2 km |
+| Fuera de pista | 34% | 20% | 78% |
 
 ## Licence
 

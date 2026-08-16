@@ -27,7 +27,7 @@
       <div class="loading-inner">
         <div class="logo">DESERT<span>RUN</span></div>
         <div class="bar"><i></i></div>
-        <p>Building the highway…</p>
+        <p data-i18n="loading.text">Building the highway…</p>
       </div>
     </div>
 
@@ -36,24 +36,33 @@
       <div class="menu-panel">
         <header>
           <div class="logo">DESERT<span>RUN</span></div>
-          <p class="strap">
+          <p class="strap" data-i18n="menu.strap" data-i18n-html>
             Route 66, high noon, no cell service. Every gas station is a
             checkpoint — <b>skip one and you die out there.</b>
           </p>
+          <div class="lang-switch" role="group" aria-label="Language">
+            <button type="button" data-lang="en">EN</button>
+            <button type="button" data-lang="es">ES</button>
+          </div>
         </header>
 
         <div class="car-picker" id="car-picker"></div>
 
         <div class="spec-sheet" id="spec-sheet"></div>
 
-        <button id="start-btn" class="primary">START ENGINE</button>
+        <button id="start-btn" class="primary" data-i18n="menu.start">
+          START ENGINE
+        </button>
 
         <div class="controls-hint">
-          <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows drive</span>
-          <span><kbd>Space</kbd> handbrake</span>
-          <span><kbd>C</kbd> camera</span>
-          <span><kbd>P</kbd> pause</span>
-          <span><kbd>M</kbd> mute</span>
+          <span
+            ><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>
+            <i data-i18n="controls.drive">/ arrows drive</i></span
+          >
+          <span><kbd>Space</kbd> <i data-i18n="controls.handbrake">handbrake</i></span>
+          <span><kbd>C</kbd> <i data-i18n="controls.camera">camera</i></span>
+          <span><kbd>P</kbd> <i data-i18n="controls.pause">pause</i></span>
+          <span><kbd>M</kbd> <i data-i18n="controls.mute">mute</i></span>
         </div>
       </div>
     </div>
@@ -62,15 +71,15 @@
     <div id="hud" class="hidden">
       <div class="hud-top">
         <div class="stat">
-          <label>Distance</label>
+          <label data-i18n="hud.distance">Distance</label>
           <strong id="hud-distance">0.00 km</strong>
         </div>
         <div class="stat">
-          <label>Stops made</label>
+          <label data-i18n="hud.stops">Stops made</label>
           <strong id="hud-stops">0</strong>
         </div>
         <div class="stat">
-          <label>Best</label>
+          <label data-i18n="hud.best">Best</label>
           <strong id="hud-best">0.00 km</strong>
         </div>
       </div>
@@ -78,7 +87,7 @@
       <div id="hud-message" class="hud-message"></div>
 
       <div id="refuel-panel" class="refuel-panel hidden">
-        <label>REFUELLING</label>
+        <label data-i18n="hud.refuelling">REFUELLING</label>
         <div class="refuel-bar"><i id="refuel-fill"></i></div>
         <span id="refuel-litres">0 L</span>
       </div>
@@ -99,20 +108,26 @@
 
         <div class="fuel-block">
           <div class="fuel-head">
-            <label>FUEL</label>
+            <label data-i18n="hud.fuel">FUEL</label>
             <span id="hud-litres">0 L</span>
           </div>
           <div class="fuel-bar"><i id="fuel-fill"></i></div>
-          <div class="range-bar" title="Range left vs. distance to the next station">
+          <div class="range-bar" data-i18n-title="hud.rangeTitle">
             <i id="range-fill"></i>
             <b id="station-marker"></b>
           </div>
           <div class="fuel-foot">
-            <span>Next stop <strong id="hud-next">—</strong></span>
-            <span>Range <strong id="hud-range">—</strong></span>
+            <span
+              ><i data-i18n="hud.nextStop">Next stop</i>
+              <strong id="hud-next">—</strong></span
+            >
+            <span
+              ><i data-i18n="hud.range">Range</i>
+              <strong id="hud-range">—</strong></span
+            >
           </div>
           <div class="damage">
-            <label>DAMAGE</label>
+            <label data-i18n="hud.damage">DAMAGE</label>
             <div class="damage-bar"><i id="damage-fill"></i></div>
           </div>
         </div>
@@ -124,8 +139,8 @@
           <button data-control="right">▶</button>
         </div>
         <div class="pad-right">
-          <button data-control="down">BRAKE</button>
-          <button data-control="up">GAS</button>
+          <button data-control="down" data-i18n="touch.brake">BRAKE</button>
+          <button data-control="up" data-i18n="touch.gas">GAS</button>
         </div>
       </div>
     </div>
@@ -133,10 +148,18 @@
     <!-- Pause --------------------------------------------------------->
     <div id="pause" class="screen overlay hidden">
       <div class="card">
-        <h2>PAUSED</h2>
-        <p>Take a breath. The desert isn't going anywhere.</p>
-        <button id="resume-btn" class="primary">RESUME</button>
-        <button id="quit-btn" class="ghost">BACK TO GARAGE</button>
+        <h2 data-i18n="pause.title">PAUSED</h2>
+        <p data-i18n="pause.text">Take a breath. The desert isn't going anywhere.</p>
+        <button id="resume-btn" class="primary" data-i18n="pause.resume">
+          RESUME
+        </button>
+        <button id="quit-btn" class="ghost" data-i18n="pause.garage">
+          BACK TO GARAGE
+        </button>
+        <div class="lang-switch centred" role="group" aria-label="Language">
+          <button type="button" data-lang="en">EN</button>
+          <button type="button" data-lang="es">ES</button>
+        </div>
       </div>
     </div>
 
@@ -146,12 +169,25 @@
         <h2 id="over-title">OUT OF FUEL</h2>
         <p id="over-text"></p>
         <div class="result-grid">
-          <div><label>Distance</label><strong id="over-distance">—</strong></div>
-          <div><label>Fuel stops</label><strong id="over-stops">—</strong></div>
-          <div><label>Best run</label><strong id="over-best">—</strong></div>
+          <div>
+            <label data-i18n="over.distance">Distance</label
+            ><strong id="over-distance">—</strong>
+          </div>
+          <div>
+            <label data-i18n="over.stops">Fuel stops</label
+            ><strong id="over-stops">—</strong>
+          </div>
+          <div>
+            <label data-i18n="over.best">Best run</label
+            ><strong id="over-best">—</strong>
+          </div>
         </div>
-        <button id="retry-btn" class="primary">DRIVE AGAIN</button>
-        <button id="garage-btn" class="ghost">CHANGE CAR</button>
+        <button id="retry-btn" class="primary" data-i18n="over.retry">
+          DRIVE AGAIN
+        </button>
+        <button id="garage-btn" class="ghost" data-i18n="over.changeCar">
+          CHANGE CAR
+        </button>
       </div>
     </div>
 
