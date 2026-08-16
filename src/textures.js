@@ -1,0 +1,311 @@
+/**
+ * Every texture in the game is painted procedurally on a <canvas>, so the
+ * repository stays asset free and the game loads instantly and offline.
+ */
+import * as THREE from 'three';
+import { ROAD_HALF, EDGE } from './track.js';
+
+const cache = new Map();
+
+function canvas(size, draw, { repeat = [1, 1], srgb = true, aniso = 8 } = {}) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  draw(ctx, size);
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(repeat[0], repeat[1]);
+  tex.anisotropy = aniso;
+  if (srgb) tex.colorSpace = THREE.SRGBColorSpace;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+function memo(key, factory) {
+  if (!cache.has(key)) cache.set(key, factory());
+  return cache.get(key);
+}
+
+/** Fills the canvas with grainy noise on top of a base colour. */
+function grain(ctx, size, base, amount, scale = 1) {
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, size, size);
+  const img = ctx.getImageData(0, 0, size, size);
+  const d = img.data;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const i = (y * size + x) * 4;
+      // Two octaves of blocky noise reads as gravel at driving speed.
+      const n =
+        (Math.random() - 0.5) * amount +
+        (Math.random() - 0.5) * amount * 0.6 * scale;
+      d[i] = Math.min(255, Math.max(0, d[i] + n));
+      d[i + 1] = Math.min(255, Math.max(0, d[i + 1] + n));
+      d[i + 2] = Math.min(255, Math.max(0, d[i + 2] + n));
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+/**
+ * Tarmac. U spans the full road + shoulders, V repeats every 16 m, and the
+ * lane markings are baked in so they follow every curve for free.
+ */
+export function asphaltTexture() {
+  return memo('asphalt', () =>
+    canvas(
+      1024,
+      (ctx, size) => {
+        const px = size / (EDGE * 2); // pixels per metre across the road
+        grain(ctx, size, '#3a3a3c', 46);
+
+        // Patches of older, lighter tarmac.
+        ctx.globalAlpha = 0.18;
+        for (let i = 0; i < 40; i++) {
+          ctx.fillStyle = Math.random() > 0.5 ? '#4a4a4c' : '#2e2e30';
+          const w = 40 + Math.random() * 200;
+          const h = 20 + Math.random() * 120;
+          ctx.beginPath();
+          ctx.ellipse(
+            Math.random() * size,
+            Math.random() * size,
+            w / 2,
+            h / 2,
+            Math.random() * Math.PI,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        // Gravel shoulders.
+        const shoulderPx = (EDGE - ROAD_HALF) * px;
+        const shoulder = ctx.createLinearGradient(0, 0, shoulderPx, 0);
+        shoulder.addColorStop(0, '#9c7f56');
+        shoulder.addColorStop(1, '#5d5346');
+        ctx.fillStyle = shoulder;
+        ctx.fillRect(0, 0, shoulderPx, size);
+        ctx.save();
+        ctx.translate(size, 0);
+        ctx.scale(-1, 1);
+        ctx.fillStyle = shoulder;
+        ctx.fillRect(0, 0, shoulderPx, size);
+        ctx.restore();
+
+        // Grit on the shoulders.
+        ctx.globalAlpha = 0.5;
+        for (let i = 0; i < 2200; i++) {
+          const side = Math.random() < 0.5;
+          const x = side
+            ? Math.random() * shoulderPx
+            : size - Math.random() * shoulderPx;
+          ctx.fillStyle = Math.random() > 0.5 ? '#c6a877' : '#4a4136';
+          ctx.fillRect(x, Math.random() * size, 2, 2);
+        }
+        ctx.globalAlpha = 1;
+
+        // Solid white edge lines.
+        ctx.fillStyle = '#e8e3d6';
+        const edgeW = 0.14 * px;
+        ctx.fillRect(shoulderPx + 0.35 * px, 0, edgeW, size);
+        ctx.fillRect(size - shoulderPx - 0.35 * px - edgeW, 0, edgeW, size);
+
+        // Double yellow centre line, dashed on one side.
+        ctx.fillStyle = '#e0b93a';
+        const cw = 0.13 * px;
+        ctx.fillRect(size / 2 - 0.22 * px - cw, 0, cw, size);
+        const dash = size / 4;
+        for (let i = 0; i < 4; i++) {
+          ctx.fillRect(size / 2 + 0.22 * px, i * dash, cw, dash * 0.62);
+        }
+
+        // Worn tyre tracks in each lane.
+        ctx.globalAlpha = 0.1;
+        ctx.fillStyle = '#1d1d1f';
+        for (const lane of [-1, 1]) {
+          for (const t of [-0.8, 0.8]) {
+            const x = size / 2 + (lane * 2.4 + t) * px;
+            ctx.fillRect(x - 0.5 * px, 0, 1 * px, size);
+          }
+        }
+        ctx.globalAlpha = 1;
+      },
+      { repeat: [1, 1] }
+    )
+  );
+}
+
+/** Desert sand / hardpack. */
+export function sandTexture() {
+  return memo('sand', () =>
+    canvas(
+      512,
+      (ctx, size) => {
+        grain(ctx, size, '#c9a06a', 34);
+        ctx.globalAlpha = 0.25;
+        for (let i = 0; i < 90; i++) {
+          ctx.fillStyle = Math.random() > 0.5 ? '#b98b55' : '#dcb884';
+          ctx.beginPath();
+          ctx.ellipse(
+            Math.random() * size,
+            Math.random() * size,
+            10 + Math.random() * 90,
+            6 + Math.random() * 30,
+            Math.random() * Math.PI,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        }
+        ctx.globalAlpha = 0.55;
+        for (let i = 0; i < 900; i++) {
+          ctx.fillStyle = ['#8a6b43', '#e6cba0', '#a1794c'][
+            (Math.random() * 3) | 0
+          ];
+          const r = 1 + Math.random() * 2.5;
+          ctx.fillRect(Math.random() * size, Math.random() * size, r, r);
+        }
+        ctx.globalAlpha = 1;
+      },
+      { repeat: [40, 40] }
+    )
+  );
+}
+
+/** Poured concrete for the gas station apron. */
+export function concreteTexture() {
+  return memo('concrete', () =>
+    canvas(
+      512,
+      (ctx, size) => {
+        grain(ctx, size, '#b3ada1', 22);
+        ctx.strokeStyle = 'rgba(70,66,60,0.55)';
+        ctx.lineWidth = 3;
+        for (let i = 1; i < 4; i++) {
+          ctx.beginPath();
+          ctx.moveTo((i * size) / 4, 0);
+          ctx.lineTo((i * size) / 4, size);
+          ctx.moveTo(0, (i * size) / 4);
+          ctx.lineTo(size, (i * size) / 4);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 0.12;
+        for (let i = 0; i < 30; i++) {
+          ctx.fillStyle = '#2b2723';
+          ctx.beginPath();
+          ctx.ellipse(
+            Math.random() * size,
+            Math.random() * size,
+            8 + Math.random() * 40,
+            6 + Math.random() * 25,
+            0,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      },
+      { repeat: [6, 6] }
+    )
+  );
+}
+
+/** Layered sedimentary rock for buttes and mesas. */
+export function rockTexture() {
+  return memo('rock', () =>
+    canvas(
+      256,
+      (ctx, size) => {
+        const bands = ['#9c5b3c', '#b2704a', '#8a4e34', '#c08258', '#7d452f'];
+        let y = 0;
+        while (y < size) {
+          const h = 6 + Math.random() * 26;
+          ctx.fillStyle = bands[(Math.random() * bands.length) | 0];
+          ctx.fillRect(0, y, size, h);
+          y += h;
+        }
+        const img = ctx.getImageData(0, 0, size, size);
+        const d = img.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const n = (Math.random() - 0.5) * 26;
+          d[i] += n;
+          d[i + 1] += n;
+          d[i + 2] += n;
+        }
+        ctx.putImageData(img, 0, 0);
+      },
+      { repeat: [2, 2] }
+    )
+  );
+}
+
+/** Soft round sprite used for dust, smoke and light glows. */
+export function puffTexture() {
+  return memo('puff', () =>
+    canvas(
+      128,
+      (ctx, size) => {
+        const g = ctx.createRadialGradient(
+          size / 2,
+          size / 2,
+          0,
+          size / 2,
+          size / 2,
+          size / 2
+        );
+        g.addColorStop(0, 'rgba(255,255,255,1)');
+        g.addColorStop(0.35, 'rgba(255,255,255,0.55)');
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, size, size);
+      },
+      { srgb: false }
+    )
+  );
+}
+
+/** Big roadside sign face, e.g. the "FUEL" totem. */
+export function signTexture(lines, { bg = '#c8382f', fg = '#fdf6e3' } = {}) {
+  return memo(`sign:${lines.join('|')}:${bg}`, () =>
+    canvas(512, (ctx, size) => {
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, size, size);
+      ctx.strokeStyle = fg;
+      ctx.lineWidth = 12;
+      ctx.strokeRect(20, 20, size - 40, size - 40);
+      ctx.fillStyle = fg;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const step = size / (lines.length + 1);
+      lines.forEach((line, i) => {
+        const fontSize = Math.min(120, (size * 1.5) / Math.max(4, line.length));
+        ctx.font = `bold ${fontSize}px "Arial Black", Impact, sans-serif`;
+        ctx.fillText(line, size / 2, step * (i + 1), size - 70);
+      });
+    })
+  );
+}
+
+/** Highway shield / warning board face. */
+export function boardTexture(text, sub = '') {
+  return memo(`board:${text}:${sub}`, () =>
+    canvas(256, (ctx, size) => {
+      ctx.fillStyle = '#1c6b3a';
+      ctx.fillRect(0, 0, size, size);
+      ctx.strokeStyle = '#f2f0e6';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(14, 14, size - 28, size - 28);
+      ctx.fillStyle = '#f2f0e6';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold 70px Arial, sans-serif';
+      ctx.fillText(text, size / 2, sub ? size / 2 - 26 : size / 2, size - 40);
+      if (sub) {
+        ctx.font = 'bold 42px Arial, sans-serif';
+        ctx.fillText(sub, size / 2, size / 2 + 44, size - 40);
+      }
+    })
+  );
+}

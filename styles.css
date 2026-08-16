@@ -1,0 +1,738 @@
+/* Desert Run — UI skin: sun-bleached signage over dark glass panels. */
+
+:root {
+  --sand: #e8cfa6;
+  --sand-dim: #b9a184;
+  --ink: #16130f;
+  --amber: #ffb020;
+  --amber-hot: #ff7a18;
+  --red: #e0402c;
+  --green: #4fd07a;
+  --panel: rgba(20, 16, 12, 0.72);
+  --panel-line: rgba(255, 196, 120, 0.22);
+  --font: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --display: "Arial Black", "Helvetica Neue", Impact, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #10141c;
+  color: var(--sand);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  touch-action: none;
+}
+
+#scene {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.overlay {
+  background: radial-gradient(
+    circle at 50% 40%,
+    rgba(10, 8, 6, 0.55),
+    rgba(6, 5, 4, 0.9)
+  );
+  backdrop-filter: blur(3px);
+}
+
+/* ---------------------------------------------------------------- logo */
+
+.logo {
+  font-family: var(--display);
+  font-size: clamp(34px, 6vw, 64px);
+  letter-spacing: 0.06em;
+  line-height: 0.95;
+  color: #fff2d8;
+  text-shadow: 0 3px 0 #7a3b12, 0 0 26px rgba(255, 150, 40, 0.45);
+}
+
+.logo span {
+  display: block;
+  color: var(--amber);
+  -webkit-text-stroke: 1px rgba(90, 40, 10, 0.6);
+}
+
+/* ------------------------------------------------------------- loading */
+
+#loading {
+  background: linear-gradient(180deg, #2b3f66 0%, #b6743e 60%, #e0a367 100%);
+}
+
+.loading-inner {
+  text-align: center;
+}
+
+.loading-inner p {
+  opacity: 0.85;
+  letter-spacing: 0.18em;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.bar {
+  width: min(320px, 60vw);
+  height: 6px;
+  margin: 22px auto 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  width: 40%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--amber), var(--amber-hot));
+  animation: slide 1.1s ease-in-out infinite;
+}
+
+@keyframes slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(260%);
+  }
+}
+
+/* ---------------------------------------------------------------- menu */
+
+#menu {
+  justify-content: flex-start;
+  background: linear-gradient(
+    100deg,
+    rgba(8, 7, 6, 0.92) 0%,
+    rgba(8, 7, 6, 0.75) 42%,
+    rgba(8, 7, 6, 0) 72%
+  );
+}
+
+.menu-panel {
+  width: min(560px, 94vw);
+  max-height: 100vh;
+  overflow-y: auto;
+  padding: clamp(18px, 3vw, 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.strap {
+  margin: 12px 0 0;
+  max-width: 46ch;
+  line-height: 1.5;
+  color: #f0dcbb;
+  opacity: 0.9;
+  font-size: 14px;
+}
+
+.strap b {
+  color: var(--amber);
+}
+
+.car-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.car-card {
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  border-radius: 12px;
+  padding: 12px 10px;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  transition: transform 0.15s ease, border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.car-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 196, 120, 0.5);
+}
+
+.car-card.active {
+  border-color: var(--amber);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 176, 32, 0.22),
+    rgba(20, 16, 12, 0.8)
+  );
+  box-shadow: 0 8px 28px rgba(255, 140, 30, 0.18);
+}
+
+.car-card .swatch {
+  width: 100%;
+  height: 6px;
+  border-radius: 99px;
+  margin-bottom: 8px;
+}
+
+.car-card h3 {
+  margin: 0 0 2px;
+  font-family: var(--display);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.car-card p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.3;
+  opacity: 0.72;
+}
+
+.spec-sheet {
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  border-radius: 12px;
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.spec-row {
+  display: grid;
+  grid-template-columns: 92px 1fr 58px;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.spec-row .meter {
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.spec-row .meter i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--amber), var(--amber-hot));
+}
+
+.spec-row.range .meter i {
+  background: linear-gradient(90deg, #57c98a, #2f9d63);
+}
+
+.spec-row b {
+  text-align: right;
+  font-weight: 700;
+  color: #fff2d8;
+}
+
+button.primary,
+button.ghost {
+  font-family: var(--display);
+  letter-spacing: 0.1em;
+  font-size: 15px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+button.primary {
+  background: linear-gradient(180deg, var(--amber), var(--amber-hot));
+  color: #2a1405;
+  border-color: rgba(255, 220, 160, 0.6);
+  box-shadow: 0 10px 30px rgba(255, 130, 20, 0.28);
+}
+
+button.ghost {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--sand);
+  border-color: var(--panel-line);
+  margin-top: 8px;
+}
+
+button.primary:hover,
+button.ghost:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+
+button.primary:active,
+button.ghost:active {
+  transform: translateY(1px);
+}
+
+.controls-hint {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 11px;
+  opacity: 0.7;
+  letter-spacing: 0.06em;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 18px;
+  text-align: center;
+  padding: 2px 5px;
+  margin-right: 2px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-family: var(--font);
+  font-size: 10px;
+}
+
+/* ----------------------------------------------------------------- HUD */
+
+#hud {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.hud-top {
+  display: flex;
+  gap: 10px;
+}
+
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  border-radius: 10px;
+  padding: 8px 14px;
+  min-width: 104px;
+}
+
+.stat label {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.stat strong {
+  font-family: var(--display);
+  font-size: 18px;
+  color: #fff2d8;
+}
+
+.hud-message {
+  position: absolute;
+  top: 16%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--display);
+  font-size: clamp(18px, 3.2vw, 32px);
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.75);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  white-space: pre-line;
+}
+
+.hud-message.show {
+  opacity: 1;
+}
+
+.hud-message.warn {
+  color: var(--amber);
+}
+
+.hud-message.danger {
+  color: #ff6a4d;
+  animation: pulse 0.7s ease-in-out infinite;
+}
+
+.hud-message.good {
+  color: var(--green);
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.refuel-panel {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  transform: translateX(-50%);
+  width: min(380px, 70vw);
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  border-radius: 12px;
+  padding: 12px 16px;
+  text-align: center;
+}
+
+.refuel-panel label {
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  opacity: 0.8;
+}
+
+.refuel-bar {
+  height: 12px;
+  margin: 8px 0 6px;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.refuel-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #6ee08a, #2f9d63);
+  transition: width 0.1s linear;
+}
+
+.refuel-panel span {
+  font-family: var(--display);
+  font-size: 16px;
+  color: #d8ffe2;
+}
+
+.hud-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.gauge {
+  width: 190px;
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  border-radius: 14px;
+  padding: 8px 8px 4px;
+}
+
+.gauge svg {
+  width: 100%;
+  display: block;
+}
+
+.gauge .track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.14);
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
+.gauge .value {
+  fill: none;
+  stroke: var(--amber);
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-dasharray: 251;
+  stroke-dashoffset: 251;
+  transition: stroke-dashoffset 0.1s linear, stroke 0.3s linear;
+}
+
+.gauge line {
+  stroke: #fff2d8;
+  stroke-width: 3;
+  stroke-linecap: round;
+  transform-origin: 100px 110px;
+  transform: rotate(-90deg);
+}
+
+.gauge .hub {
+  fill: #fff2d8;
+}
+
+.gauge .readout {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+
+.gauge .readout strong {
+  font-family: var(--display);
+  font-size: 26px;
+  color: #fff2d8;
+}
+
+.gauge .readout span {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  opacity: 0.7;
+  margin-left: 3px;
+}
+
+.gauge .readout em {
+  position: absolute;
+  right: 12px;
+  bottom: 4px;
+  font-style: normal;
+  font-family: var(--display);
+  font-size: 14px;
+  color: var(--amber);
+}
+
+.fuel-block {
+  width: min(340px, 46vw);
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.fuel-head,
+.fuel-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.fuel-head span,
+.fuel-foot strong {
+  font-family: var(--display);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: #fff2d8;
+}
+
+.fuel-bar {
+  height: 16px;
+  margin: 7px 0;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fuel-bar i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #ffd166, #f0a02a);
+  transition: width 0.15s linear, background 0.4s linear;
+}
+
+.fuel-bar.low i {
+  background: linear-gradient(90deg, #ff8b3d, #e0402c);
+}
+
+.fuel-bar.critical i {
+  background: linear-gradient(90deg, #ff5b3d, #b8231a);
+  animation: pulse 0.55s ease-in-out infinite;
+}
+
+.range-bar {
+  position: relative;
+  height: 8px;
+  margin: 8px 0 6px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: visible;
+}
+
+.range-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #6fd39a, #2f9d63);
+}
+
+.range-bar b {
+  position: absolute;
+  top: -5px;
+  width: 3px;
+  height: 18px;
+  border-radius: 2px;
+  background: #fff2d8;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+  transition: left 0.2s linear;
+}
+
+.damage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.damage label {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  opacity: 0.65;
+}
+
+.damage-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.damage-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #ffb020, #e0402c);
+  transition: width 0.2s ease;
+}
+
+/* --------------------------------------------------------- touch pads */
+
+.touch-controls {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: none;
+  justify-content: space-between;
+  padding: 0 18px 22px;
+  pointer-events: none;
+}
+
+body.touch .touch-controls {
+  display: flex;
+}
+
+.touch-controls > div {
+  display: flex;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.touch-controls button {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  border: 1px solid var(--panel-line);
+  background: rgba(20, 16, 12, 0.6);
+  color: var(--sand);
+  font-family: var(--display);
+  font-size: 13px;
+  backdrop-filter: blur(2px);
+}
+
+.touch-controls button.pressed {
+  background: rgba(255, 176, 32, 0.55);
+  color: #2a1405;
+}
+
+/* ---------------------------------------------------------- end cards */
+
+.card {
+  width: min(520px, 92vw);
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  border-radius: 18px;
+  padding: 28px;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+}
+
+.card h2 {
+  margin: 0 0 8px;
+  font-family: var(--display);
+  font-size: clamp(26px, 5vw, 40px);
+  letter-spacing: 0.06em;
+  color: var(--amber);
+}
+
+.card p {
+  margin: 0 0 18px;
+  line-height: 1.55;
+  opacity: 0.85;
+  font-size: 14px;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.result-grid div {
+  background: rgba(0, 0, 0, 0.32);
+  border-radius: 10px;
+  padding: 10px 6px;
+}
+
+.result-grid label {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.65;
+  margin-bottom: 4px;
+}
+
+.result-grid strong {
+  font-family: var(--display);
+  font-size: 18px;
+  color: #fff2d8;
+}
+
+@media (max-width: 720px) {
+  .hud-bottom {
+    align-items: flex-end;
+  }
+  .gauge {
+    width: 140px;
+  }
+  .fuel-block {
+    width: 54vw;
+  }
+  .hud-top .stat:nth-child(3) {
+    display: none;
+  }
+  .menu-panel {
+    width: 100vw;
+  }
+  .touch-controls {
+    padding-bottom: 96px;
+  }
+}
