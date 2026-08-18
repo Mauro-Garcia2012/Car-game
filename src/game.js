@@ -9,6 +9,7 @@ import {
   nextStationIndex,
   ZONE_HALF,
 } from './world/gasStation.js';
+import { RoadSigns, speedLimitAt } from './world/signs.js';
 import { createSky } from './world/sky.js';
 import { Vehicle, SURFACE } from './vehicle.js';
 import { Traffic } from './traffic.js';
@@ -71,6 +72,7 @@ export class Game {
     this.road.addListener(this.props);
     this.stations = new GasStations(this.scene);
     onLanguageChange(() => this.stations.retranslate());
+    this.signs = new RoadSigns(this.scene);
     this.traffic = new Traffic(this.scene);
     this.dust = new DustSystem(this.scene);
 
@@ -143,6 +145,7 @@ export class Game {
     this.vehicle.syncModel(0);
     this.road.update(s);
     this.stations.update(s);
+    this.signs.update(s);
   }
 
   start(id) {
@@ -228,6 +231,7 @@ export class Game {
 
     this.road.update(v.s);
     this.stations.update(v.s);
+    this.signs.update(v.s);
     this.traffic.update(dt, v.s);
 
     if (!frozen) {
@@ -385,9 +389,11 @@ export class Game {
     const idx = nextStationIndex(v.s);
     const toStation = stationDistance(idx) - v.s;
     const rangeLeft = (v.fuel / spec.tank) * carRange(spec) * 0.92;
+    const speedLimit = speedLimitAt(v.s);
 
     this.ui.update({
       speedKmh: Math.abs(v.speed) * 3.6,
+      speedLimit,
       topKmh: spec.topSpeed * 3.6,
       gear: v.gear,
       engineOn: v.engineOn,

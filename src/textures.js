@@ -7,11 +7,16 @@ import { ROAD_HALF, EDGE } from './track.js';
 
 const cache = new Map();
 
-function canvas(size, draw, { repeat = [1, 1], srgb = true, aniso = 8 } = {}) {
+function canvas(
+  size,
+  draw,
+  { repeat = [1, 1], srgb = true, aniso = 8, height = null } = {}
+) {
   const c = document.createElement('canvas');
-  c.width = c.height = size;
+  c.width = size;
+  c.height = height ?? size;
   const ctx = c.getContext('2d');
-  draw(ctx, size);
+  draw(ctx, size, c.height);
   const tex = new THREE.CanvasTexture(c);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.repeat.set(repeat[0], repeat[1]);
@@ -307,5 +312,46 @@ export function boardTexture(text, sub = '') {
         ctx.fillText(sub, size / 2, size / 2 + 44, size - 58);
       }
     })
+  );
+}
+
+/**
+ * MUTCD R2-1 speed limit sign, the white 36x48" rectangle you see all over
+ * rural Nevada. Black legend on white, rounded black border.
+ */
+export function speedLimitTexture(mph) {
+  return memo(`speed:${mph}`, () =>
+    canvas(
+      384,
+      (ctx, w, h) => {
+        ctx.fillStyle = '#f4f3ef';
+        ctx.fillRect(0, 0, w, h);
+
+        // Border: rounded rectangle, inset like the real thing.
+        const inset = 20;
+        const r = 26;
+        ctx.strokeStyle = '#15171a';
+        ctx.lineWidth = 13;
+        ctx.beginPath();
+        ctx.moveTo(inset + r, inset);
+        ctx.arcTo(w - inset, inset, w - inset, h - inset, r);
+        ctx.arcTo(w - inset, h - inset, inset, h - inset, r);
+        ctx.arcTo(inset, h - inset, inset, inset, r);
+        ctx.arcTo(inset, inset, w - inset, inset, r);
+        ctx.closePath();
+        ctx.stroke();
+
+        ctx.fillStyle = '#15171a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        // "SPEED" / "LIMIT" in the upper third, numerals filling the rest.
+        ctx.font = 'bold 78px "Arial Narrow", Arial, sans-serif';
+        ctx.fillText('SPEED', w / 2, h * 0.22, w - 90);
+        ctx.fillText('LIMIT', w / 2, h * 0.38, w - 90);
+        ctx.font = 'bold 210px "Arial Narrow", Arial, sans-serif';
+        ctx.fillText(String(mph), w / 2, h * 0.7, w - 90);
+      },
+      { height: 512 }
+    )
   );
 }

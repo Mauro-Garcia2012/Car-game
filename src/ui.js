@@ -44,6 +44,8 @@ export class UI {
       refuelPanel: $('refuel-panel'),
       refuelFill: $('refuel-fill'),
       refuelLitres: $('refuel-litres'),
+      limitSign: $('limit-sign'),
+      limitValue: $('limit-value'),
       overTitle: $('over-title'),
       overText: $('over-text'),
       overDistance: $('over-distance'),
@@ -178,7 +180,8 @@ export class UI {
   }
 
   /**
-   * @param {{speedKmh:number, topKmh:number, gear:number, engineOn:boolean,
+   * @param {{speedKmh:number, topKmh:number, speedLimit:number, gear:number,
+   *          engineOn:boolean,
    *          fuel:number, tank:number, rangeLeft:number, toStation:number,
    *          distance:number, stops:number, damage:number,
    *          refuelling:boolean, refuelProgress:number, refuelLitres:number}} s
@@ -191,6 +194,11 @@ export class UI {
         ? t('hud.neutral')
         : String(s.gear)
       : '—';
+
+    // Posted limit is in mph, the speedo in km/h — as it would be in a
+    // European car driven across Nevada.
+    e.limitValue.textContent = String(s.speedLimit);
+    e.limitSign.classList.toggle('over', s.speedKmh > s.speedLimit * 1.609 + 5);
 
     const ratio = Math.min(1, s.speedKmh / s.topKmh);
     e.speedArc.style.strokeDashoffset = String(251 - 251 * ratio);

@@ -93,7 +93,14 @@
       </div>
 
       <div class="hud-bottom">
-        <div class="gauge speedo">
+        <div class="hud-left">
+          <!-- Replica of the R2-1 sign posted on this stretch of highway. -->
+          <div class="limit-sign" id="limit-sign" aria-hidden="true">
+            <b>SPEED<br />LIMIT</b>
+            <strong id="limit-value">70</strong>
+          </div>
+
+          <div class="gauge speedo">
           <svg viewBox="0 0 200 120">
             <path class="track" d="M20 110 A 80 80 0 0 1 180 110" />
             <path id="speed-arc" class="value" d="M20 110 A 80 80 0 0 1 180 110" />
@@ -103,6 +110,7 @@
           <div class="readout">
             <strong id="hud-speed">0</strong><span>km/h</span>
             <em id="hud-gear">N</em>
+            </div>
           </div>
         </div>
 

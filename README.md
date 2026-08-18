@@ -59,6 +59,12 @@ automatically.
   kilometre or two, never more than three on the road, mostly semis coming the
   other way. Rear-end a pickup or clip one of them and you lose speed, fuel and
   bodywork; at 100% damage the run is over.
+- The posted limit is Nevada-realistic: **70 mph** out on the open two-lane
+  (a few stretches drop to 65), **55** on the approach to a gas station and
+  **45** past the pumps. The MUTCD R2-1 signs on the shoulder and the little
+  replica sign next to the speedo always agree; go over and the replica lights
+  up red. Nothing fines you — the only thing that punishes you out here is the
+  fuel gauge.
 - The run ends when the tank hits zero and the car rolls to a stop, or when the
   car is wrecked. Your best distance is stored in the browser.
 
@@ -106,7 +112,7 @@ src/
   textures.js       every texture, painted on a <canvas>
   rng.js            deterministic hash noise
   cars/             the three player cars, built from extruded side profiles
-  world/            sky, road ribbon, terrain, scenery, gas stations
+  world/            sky, road ribbon, terrain, scenery, gas stations, signage
 vendor/three/       three.js r169 (MIT), vendored so the game runs offline
 ```
 
@@ -175,6 +181,12 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   kilómetro o dos, nunca más de tres en la carretera, y casi siempre camiones
   de frente. Si chocas contra uno pierdes velocidad, gasolina y chapa; al 100%
   de daños se acabó la partida.
+- Los límites de velocidad son los de Nevada: **70 mph** en carretera abierta
+  de dos carriles (algún tramo baja a 65), **55** al acercarte a una gasolinera
+  y **45** a la altura de los surtidores. Las señales MUTCD del arcén y la
+  réplica que verás junto al velocímetro siempre coinciden; si te pasas, la
+  réplica se pone roja. No hay multas: aquí lo único que castiga es la aguja de
+  la gasolina.
 - La barra verde del HUD es tu autonomía y la marca blanca es la próxima
   gasolinera. **Cuando la marca se pone roja, ya no llegas.**
 
