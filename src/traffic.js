@@ -1,6 +1,10 @@
 /**
- * Sparse highway traffic: pickups plodding along in your lane and semis
- * thundering the other way. Hitting one costs speed, fuel and bodywork.
+ * Desert traffic — and there is almost none of it.
+ *
+ * A real highway out here gives you a vehicle every kilometre or two: mostly
+ * semis coming the other way, the odd pickup plodding along in your lane. At
+ * most three are ever on the road at once, so meeting one is an event.
+ * Hitting one costs speed, fuel and bodywork.
  */
 import * as THREE from 'three';
 import { roadPoint, roadYaw } from './track.js';
@@ -8,7 +12,12 @@ import { terrainHeight } from './world/road.js';
 import { MAT, paint, part, profilePiece, makeWheel } from './cars/parts.js';
 
 const LANE = 2.45;
-const MAX_ACTIVE = 9;
+const MAX_ACTIVE = 3;
+/** Seconds between vehicles: roughly one every 1.5–3 km at cruising speed. */
+const SPAWN_MIN = 34;
+const SPAWN_SPREAD = 50;
+/** Nothing on the road for the first stretch out of the start line. */
+const FIRST_SPAWN_MIN = 14;
 
 function simpleWheels(group, layout) {
   const wheels = [];
@@ -30,6 +39,7 @@ function simpleWheels(group, layout) {
 function buildPickup(color) {
   const g = new THREE.Group();
   const body = paint(color, { metalness: 0.35, roughness: 0.5 });
+  g.userData.bodyMaterial = body;
   g.add(
     profilePiece(
       [
@@ -93,6 +103,7 @@ function buildPickup(color) {
 function buildSemi(color) {
   const g = new THREE.Group();
   const body = paint(color, { metalness: 0.65, roughness: 0.3 });
+  g.userData.bodyMaterial = body;
   const trailerMat = new THREE.MeshStandardMaterial({
     color: '#dcd8ce',
     metalness: 0.35,
@@ -159,7 +170,7 @@ export class Traffic {
         halfWidth: semi ? 1.4 : 1.1,
       });
     }
-    this.spawnTimer = 1.5;
+    this.spawnTimer = FIRST_SPAWN_MIN;
     this.tmp = { x: 0, y: 0, z: 0 };
   }
 
@@ -168,32 +179,33 @@ export class Traffic {
       it.active = false;
       it.model.visible = false;
     }
-    this.spawnTimer = 2;
+    this.spawnTimer = FIRST_SPAWN_MIN + Math.random() * SPAWN_SPREAD;
   }
 
-  spawn(playerS, density) {
+  spawn(playerS) {
     const it = this.items.find((i) => !i.active);
     if (!it) return;
-    const oncoming = Math.random() < (it.semi ? 0.75 : 0.5);
+    // Most of what you meet is coming the other way.
+    const oncoming = Math.random() < (it.semi ? 0.8 : 0.65);
     it.dir = oncoming ? -1 : 1;
     it.lateral = oncoming ? -LANE : LANE + (Math.random() - 0.5) * 0.5;
     it.s = oncoming
-      ? playerS + 700 + Math.random() * 700
-      : playerS + 200 + Math.random() * 500;
-    it.speed = it.semi
-      ? 22 + Math.random() * 8
-      : 24 + Math.random() * 12 * density;
+      ? playerS + 800 + Math.random() * 700
+      : playerS + 300 + Math.random() * 500;
+    it.speed = it.semi ? 22 + Math.random() * 8 : 25 + Math.random() * 11;
+    const palette = it.semi ? SEMI_COLORS : PICKUP_COLORS;
+    it.model.userData.bodyMaterial.color.set(
+      palette[(Math.random() * palette.length) | 0]
+    );
     it.active = true;
     it.model.visible = true;
   }
 
   update(dt, playerS) {
-    // Traffic thickens a little the further you get.
-    const density = Math.min(1.6, 0.6 + playerS / 12000);
     this.spawnTimer -= dt;
     if (this.spawnTimer <= 0) {
-      this.spawn(playerS, density);
-      this.spawnTimer = (2.6 + Math.random() * 4.5) / density;
+      this.spawn(playerS);
+      this.spawnTimer = SPAWN_MIN + Math.random() * SPAWN_SPREAD;
     }
 
     for (const it of this.items) {

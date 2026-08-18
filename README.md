@@ -55,8 +55,10 @@ automatically.
   (under ~12 km/h). Filling up is free and takes three to seven seconds.
 - Driving on sand is slow and burns **70% more fuel**; the gravel shoulder
   costs 25% more. Standing still still burns fuel — the engine is idling.
-- Traffic is real. Rear-end a pickup or clip an oncoming semi and you lose
-  speed, fuel and bodywork. At 100% damage the run is over.
+- Traffic is thin on the ground, like the real thing: a vehicle every
+  kilometre or two, never more than three on the road, mostly semis coming the
+  other way. Rear-end a pickup or clip one of them and you lose speed, fuel and
+  bodywork; at 100% damage the run is over.
 - The run ends when the tank hits zero and the car rolls to a stop, or when the
   car is wrecked. Your best distance is stored in the browser.
 
@@ -169,8 +171,10 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   tres y siete segundos.
 - La arena es lenta y gasta un **70% más** de gasolina; el arcén, un 25% más.
   Parado también gastas: el motor sigue al ralentí.
-- El tráfico es real: si chocas contra una camioneta o un camión pierdes
-  velocidad, gasolina y chapa. Al 100% de daños se acabó la partida.
+- Hay muy poco tráfico, como en el desierto de verdad: un vehículo cada
+  kilómetro o dos, nunca más de tres en la carretera, y casi siempre camiones
+  de frente. Si chocas contra uno pierdes velocidad, gasolina y chapa; al 100%
+  de daños se acabó la partida.
 - La barra verde del HUD es tu autonomía y la marca blanca es la próxima
   gasolinera. **Cuando la marca se pone roja, ya no llegas.**
 
