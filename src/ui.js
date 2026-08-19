@@ -63,7 +63,7 @@ export class UI {
 
     this.selected = CARS[0].id;
     this.best = Number(localStorage.getItem(BEST_KEY) || 0);
-    this.message_ = { key: '', level: '' };
+    this.message_ = { key: '', level: '', params: null };
     this.lastResult = null;
 
     applyStaticTranslations();
@@ -125,9 +125,9 @@ export class UI {
   retranslate() {
     applyStaticTranslations();
     this.buildPicker();
-    const { key, level } = this.message_;
-    this.message_ = { key: null, level: null }; // force a repaint
-    this.message(key, level);
+    const { key, level, params } = this.message_;
+    this.message_ = { key: null, level: null, params: null }; // force a repaint
+    this.message(key, level, params);
     if (this.lastResult) this.showGameOver(this.lastResult);
   }
 
@@ -179,12 +179,18 @@ export class UI {
   }
 
   /** Shows a HUD message by translation key, so it survives a language swap. */
-  message(key, level = '') {
-    if (key === this.message_.key && level === this.message_.level) return;
-    this.message_ = { key, level };
+  message(key, level = '', params = null) {
+    if (
+      key === this.message_.key &&
+      level === this.message_.level &&
+      params === this.message_.params
+    ) {
+      return;
+    }
+    this.message_ = { key, level, params };
     const el = this.el.message;
     el.className = `hud-message ${level} ${key ? 'show' : ''}`;
-    el.textContent = key ? t(key) : '';
+    el.textContent = key ? t(key, params) : '';
   }
 
   /**

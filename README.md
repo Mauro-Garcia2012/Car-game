@@ -52,14 +52,19 @@ automatically.
   the throttle) — enough for the next station, never enough for the one after
   it.
 - To refuel, **leave the tarmac, pull onto the apron by the pumps and stop**
-  (under ~12 km/h). **Fuel costs money**: Nevada prices, from about $4.30 a
-  gallon at the first station to $7.99 out where nobody lives. You start with
-  **$500 in the glovebox and there is no way to earn more yet**, so the wallet
-  is a second countdown running under the fuel gauge.
+  (under ~12 km/h). **Fuel costs money.** The whole highway shares one market
+  price, opening at **$4.29 a gallon**; each station is only a few cents off
+  its neighbours, and hauling fuel further out adds a little more.
+  You start with **$500 in the glovebox and there is no way to earn more
+  yet**, so the wallet is a second countdown running under the fuel gauge.
+- **Prices only move overnight.** Every night you spend in a motel the market
+  jumps **8 to 30 cents**, occasionally more, and you are told what it costs
+  now the moment you wake up. Every pump moves together. Nothing on this road
+  will ever ask more than **$8.99**.
 - **Sleep runs on the clock, not the odometer.** Six minutes of driving takes
   you from wide awake to nodding off, and the only place to fix it is a
-  **motel** — free, but they sit about 7.5 km apart, several gas stations'
-  worth. About one in four shares a plot with a station; the rest stand alone
+  **motel** — the bed is free, but the night costs you at the pump, and they
+  sit about 7.5 km apart, several gas stations' worth. About one in four shares a plot with a station; the rest stand alone
   with nothing but their neon. Park in the lot, stop, and you check in.
 - Cruise at 120 km/h and you reach the next bed with a quarter of the meter
   left. **Dawdle at 70 km/h and you do not make it**: the last few hundred
@@ -193,15 +198,20 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   para **3,0–3,7 km** conduciendo fuerte: llegas a la siguiente, nunca a la de
   después.
 - Para repostar hay que **salir del asfalto, entrar en la explanada de los
-  surtidores y detenerse** (por debajo de ~12 km/h). **La gasolina se paga**, a
-  precios de Nevada: unos 4,30 $ el galón en la primera gasolinera y hasta
-  7,99 $ donde no vive nadie. Empiezas con **500 $ en la guantera y todavía no
-  hay forma de ganar más**, así que la cartera es una segunda cuenta atrás por
-  debajo de la aguja.
+  surtidores y detenerse** (por debajo de ~12 km/h). **La gasolina se paga.**
+  Toda la carretera comparte un mismo precio de mercado, que abre a **4,29 $ el
+  galón**; cada gasolinera se desvía solo unos centavos de sus vecinas y llevar
+  el combustible más lejos encarece un poco más. Empiezas con **500 $ en la
+  guantera y todavía no hay forma de ganar más**, así que la cartera es una
+  segunda cuenta atrás por debajo de la aguja.
+- **El precio solo se mueve de noche.** Cada noche que pasas en un motel el
+  mercado sube entre **8 y 30 centavos**, a veces más, y al despertar te dicen
+  cuánto cuesta ahora. Todos los surtidores suben a la vez. El tope, pase lo
+  que pase, son **8,99 $**.
 - **El sueño va por tiempo, no por kilómetros.** Seis minutos al volante te
   llevan de estar fresco a caerte de sueño, y lo único que lo arregla es un
-  **motel** — gratis, pero están a unos 7,5 km unos de otros, varias
-  gasolineras de por medio. Uno de cada cuatro comparte parcela con una
+  **motel** — la cama es gratis, pero la noche te la cobran en el surtidor, y
+  están a unos 7,5 km unos de otros, varias gasolineras de por medio. Uno de cada cuatro comparte parcela con una
   gasolinera; el resto están solos en mitad de la nada con su neón. Aparca en
   el parking, párate del todo y te registras.
 - A 120 km/h llegas a la cama con un cuarto de la barra. **A 70 km/h no

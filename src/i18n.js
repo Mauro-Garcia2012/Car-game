@@ -75,7 +75,8 @@ const STRINGS = {
     'msg.motelAhead': 'MOTEL AHEAD — FREE BEDS',
     'msg.stopToSleep': 'PARK AT THE MOTEL TO SLEEP',
     'msg.checkingIn': 'CHECKING IN…',
-    'msg.slept': 'SLEPT LIKE A ROCK — BACK ON THE ROAD',
+    'msg.sleptPrice':
+      'SLEPT LIKE A ROCK\nGAS WENT UP {delta} OVERNIGHT — NOW {price}/GAL',
     'msg.drowsy': 'YOU ARE GETTING SLEEPY',
     'msg.fallingAsleep': "YOU CAN'T KEEP YOUR EYES OPEN",
     'msg.asleep': 'ASLEEP AT THE WHEEL',
@@ -171,7 +172,8 @@ const STRINGS = {
     'msg.motelAhead': 'MOTEL ADELANTE — CAMA GRATIS',
     'msg.stopToSleep': 'APARCA EN EL MOTEL PARA DORMIR',
     'msg.checkingIn': 'REGISTRÁNDOTE…',
-    'msg.slept': 'HAS DORMIDO DE UN TIRÓN — A LA CARRETERA',
+    'msg.sleptPrice':
+      'HAS DORMIDO DE UN TIRÓN\nLA GASOLINA SUBIÓ {delta} ESTA NOCHE — AHORA {price}/GAL',
     'msg.drowsy': 'TE ESTÁ ENTRANDO SUEÑO',
     'msg.fallingAsleep': 'NO PUEDES MANTENER LOS OJOS ABIERTOS',
     'msg.asleep': 'TE HAS DORMIDO AL VOLANTE',

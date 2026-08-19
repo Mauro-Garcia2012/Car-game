@@ -356,10 +356,13 @@ export function speedLimitTexture(mph) {
   );
 }
 
-/** Gas price totem: dark board with the pump price in illuminated digits. */
+/**
+ * Gas price totem: dark board with the pump price in illuminated digits.
+ * Not cached — prices move, and the caller disposes the texture it replaces.
+ */
 export function priceBoardTexture(dollars) {
   const price = dollars.toFixed(2);
-  return memo(`price:${price}`, () =>
+  return (() =>
     canvas(
       512,
       (ctx, w, h) => {
@@ -384,8 +387,7 @@ export function priceBoardTexture(dollars) {
         ctx.fillText('9', w - 52, h * 0.5);
       },
       { height: 284 }
-    )
-  );
+    ))();
 }
 
 /** Tall neon motel sign: MOTEL stacked vertically on a dark panel. */

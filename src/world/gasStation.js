@@ -24,15 +24,64 @@ const GAP_SPREAD = 520;
 /** Litres in a US gallon, for the pump price. */
 export const LITRES_PER_GALLON = 3.785;
 
+/* ------------------------------------------------------------------ */
+/* The price of gas                                                    */
+/* ------------------------------------------------------------------ */
+
+/** Where the market opens, in dollars per gallon. */
+const BASE_PRICE = 4.29;
+/** Nothing on this road will ever ask more than this. */
+export const PRICE_CAP = 8.99;
+/** The market itself stops here, leaving room for the local variation. */
+const MARKET_CAP = 8.0;
+/** Overnight moves: a dime to thirty cents, occasionally a nastier jump. */
+const HIKE_MIN = 0.08;
+const HIKE_SPREAD = 0.22;
+const SPIKE_CHANCE = 0.18;
+const SPIKE_MIN = 0.12;
+const SPIKE_SPREAD = 0.25;
+
 /**
- * What this station charges per gallon. Nevada rural prices start around
- * $4.29 and climb the further you get from anywhere, the way they really do
- * out on US-95; each station is a few cents off its neighbours.
+ * One market price for the whole highway, so every pump moves together and
+ * stations only differ by a few cents. It only ever moves overnight.
  */
+let market = BASE_PRICE;
+
+export function marketPrice() {
+  return market;
+}
+
+export function resetMarket() {
+  market = BASE_PRICE;
+}
+
+/**
+ * A night's worth of price movement, applied to every station at once.
+ * @returns {{before:number, after:number, delta:number}}
+ */
+export function overnightHike() {
+  const before = market;
+  let delta = HIKE_MIN + Math.random() * HIKE_SPREAD;
+  if (Math.random() < SPIKE_CHANCE) {
+    delta += SPIKE_MIN + Math.random() * SPIKE_SPREAD;
+  }
+  market = Math.min(MARKET_CAP, market + delta);
+  return { before, after: market, delta: market - before };
+}
+
+/** A few cents either way, fixed per station so the same pump keeps its rank. */
+function localVariation(index) {
+  return hashRand(index, 401) * 0.18 - 0.09;
+}
+
+/** Hauling fuel further out costs a little more, capped so it stays subtle. */
+function remoteness(index) {
+  return Math.min(0.9, (stationDistance(index) / 1000) * 0.02);
+}
+
+/** What this station charges per gallon right now. */
 export function fuelPricePerGallon(index) {
-  const remote = (stationDistance(index) / 1000) * 0.085;
-  const local = hashRand(index, 401) * 0.7 - 0.25;
-  return Math.min(7.99, Math.max(4.09, 4.29 + remote + local));
+  return Math.min(PRICE_CAP, market + remoteness(index) + localVariation(index));
 }
 
 /** Price per litre, which is what the pump actually charges. */
@@ -165,8 +214,12 @@ function totemTexture() {
   return signTexture([t('sign.totem1'), t('sign.totem2')], { bg: '#c8382f' });
 }
 
-function priceTexture(index) {
-  return priceBoardTexture(fuelPricePerGallon(index));
+/** Repaints a totem's price board, disposing the texture it replaces. */
+function setPriceBoard(mesh, index) {
+  const previous = mesh.material.map;
+  mesh.material.map = priceBoardTexture(fuelPricePerGallon(index));
+  mesh.material.needsUpdate = true;
+  if (previous) previous.dispose();
 }
 
 function buildStationModel(index) {
@@ -247,13 +300,16 @@ function buildStationModel(index) {
   sign.add(face);
   const price = new THREE.Mesh(
     new THREE.BoxGeometry(0.3, 2.0, 3.6),
-    new THREE.MeshStandardMaterial({ map: priceTexture(index), roughness: 0.7 })
+    new THREE.MeshStandardMaterial({
+      map: priceBoardTexture(fuelPricePerGallon(index)),
+      roughness: 0.7,
+    })
   );
   price.position.set(0, 6.2, 0);
   sign.add(price);
 
-  // Kept so the signage can be repainted when the language changes.
-  root.userData.signs = { index, totemFaces, price };
+  // Kept so the signage can be repainted when the language or price changes.
+  root.userData.signs = { totemFaces, price };
 
   root.traverse((o) => {
     if (o.isMesh) {
@@ -310,8 +366,6 @@ export class GasStations {
         m.map = totemTexture();
         m.needsUpdate = true;
       }
-      signs.price.material.map = priceTexture(signs.index);
-      signs.price.material.needsUpdate = true;
       const board = slot.advance.userData.board;
       board.material.map = boardTexture(
         t('sign.advance'),
@@ -319,6 +373,14 @@ export class GasStations {
         SERVICE_BLUE
       );
       board.material.needsUpdate = true;
+    }
+  }
+
+  /** Repaints every visible price board — call it after an overnight hike. */
+  refreshPrices() {
+    for (const slot of this.slots) {
+      if (slot.index < 0) continue;
+      setPriceBoard(slot.model.userData.signs.price, slot.index);
     }
   }
 
@@ -330,6 +392,8 @@ export class GasStations {
       const index = base + k;
       if (slot.index === index) continue;
       slot.index = index;
+      // Each slot shows whichever station it is standing in for.
+      setPriceBoard(slot.model.userData.signs.price, index);
       const s = stationDistance(index);
       const p = roadPoint(s, 0, this.tmp);
       slot.model.position.set(p.x, terrainHeight(s, EDGE + 10) + 0.06, p.z);

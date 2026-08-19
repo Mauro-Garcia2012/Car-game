@@ -7,7 +7,10 @@ import {
   GasStations,
   stationDistance,
   nextStationIndex,
+  fuelPricePerGallon,
   fuelPricePerLitre,
+  overnightHike,
+  resetMarket,
   ZONE_HALF,
 } from './world/gasStation.js';
 import { Motels, motelDistance, nextMotelIndex } from './world/motel.js';
@@ -174,6 +177,8 @@ export class Game {
     this.checkingIn = 0;
     this.cash = START_CASH;
     this.spent = 0;
+    resetMarket();
+    this.stations.refreshPrices();
     this.fatigue.reset();
     this.lowFuelWarned = false;
     this.drowsyWarned = false;
@@ -370,7 +375,15 @@ export class Game {
       this.fatigue.sleep();
       this.beds.add(index);
       this.audio.fanfare();
-      this.flash('msg.slept', 'good', 2.6);
+      // Every pump on the highway moves overnight, and you find out at dawn.
+      // The figure quoted is what the next station down the road now charges.
+      const hike = overnightHike();
+      this.stations.refreshPrices();
+      const nextPump = fuelPricePerGallon(nextStationIndex(v.s));
+      this.flash('msg.sleptPrice', 'good', 4.5, {
+        delta: `$${hike.delta.toFixed(2)}`,
+        price: `$${nextPump.toFixed(2)}`,
+      });
     }
   }
 
@@ -442,8 +455,8 @@ export class Game {
   }
 
   /** Shows a translation key for a few seconds, above the ambient messages. */
-  flash(key, level, duration) {
-    this.tempMessage = { key, level };
+  flash(key, level, duration, params = null) {
+    this.tempMessage = { key, level, params };
     this.messageTimer = duration;
   }
 
@@ -486,7 +499,11 @@ export class Game {
     // Message priority: temporary flashes, then situational advice.
     if (this.messageTimer > 0) {
       this.messageTimer -= dt;
-      this.ui.message(this.tempMessage.key, this.tempMessage.level);
+      this.ui.message(
+        this.tempMessage.key,
+        this.tempMessage.level,
+        this.tempMessage.params
+      );
       return;
     }
 
