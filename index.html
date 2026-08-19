@@ -67,6 +67,9 @@
       </div>
     </div>
 
+    <!-- Tunnel vision as the driver nods off ------------------------->
+    <div id="drowsy-veil"></div>
+
     <!-- HUD ----------------------------------------------------------->
     <div id="hud" class="hidden">
       <div class="hud-top">
@@ -77,6 +80,10 @@
         <div class="stat">
           <label data-i18n="hud.stops">Stops made</label>
           <strong id="hud-stops">0</strong>
+        </div>
+        <div class="stat">
+          <label data-i18n="hud.cash">Cash</label>
+          <strong id="hud-cash">$500</strong>
         </div>
         <div class="stat">
           <label data-i18n="hud.best">Best</label>
@@ -90,6 +97,13 @@
         <label data-i18n="hud.refuelling">REFUELLING</label>
         <div class="refuel-bar"><i id="refuel-fill"></i></div>
         <span id="refuel-litres">0 L</span>
+        <em id="refuel-price"></em>
+      </div>
+
+      <div id="checkin-panel" class="refuel-panel hidden">
+        <label data-i18n="hud.checkin">CHECKING IN</label>
+        <div class="refuel-bar"><i id="checkin-fill"></i></div>
+        <span data-i18n="hud.freeBed">FREE BED</span>
       </div>
 
       <div class="hud-bottom">
@@ -137,6 +151,11 @@
           <div class="damage">
             <label data-i18n="hud.damage">DAMAGE</label>
             <div class="damage-bar"><i id="damage-fill"></i></div>
+          </div>
+          <div class="damage sleep">
+            <label data-i18n="hud.sleep">SLEEP</label>
+            <div class="damage-bar" id="sleep-bar"><i id="sleep-fill"></i></div>
+            <span id="hud-motel">—</span>
           </div>
         </div>
       </div>

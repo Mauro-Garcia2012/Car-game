@@ -7,8 +7,11 @@ import {
   GasStations,
   stationDistance,
   nextStationIndex,
+  fuelPricePerLitre,
   ZONE_HALF,
 } from './world/gasStation.js';
+import { Motels, motelDistance, nextMotelIndex } from './world/motel.js';
+import { Fatigue } from './fatigue.js';
 import { RoadSigns, speedLimitAt } from './world/signs.js';
 import { createSky } from './world/sky.js';
 import { Vehicle, SURFACE } from './vehicle.js';
@@ -20,6 +23,9 @@ import { terrainHeight } from './world/road.js';
 
 const REFUEL_RATE = 14; // litres per second
 const REFUEL_SPEED_LIMIT = 3.2; // m/s — you have to actually stop
+const CHECKIN_TIME = 2.5; // seconds parked before the room key appears
+/** Cash in the glovebox at the start. There is no way to earn more yet. */
+const START_CASH = 500;
 const CAMERA_MODES = ['chase', 'hood', 'orbit'];
 
 export class Game {
@@ -36,7 +42,11 @@ export class Game {
     this.messageTimer = 0;
     this.tempMessage = null;
     this.inZone = -1;
+    this.motelZone = -1;
     this.refuelling = false;
+    this.checkingIn = 0;
+    this.cash = START_CASH;
+    this.fatigue = new Fatigue();
 
     this.renderer = new THREE.WebGLRenderer({
       canvas,
@@ -73,6 +83,7 @@ export class Game {
     this.stations = new GasStations(this.scene);
     onLanguageChange(() => this.stations.retranslate());
     this.signs = new RoadSigns(this.scene);
+    this.motels = new Motels(this.scene);
     this.traffic = new Traffic(this.scene);
     this.dust = new DustSystem(this.scene);
 
@@ -146,6 +157,7 @@ export class Game {
     this.road.update(s);
     this.stations.update(s);
     this.signs.update(s);
+    this.motels.update(s);
   }
 
   start(id) {
@@ -156,9 +168,15 @@ export class Game {
     this.dust.clear();
     this.stops.clear();
     this.skipped.clear();
+    this.beds = new Set();
     this.refuelling = false;
     this.refuelTick = 0;
+    this.checkingIn = 0;
+    this.cash = START_CASH;
+    this.spent = 0;
+    this.fatigue.reset();
     this.lowFuelWarned = false;
+    this.drowsyWarned = false;
     this.cameraMode = 0;
     this.state = 'playing';
     this.ui.showHud();
@@ -223,20 +241,27 @@ export class Game {
 
   simulate(dt, frozen = false) {
     const v = this.vehicle;
-    const input = frozen
+    const raw = frozen
       ? { throttle: 0, brake: 1, steer: 0, handbrake: false }
       : this.input.update();
+
+    // Sleep runs on the clock, and filters the controls once it runs low.
+    if (!frozen) this.fatigue.update(dt);
+    const input = frozen ? raw : this.fatigue.applyToInput(raw);
+    if (this.fatigue.blinked) this.audio.blip(180, 0.5, 'sine', 0.12);
 
     v.update(dt, input);
 
     this.road.update(v.s);
     this.stations.update(v.s);
     this.signs.update(v.s);
+    this.motels.update(v.s);
     this.traffic.update(dt, v.s);
 
     if (!frozen) {
       this.handleCollisions();
       this.handleRefuelling(dt);
+      this.handleMotel(dt);
       this.handleStationBookkeeping();
       this.checkGameOver();
     }
@@ -290,9 +315,23 @@ export class Game {
     const wasRefuelling = this.refuelling;
     this.refuelling = index >= 0 && stopped && v.fuel < this.spec.tank - 0.05;
 
+    const price = index >= 0 ? fuelPricePerLitre(index) : 0;
+    this.pumpPrice = price;
+    if (this.refuelling && this.cash < price * 0.2) {
+      this.refuelling = false; // not even a splash of it
+      this.broke = true;
+    }
+
     if (this.refuelling) {
+      this.broke = false;
       if (!wasRefuelling) this.audio.blip(520, 0.12, 'triangle', 0.14);
-      v.fuel = Math.min(this.spec.tank, v.fuel + REFUEL_RATE * dt);
+      // Buy as many litres as the tank and the wallet allow this frame.
+      const wanted = Math.min(REFUEL_RATE * dt, this.spec.tank - v.fuel);
+      const affordable = price > 0 ? this.cash / price : wanted;
+      const litres = Math.min(wanted, affordable);
+      v.fuel += litres;
+      this.cash = Math.max(0, this.cash - litres * price);
+      this.spent += litres * price;
       v.engineOn = true;
       this.refuelTick -= dt;
       if (this.refuelTick <= 0) {
@@ -312,6 +351,27 @@ export class Game {
     this.stops.add(index);
     this.audio.fanfare();
     this.flash('msg.tankFull', 'good', 2.2);
+  }
+
+  /** Parking at a motel and sleeping it off — free, but it costs time. */
+  handleMotel(dt) {
+    const v = this.vehicle;
+    const index = this.motels.zoneAt(v.s, v.lateral);
+    this.motelZone = index;
+    const stopped = Math.abs(v.speed) < REFUEL_SPEED_LIMIT;
+
+    if (index < 0 || !stopped || this.fatigue.level > 0.995) {
+      this.checkingIn = 0;
+      return;
+    }
+    this.checkingIn += dt;
+    if (this.checkingIn >= CHECKIN_TIME) {
+      this.checkingIn = 0;
+      this.fatigue.sleep();
+      this.beds.add(index);
+      this.audio.fanfare();
+      this.flash('msg.slept', 'good', 2.6);
+    }
   }
 
   handleStationBookkeeping() {
@@ -341,9 +401,13 @@ export class Game {
     if (v.fuel <= 0 && Math.abs(v.speed) < 0.6) {
       const idx = nextStationIndex(v.s);
       const short = stationDistance(idx) - v.s;
-      this.gameOver('over.title.fuel', 'over.text.fuel', {
-        km: (short / 1000).toFixed(2),
-      });
+      // Dying with an empty wallet is its own kind of ending.
+      const broke = this.cash < 2;
+      this.gameOver(
+        broke ? 'over.title.broke' : 'over.title.fuel',
+        broke ? 'over.text.broke' : 'over.text.fuel',
+        { km: (short / 1000).toFixed(2) }
+      );
     }
   }
 
@@ -390,6 +454,8 @@ export class Game {
     const toStation = stationDistance(idx) - v.s;
     const rangeLeft = (v.fuel / spec.tank) * carRange(spec) * 0.92;
     const speedLimit = speedLimitAt(v.s);
+    const motelIdx = nextMotelIndex(v.s);
+    const toMotel = motelDistance(motelIdx) - v.s;
 
     this.ui.update({
       speedKmh: Math.abs(v.speed) * 3.6,
@@ -407,6 +473,14 @@ export class Game {
       refuelling: this.refuelling,
       refuelProgress: v.fuel / spec.tank,
       refuelLitres: v.fuel,
+      refuelCost: this.spent,
+      cash: this.cash,
+      pumpPrice: this.pumpPrice || 0,
+      sleep: this.fatigue.level,
+      drowsiness: this.fatigue.drowsiness,
+      asleep: this.fatigue.asleep,
+      toMotel,
+      checkingIn: this.checkingIn / CHECKIN_TIME,
     });
 
     // Message priority: temporary flashes, then situational advice.
@@ -416,8 +490,18 @@ export class Game {
       return;
     }
 
-    if (this.refuelling) {
+    if (this.checkingIn > 0) {
+      this.ui.message('msg.checkingIn', 'good');
+    } else if (this.fatigue.asleep) {
+      this.ui.message('msg.asleep', 'danger');
+    } else if (this.refuelling) {
       this.ui.message('msg.filling', 'good');
+    } else if (this.broke && this.inZone >= 0) {
+      this.ui.message('msg.noCash', 'danger');
+    } else if (this.motelZone >= 0 && Math.abs(v.speed) >= REFUEL_SPEED_LIMIT) {
+      this.ui.message('msg.stopToSleep', 'warn');
+    } else if (this.fatigue.level <= 0) {
+      this.ui.message('msg.fallingAsleep', 'danger');
     } else if (this.inZone >= 0 && Math.abs(v.speed) >= REFUEL_SPEED_LIMIT) {
       this.ui.message('msg.stopToRefuel', 'warn');
     } else if (!v.engineOn) {
@@ -426,6 +510,10 @@ export class Game {
       this.ui.message('msg.wontMakeIt', 'danger');
     } else if (toStation < 260 && !this.stops.has(idx)) {
       this.ui.message('msg.stationAhead', 'warn');
+    } else if (toMotel < 400 && this.fatigue.level < 0.55) {
+      this.ui.message('msg.motelAhead', 'warn');
+    } else if (this.fatigue.level < 0.2) {
+      this.ui.message('msg.drowsy', 'warn');
     } else if (v.fuel / spec.tank < 0.25) {
       this.ui.message('msg.lowFuel', 'warn');
     } else {
@@ -437,6 +525,12 @@ export class Game {
       this.audio.warn();
     }
     if (v.fuel / spec.tank > 0.3) this.lowFuelWarned = false;
+
+    if (this.fatigue.level < 0.25 && !this.drowsyWarned) {
+      this.drowsyWarned = true;
+      this.audio.warn();
+    }
+    if (this.fatigue.level > 0.5) this.drowsyWarned = false;
   }
 
   /* ---------------------------------------------------------------- */

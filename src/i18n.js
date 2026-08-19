@@ -52,6 +52,11 @@ const STRINGS = {
     'hud.range': 'Range',
     'hud.rangeTitle': 'Range left vs. distance to the next station',
     'hud.damage': 'DAMAGE',
+    'hud.cash': 'Cash',
+    'hud.sleep': 'SLEEP',
+    'hud.checkin': 'CHECKING IN',
+    'hud.freeBed': 'FREE BED',
+    'hud.motelShort': 'MOTEL',
     'hud.neutral': 'N',
 
     'touch.brake': 'BRAKE',
@@ -67,6 +72,14 @@ const STRINGS = {
     'msg.wontMakeIt': "YOU WON'T MAKE THE NEXT STATION",
     'msg.stationAhead': 'FUEL STOP AHEAD — PULL RIGHT',
     'msg.lowFuel': 'LOW FUEL',
+    'msg.motelAhead': 'MOTEL AHEAD — FREE BEDS',
+    'msg.stopToSleep': 'PARK AT THE MOTEL TO SLEEP',
+    'msg.checkingIn': 'CHECKING IN…',
+    'msg.slept': 'SLEPT LIKE A ROCK — BACK ON THE ROAD',
+    'msg.drowsy': 'YOU ARE GETTING SLEEPY',
+    'msg.fallingAsleep': "YOU CAN'T KEEP YOUR EYES OPEN",
+    'msg.asleep': 'ASLEEP AT THE WHEEL',
+    'msg.noCash': 'NO CASH FOR FUEL',
 
     'pause.title': 'PAUSED',
     'pause.text': "Take a breath. The desert isn't going anywhere.",
@@ -79,6 +92,9 @@ const STRINGS = {
       'The engine died {km} km short of the next pumps. Nothing out here but heat and buzzards.',
     'over.text.wrecked':
       "You folded the {car} around somebody's front bumper after {km} km.",
+    'over.title.broke': 'BROKE',
+    'over.text.broke':
+      'Dry tank, empty wallet, {km} km short of the next pumps. Out here that is the same thing as the end of the road.',
     'over.distance': 'Distance',
     'over.stops': 'Fuel stops',
     'over.best': 'Best run',
@@ -132,6 +148,11 @@ const STRINGS = {
     'hud.rangeTitle':
       'Autonomía restante frente a la distancia hasta la próxima gasolinera',
     'hud.damage': 'DAÑOS',
+    'hud.cash': 'Dinero',
+    'hud.sleep': 'SUEÑO',
+    'hud.checkin': 'REGISTRÁNDOTE',
+    'hud.freeBed': 'CAMA GRATIS',
+    'hud.motelShort': 'MOTEL',
     'hud.neutral': 'N',
 
     'touch.brake': 'FRENO',
@@ -147,6 +168,14 @@ const STRINGS = {
     'msg.wontMakeIt': 'NO LLEGARÁS A LA PRÓXIMA GASOLINERA',
     'msg.stationAhead': 'GASOLINERA ADELANTE — SAL A LA DERECHA',
     'msg.lowFuel': 'QUEDA POCA GASOLINA',
+    'msg.motelAhead': 'MOTEL ADELANTE — CAMA GRATIS',
+    'msg.stopToSleep': 'APARCA EN EL MOTEL PARA DORMIR',
+    'msg.checkingIn': 'REGISTRÁNDOTE…',
+    'msg.slept': 'HAS DORMIDO DE UN TIRÓN — A LA CARRETERA',
+    'msg.drowsy': 'TE ESTÁ ENTRANDO SUEÑO',
+    'msg.fallingAsleep': 'NO PUEDES MANTENER LOS OJOS ABIERTOS',
+    'msg.asleep': 'TE HAS DORMIDO AL VOLANTE',
+    'msg.noCash': 'NO TE QUEDA DINERO PARA GASOLINA',
 
     'pause.title': 'EN PAUSA',
     'pause.text': 'Respira. El desierto no se va a ir a ninguna parte.',
@@ -159,6 +188,9 @@ const STRINGS = {
       'El motor se apagó a {km} km de los surtidores. Aquí fuera solo hay calor y buitres.',
     'over.text.wrecked':
       'Doblaste el {car} contra el parachoques de otro después de {km} km.',
+    'over.title.broke': 'SIN BLANCA',
+    'over.text.broke':
+      'Depósito seco, cartera vacía y a {km} km de los surtidores. Aquí fuera eso es exactamente el final del camino.',
     'over.distance': 'Distancia',
     'over.stops': 'Repostajes',
     'over.best': 'Mejor viaje',

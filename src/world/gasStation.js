@@ -8,7 +8,12 @@
 import * as THREE from 'three';
 import { roadPoint, roadYaw, EDGE } from '../track.js';
 import { hashRand } from '../rng.js';
-import { concreteTexture, signTexture, boardTexture } from '../textures.js';
+import {
+  concreteTexture,
+  signTexture,
+  boardTexture,
+  priceBoardTexture,
+} from '../textures.js';
 import { t } from '../i18n.js';
 import { terrainHeight } from './road.js';
 
@@ -16,10 +21,32 @@ const FIRST_STATION = 1500;
 const MIN_GAP = 1950;
 const GAP_SPREAD = 520;
 
+/** Litres in a US gallon, for the pump price. */
+export const LITRES_PER_GALLON = 3.785;
+
+/**
+ * What this station charges per gallon. Nevada rural prices start around
+ * $4.29 and climb the further you get from anywhere, the way they really do
+ * out on US-95; each station is a few cents off its neighbours.
+ */
+export function fuelPricePerGallon(index) {
+  const remote = (stationDistance(index) / 1000) * 0.085;
+  const local = hashRand(index, 401) * 0.7 - 0.25;
+  return Math.min(7.99, Math.max(4.09, 4.29 + remote + local));
+}
+
+/** Price per litre, which is what the pump actually charges. */
+export function fuelPricePerLitre(index) {
+  return fuelPricePerGallon(index) / LITRES_PER_GALLON;
+}
+
 /** Half length of the refuelling zone, measured along the road. */
 export const ZONE_HALF = 28;
 const ZONE_INNER = EDGE - 1.5;
 const ZONE_OUTER = EDGE + 26;
+
+/** US motorist-service signs (gas, food, lodging) are blue, not green. */
+export const SERVICE_BLUE = '#0b4a8f';
 
 const distances = [FIRST_STATION];
 
@@ -139,9 +166,7 @@ function totemTexture() {
 }
 
 function priceTexture(index) {
-  return boardTexture(t('sign.board'), t('sign.boardSub', {
-    miles: 60 + (index % 7) * 5,
-  }));
+  return priceBoardTexture(fuelPricePerGallon(index));
 }
 
 function buildStationModel(index) {
@@ -248,7 +273,7 @@ function buildAdvanceSign() {
   const board = new THREE.Mesh(
     new THREE.BoxGeometry(3.2, 2.2, 0.16),
     new THREE.MeshStandardMaterial({
-      map: boardTexture(t('sign.advance'), t('sign.advanceSub')),
+      map: boardTexture(t('sign.advance'), t('sign.advanceSub'), SERVICE_BLUE),
       roughness: 0.65,
     })
   );
@@ -288,7 +313,11 @@ export class GasStations {
       signs.price.material.map = priceTexture(signs.index);
       signs.price.material.needsUpdate = true;
       const board = slot.advance.userData.board;
-      board.material.map = boardTexture(t('sign.advance'), t('sign.advanceSub'));
+      board.material.map = boardTexture(
+        t('sign.advance'),
+        t('sign.advanceSub'),
+        SERVICE_BLUE
+      );
       board.material.needsUpdate = true;
     }
   }

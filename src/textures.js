@@ -293,11 +293,11 @@ export function signTexture(lines, { bg = '#c8382f', fg = '#fdf6e3' } = {}) {
   );
 }
 
-/** Highway shield / warning board face. */
-export function boardTexture(text, sub = '') {
-  return memo(`board:${text}:${sub}`, () =>
+/** Highway guide board: green for distances, blue for motorist services. */
+export function boardTexture(text, sub = '', bg = '#1c6b3a') {
+  return memo(`board:${text}:${sub}:${bg}`, () =>
     canvas(256, (ctx, size) => {
-      ctx.fillStyle = '#1c6b3a';
+      ctx.fillStyle = bg;
       ctx.fillRect(0, 0, size, size);
       ctx.strokeStyle = '#f2f0e6';
       ctx.lineWidth = 8;
@@ -352,6 +352,86 @@ export function speedLimitTexture(mph) {
         ctx.fillText(String(mph), w / 2, h * 0.7, w - 90);
       },
       { height: 512 }
+    )
+  );
+}
+
+/** Gas price totem: dark board with the pump price in illuminated digits. */
+export function priceBoardTexture(dollars) {
+  const price = dollars.toFixed(2);
+  return memo(`price:${price}`, () =>
+    canvas(
+      512,
+      (ctx, w, h) => {
+        ctx.fillStyle = '#12141a';
+        ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = '#e8e3d6';
+        ctx.lineWidth = 7;
+        ctx.strokeRect(12, 12, w - 24, h - 24);
+
+        ctx.fillStyle = '#e8e3d6';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold 34px Arial, sans-serif';
+        ctx.fillText('REGULAR', 34, 48);
+
+        // Big amber digits, with the traditional 9/10 of a cent.
+        ctx.fillStyle = '#ffc23a';
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 150px "Arial Narrow", Arial, sans-serif';
+        ctx.fillText(price, w / 2 - 18, h * 0.66, w - 110);
+        ctx.font = 'bold 62px "Arial Narrow", Arial, sans-serif';
+        ctx.fillText('9', w - 52, h * 0.5);
+      },
+      { height: 284 }
+    )
+  );
+}
+
+/** Tall neon motel sign: MOTEL stacked vertically on a dark panel. */
+export function motelSignTexture() {
+  return memo('motelSign', () =>
+    canvas(
+      256,
+      (ctx, w, h) => {
+        const g = ctx.createLinearGradient(0, 0, 0, h);
+        g.addColorStop(0, '#1b2f52');
+        g.addColorStop(1, '#122238');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = '#ffd76a';
+        ctx.lineWidth = 10;
+        ctx.strokeRect(16, 16, w - 32, h - 32);
+
+        ctx.fillStyle = '#ffe7a8';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold 150px "Arial Black", Impact, sans-serif';
+        const letters = ['M', 'O', 'T', 'E', 'L'];
+        letters.forEach((letter, i) => {
+          ctx.fillText(letter, w / 2, (h / (letters.length + 0.6)) * (i + 0.9));
+        });
+      },
+      { height: 1024 }
+    )
+  );
+}
+
+/** The little VACANCY panel that hangs under a motel sign. */
+export function vacancyTexture() {
+  return memo('vacancy', () =>
+    canvas(
+      512,
+      (ctx, w, h) => {
+        ctx.fillStyle = '#141317';
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = '#ff5b57';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold 118px "Arial Narrow", Arial, sans-serif';
+        ctx.fillText('VACANCY', w / 2, h * 0.5, w - 40);
+      },
+      { height: 200 }
     )
   );
 }

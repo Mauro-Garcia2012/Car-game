@@ -46,6 +46,14 @@ export class UI {
       refuelLitres: $('refuel-litres'),
       limitSign: $('limit-sign'),
       limitValue: $('limit-value'),
+      cash: $('hud-cash'),
+      sleepBar: $('sleep-bar'),
+      sleepFill: $('sleep-fill'),
+      motel: $('hud-motel'),
+      veil: $('drowsy-veil'),
+      refuelPrice: $('refuel-price'),
+      checkinPanel: $('checkin-panel'),
+      checkinFill: $('checkin-fill'),
       overTitle: $('over-title'),
       overText: $('over-text'),
       overDistance: $('over-distance'),
@@ -183,8 +191,11 @@ export class UI {
    * @param {{speedKmh:number, topKmh:number, speedLimit:number, gear:number,
    *          engineOn:boolean,
    *          fuel:number, tank:number, rangeLeft:number, toStation:number,
-   *          distance:number, stops:number, damage:number,
-   *          refuelling:boolean, refuelProgress:number, refuelLitres:number}} s
+   *          distance:number, stops:number, damage:number, cash:number,
+   *          pumpPrice:number, sleep:number, drowsiness:number, asleep:boolean,
+   *          toMotel:number, checkingIn:number,
+   *          refuelling:boolean, refuelProgress:number, refuelLitres:number,
+   *          refuelCost:number}} s
    */
   update(s) {
     const e = this.el;
@@ -224,10 +235,31 @@ export class UI {
     e.stops.textContent = String(s.stops);
     e.damage.style.width = `${s.damage}%`;
 
+    e.cash.textContent = `$${s.cash.toFixed(0)}`;
+
+    // Sleep: a clock, not a distance. The motel is the only refill.
+    const sleepRatio = Math.max(0, s.sleep);
+    e.sleepFill.style.width = `${sleepRatio * 100}%`;
+    e.sleepBar.classList.toggle('low', sleepRatio < 0.35);
+    e.sleepBar.classList.toggle('critical', sleepRatio < 0.15);
+    e.motel.textContent =
+      s.toMotel < 0 ? '—' : `${t('hud.motelShort')} ${(s.toMotel / 1000).toFixed(1)}`;
+
+    e.veil.style.opacity = String(
+      Math.min(1, s.drowsiness * 0.92 + (s.asleep ? 1 : 0))
+    );
+    e.veil.classList.toggle('asleep', s.asleep);
+
     e.refuelPanel.classList.toggle('hidden', !s.refuelling);
     if (s.refuelling) {
       e.refuelFill.style.width = `${s.refuelProgress * 100}%`;
       e.refuelLitres.textContent = `${s.refuelLitres.toFixed(0)} L`;
+      e.refuelPrice.textContent = `$${(s.pumpPrice * 3.785).toFixed(2)}/gal · −$${s.refuelCost.toFixed(2)}`;
+    }
+
+    e.checkinPanel.classList.toggle('hidden', s.checkingIn <= 0);
+    if (s.checkingIn > 0) {
+      e.checkinFill.style.width = `${Math.min(1, s.checkingIn) * 100}%`;
     }
   }
 }

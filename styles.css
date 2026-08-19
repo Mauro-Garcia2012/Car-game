@@ -486,6 +486,23 @@ kbd {
   color: #d8ffe2;
 }
 
+.refuel-panel em {
+  display: block;
+  margin-top: 2px;
+  font-style: normal;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  opacity: 0.75;
+}
+
+#checkin-panel .refuel-bar i {
+  background: linear-gradient(90deg, #7fd0ff, #3f7fd0);
+}
+
+#checkin-panel span {
+  color: #d8ecff;
+}
+
 .hud-bottom {
   display: flex;
   align-items: flex-end;
@@ -699,6 +716,53 @@ kbd {
   font-size: 9px;
   letter-spacing: 0.18em;
   opacity: 0.65;
+  min-width: 48px;
+}
+
+.damage.sleep span {
+  font-family: var(--display);
+  font-size: 10px;
+  color: #fff2d8;
+  min-width: 74px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.damage.sleep .damage-bar i {
+  background: linear-gradient(90deg, #7fd0ff, #4f8fd0);
+  width: 100%;
+  transition: width 0.2s linear, background 0.4s linear;
+}
+
+#sleep-bar.low i {
+  background: linear-gradient(90deg, #ffd166, #f0a02a);
+}
+
+#sleep-bar.critical i {
+  background: linear-gradient(90deg, #ff8b3d, #e0402c);
+  animation: pulse 0.7s ease-in-out infinite;
+}
+
+/* --------------------------------------------------------- drowsiness */
+
+#drowsy-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    ellipse at 50% 52%,
+    rgba(0, 0, 0, 0) 26%,
+    rgba(0, 0, 0, 0.55) 62%,
+    rgba(6, 4, 2, 0.96) 100%
+  );
+  transition: opacity 0.3s ease;
+}
+
+#drowsy-veil.asleep {
+  background: rgba(2, 2, 3, 0.94);
+  transition: opacity 0.12s ease;
 }
 
 .damage-bar {

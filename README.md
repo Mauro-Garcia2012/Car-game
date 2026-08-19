@@ -52,7 +52,20 @@ automatically.
   the throttle) — enough for the next station, never enough for the one after
   it.
 - To refuel, **leave the tarmac, pull onto the apron by the pumps and stop**
-  (under ~12 km/h). Filling up is free and takes three to seven seconds.
+  (under ~12 km/h). **Fuel costs money**: Nevada prices, from about $4.30 a
+  gallon at the first station to $7.99 out where nobody lives. You start with
+  **$500 in the glovebox and there is no way to earn more yet**, so the wallet
+  is a second countdown running under the fuel gauge.
+- **Sleep runs on the clock, not the odometer.** Six minutes of driving takes
+  you from wide awake to nodding off, and the only place to fix it is a
+  **motel** — free, but they sit about 7.5 km apart, several gas stations'
+  worth. About one in four shares a plot with a station; the rest stand alone
+  with nothing but their neon. Park in the lot, stop, and you check in.
+- Cruise at 120 km/h and you reach the next bed with a quarter of the meter
+  left. **Dawdle at 70 km/h and you do not make it**: the last few hundred
+  metres are driven asleep, with the wheel wandering, the edges of the world
+  closing in and blackouts of about a second. Sleep never kills you by
+  itself — it just makes you a much worse driver.
 - Driving on sand is slow and burns **70% more fuel**; the gravel shoulder
   costs 25% more. Standing still still burns fuel — the engine is idling.
 - Traffic is thin on the ground, like the real thing: a vehicle every
@@ -66,7 +79,8 @@ automatically.
   up red. Nothing fines you — the only thing that punishes you out here is the
   fuel gauge.
 - The run ends when the tank hits zero and the car rolls to a stop, or when the
-  car is wrecked. Your best distance is stored in the browser.
+  car is wrecked. Dying with an empty wallet gets its own ending. Your best
+  distance is stored in the browser.
 
 The HUD's green bar is your remaining range and the white tick on it is the
 next station. **When the tick turns red, you are already out of road.**
@@ -104,6 +118,7 @@ src/
   game.js           game state, rules, refuelling, camera work
   track.js          the analytic highway curve (everything hangs off this)
   vehicle.js        arcade car physics and the fuel model
+  fatigue.js        sleep: drains on the clock, degrades the driving
   traffic.js        AI pickups and semis
   input.js          keyboard, touch and gamepad
   audio.js          synthesised engine, tyres and beeps (no audio files)
@@ -112,7 +127,7 @@ src/
   textures.js       every texture, painted on a <canvas>
   rng.js            deterministic hash noise
   cars/             the three player cars, built from extruded side profiles
-  world/            sky, road ribbon, terrain, scenery, gas stations, signage
+  world/            sky, road, terrain, scenery, gas stations, motels, signage
 vendor/three/       three.js r169 (MIT), vendored so the game runs offline
 ```
 
@@ -128,6 +143,11 @@ A few things worth knowing if you want to poke at it:
   rewritten for a slot further up the road; scenery is one `InstancedMesh` per
   prop type per chunk, refilled from a deterministic hash so a stretch of
   desert always regenerates the same way.
+- **Fuel and sleep pull in opposite directions.** Petrol is spent per metre and
+  cash per litre, while sleep is spent per second. Driving slowly saves fuel
+  and money but costs you the bed; driving fast saves the bed but empties the
+  tank and the wallet. There is a speed in the middle that keeps all three
+  alive, and finding it is the game.
 - **The cars are extruded side profiles.** Each body panel is a 2D outline
   extruded across the car, then squeezed laterally by a `bodySculpt()` function
   that pinches the nose and tail and adds tumblehome. That is what turns a slab
@@ -173,8 +193,22 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   para **3,0–3,7 km** conduciendo fuerte: llegas a la siguiente, nunca a la de
   después.
 - Para repostar hay que **salir del asfalto, entrar en la explanada de los
-  surtidores y detenerse** (por debajo de ~12 km/h). Es gratis y tarda entre
-  tres y siete segundos.
+  surtidores y detenerse** (por debajo de ~12 km/h). **La gasolina se paga**, a
+  precios de Nevada: unos 4,30 $ el galón en la primera gasolinera y hasta
+  7,99 $ donde no vive nadie. Empiezas con **500 $ en la guantera y todavía no
+  hay forma de ganar más**, así que la cartera es una segunda cuenta atrás por
+  debajo de la aguja.
+- **El sueño va por tiempo, no por kilómetros.** Seis minutos al volante te
+  llevan de estar fresco a caerte de sueño, y lo único que lo arregla es un
+  **motel** — gratis, pero están a unos 7,5 km unos de otros, varias
+  gasolineras de por medio. Uno de cada cuatro comparte parcela con una
+  gasolinera; el resto están solos en mitad de la nada con su neón. Aparca en
+  el parking, párate del todo y te registras.
+- A 120 km/h llegas a la cama con un cuarto de la barra. **A 70 km/h no
+  llegas**: los últimos cientos de metros los haces dormido, con el volante
+  yéndose solo, la pantalla cerrándose por los bordes y apagones de casi un
+  segundo. El sueño nunca te mata por sí mismo: solo te convierte en un
+  conductor pésimo.
 - La arena es lenta y gasta un **70% más** de gasolina; el arcén, un 25% más.
   Parado también gastas: el motor sigue al ralentí.
 - Hay muy poco tráfico, como en el desierto de verdad: un vehículo cada
@@ -188,7 +222,8 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   réplica se pone roja. No hay multas: aquí lo único que castiga es la aguja de
   la gasolina.
 - La barra verde del HUD es tu autonomía y la marca blanca es la próxima
-  gasolinera. **Cuando la marca se pone roja, ya no llegas.**
+  gasolinera. **Cuando la marca se pone roja, ya no llegas.** La barra azul es
+  el sueño, y a su derecha tienes los kilómetros hasta el próximo motel.
 
 ### Los coches
 
