@@ -111,7 +111,8 @@ automatically.
 - Traffic is thin on the ground, like the real thing: a vehicle every
   kilometre or two, never more than three on the road, mostly semis coming the
   other way. Rear-end a pickup or clip one of them and you lose speed, fuel and
-  bodywork; at 100% damage the run is over.
+  bodywork; at 100% damage the run is over. How much of an impact a vehicle
+  keeps is its own business — see the moped in the garage.
 - The posted limit is Nevada-realistic: **70 mph** out on the open two-lane
   (a few stretches drop to 65), **55** on the approach to a gas station and
   **45** past the pumps. The MUTCD R2-1 signs on the shoulder and the little
@@ -155,8 +156,13 @@ being the thing you worry about. What replaces it is the clock. Restricted to
 45 km/h it covers 4.5 km in a day's worth of sleep, and the motels are 7.4 km
 apart — so **you cannot reach a bed before the meter empties, ever.** The last
 two or three kilometres of every night are ridden asleep, wandering, blacking
-out a second at a time. It is survivable mostly because falling off at 45 km/h
-costs less than falling off at 250.
+out a second at a time.
+
+And there is nothing around you. A car takes three big hits before it is
+finished; the moped takes **one head-on and the run is over**, whatever the
+gauges say, because anything coming the other way closes at 120 km/h or more.
+Two ordinary shunts from behind do the same. Riding it asleep past oncoming
+traffic is exactly as bad an idea as it sounds.
 
 ## How it works
 
@@ -357,8 +363,13 @@ gasolina deja de ser el problema. Lo que la sustituye es el reloj. Limitado a
 45 km/h recorre 4,5 km con un depósito de sueño lleno, y los moteles están a
 7,4 km — o sea que **no puedes llegar a una cama antes de que se acabe la
 barra, nunca.** Los últimos dos o tres kilómetros de cada noche los haces
-dormido, dando bandazos y con apagones de un segundo. Se sobrevive sobre todo
-porque salirse a 45 km/h cuesta menos que salirse a 250.
+dormido, dando bandazos y con apagones de un segundo.
+
+Y no llevas nada alrededor. Un coche aguanta tres golpes fuertes antes de
+quedarse; el ciclomotor se acaba **con un frontal y ya**, marque lo que marque
+la barra de daños, porque lo que viene de frente cierra a 120 km/h o más. Dos
+alcances por detrás hacen lo mismo. Ir dormido entre el tráfico de frente es
+tan mala idea como suena.
 
 ## Licence
 

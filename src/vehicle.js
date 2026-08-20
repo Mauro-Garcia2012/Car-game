@@ -233,15 +233,26 @@ export class Vehicle {
     }
   }
 
-  /** Head-on or rear-end hit with another vehicle. */
+  /**
+   * Head-on or rear-end hit with another vehicle.
+   *
+   * `crashScale` is how much of that a vehicle keeps. A car has a
+   * structure, crumple zones and something between you and the road, and
+   * takes three big hits before it is finished. Two wheels and a helmet
+   * have none of that, so the moped carries a multiplier and goes down for
+   * good at a closing speed a car would shrug off.
+   */
   crash(closingSpeed) {
     if (this.crashCooldown > 0) return 0;
+    const spec = this.spec;
+    const scale = spec.crashScale ?? 1;
     this.crashCooldown = 1.2;
     const severity = THREE.MathUtils.clamp(closingSpeed / 55, 0.12, 1);
-    this.damage = Math.min(100, this.damage + severity * 48);
-    this.speed *= 0.25;
-    this.yaw += (Math.random() - 0.5) * severity * 1.1;
-    this.fuel = Math.max(0, this.fuel - severity * 3.5);
+    this.damage = Math.min(100, this.damage + severity * 48 * scale);
+    // Light things get stopped and spun harder by the same impact.
+    this.speed *= 0.25 / Math.max(1, scale * 0.55);
+    this.yaw += (Math.random() - 0.5) * severity * 1.1 * Math.min(2, scale * 0.6);
+    this.fuel = Math.max(0, this.fuel - severity * 3.5 * Math.min(1, 1 / scale));
     return severity;
   }
 }

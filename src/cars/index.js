@@ -73,6 +73,9 @@ export const CARS = [
     camera: { back: 4.4, height: 1.9, look: 9 },
     hood: { forward: 0.5, height: 1.42 },
     collisionRadius: 0.8,
+    // Nothing around you but a helmet: any head-on ends the run outright,
+    // and two ordinary shunts do the same.
+    crashScale: 4.5,
     stats: { speed: 0.13, accel: 0.2, grip: 0.9, range: 1 },
   },
   {
