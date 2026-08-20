@@ -9,6 +9,7 @@
  * A bed is free. The cost is the time it takes to get there.
  */
 import * as THREE from 'three';
+import { glowAtNight } from './nightlights.js';
 import { roadPoint, roadYaw, EDGE } from '../track.js';
 import { hashRand } from '../rng.js';
 import {
@@ -120,18 +121,27 @@ function materials() {
     emissive: '#0d5a72',
     emissiveIntensity: 0.35,
   });
-  MATS.neon = new THREE.MeshStandardMaterial({
-    map: motelSignTexture(),
-    emissive: '#ffca6a',
-    emissiveIntensity: 0.5,
-    roughness: 0.6,
-  });
-  MATS.vacancy = new THREE.MeshStandardMaterial({
-    map: vacancyTexture(),
-    emissive: '#ff4a44',
-    emissiveIntensity: 0.7,
-    roughness: 0.6,
-  });
+  glowAtNight(MATS.water, 0.5);
+  MATS.neon = glowAtNight(
+    new THREE.MeshStandardMaterial({
+      map: motelSignTexture(),
+      emissiveMap: motelSignTexture(),
+      emissive: '#ffca6a',
+      emissiveIntensity: 0.5,
+      roughness: 0.6,
+    }),
+    1.0
+  );
+  MATS.vacancy = glowAtNight(
+    new THREE.MeshStandardMaterial({
+      map: vacancyTexture(),
+      emissiveMap: vacancyTexture(),
+      emissive: '#ff4a44',
+      emissiveIntensity: 0.7,
+      roughness: 0.6,
+    }),
+    1.25
+  );
   MATS.ready = true;
   return MATS;
 }
@@ -214,14 +224,16 @@ function buildMotelModel() {
   sign.position.set(3.0, 0, 22);
   root.add(sign);
   sign.add(box(0.5, 10, 0.5, mat.steel, 0, 5, 0));
-  const neon = new THREE.Mesh(new THREE.BoxGeometry(0.3, 5.0, 1.5), mat.neon);
+  // Broad faces along the road: a motel sign that only its own car park can
+  // read is no use to anybody, and at night it is the one landmark there is.
+  const neon = new THREE.Mesh(new THREE.BoxGeometry(1.5, 5.0, 0.3), mat.neon);
   neon.position.set(0, 8.6, 0);
   neon.castShadow = true;
   sign.add(neon);
-  const vacancy = new THREE.Mesh(new THREE.BoxGeometry(0.26, 1.0, 2.6), mat.vacancy);
+  const vacancy = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.0, 0.26), mat.vacancy);
   vacancy.position.set(0, 5.3, 0);
   sign.add(vacancy);
-  sign.add(box(0.6, 0.3, 2.9, mat.trim, 0, 5.95, 0));
+  sign.add(box(2.9, 0.3, 0.6, mat.trim, 0, 5.95, 0));
 
   root.traverse((o) => {
     if (o.isMesh) o.receiveShadow = true;

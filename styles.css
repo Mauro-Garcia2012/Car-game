@@ -419,6 +419,21 @@ kbd {
   color: var(--amber);
 }
 
+.stat.clock {
+  min-width: 82px;
+}
+
+/* The clock reads warm through the day and goes cold once it is dark. */
+.stat.clock strong {
+  color: #ffe0a8;
+  transition: color 1.2s linear, text-shadow 1.2s linear;
+}
+
+.stat.clock.night strong {
+  color: #a8c8ff;
+  text-shadow: 0 0 12px rgba(110, 160, 255, 0.55);
+}
+
 .hud-message {
   position: absolute;
   top: 16%;

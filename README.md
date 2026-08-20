@@ -81,6 +81,21 @@ automatically.
   each one signposted 300 m ahead. Cross it more than 8 km/h over the posted
   limit and the flash goes off: **$50 gone**. Slow down for it and it costs you
   nothing but a few seconds.
+- **The sleep meter is the clock.** It is not just a stamina bar — it is what
+  time of day it is. You leave the garage at **07:00** in the low morning sun,
+  and as the meter drains the sun crosses the sky: high noon around the
+  halfway mark, golden hour at three quarters, and the sun on the horizon with
+  a quarter left. **The last of the light goes with the last of the meter, at
+  22:00.** After that the world stops moving: it stays night, the moon stays
+  up, and no amount of driving brings the morning back. Only a bed does — you
+  wake at dawn on the next day, and the day counter ticks over.
+- **Driving at night is a different game.** Your headlamps come up on their own
+  through dusk and past that they are all you have: a hundred metres of tarmac
+  and whatever is standing in it. The desert reads as silhouettes under the
+  moon, the sign faces catch the beams, and a gas station forty seconds up the
+  road is a glow on the horizon long before it is a building. Getting caught
+  out at night is the natural punishment for dawdling — and it is also the
+  best the game looks.
 - **Sleep runs on the clock, not the odometer.** Six minutes of driving takes
   you from wide awake to nodding off, and the only place to fix it is a
   **motel** — the bed is free, but the night costs you at the pump, and they
@@ -146,6 +161,7 @@ src/
   track.js          the analytic highway curve (everything hangs off this)
   vehicle.js        arcade car physics and the fuel model
   fatigue.js        sleep: drains on the clock, degrades the driving
+  daynight.js       the clock: one sleep meter is one day, dawn to dark
   fares.js          passengers: who is waiting where, and what they pay
   traffic.js        AI pickups and semis
   input.js          keyboard, touch and gamepad
@@ -155,8 +171,8 @@ src/
   textures.js       every texture, painted on a <canvas>
   rng.js            deterministic hash noise
   cars/             the three player cars, built from extruded side profiles
-  world/            sky, road, terrain, scenery, stations, motels, signs,
-                    cameras, roadside crates
+  world/            sky and the day/night rig, road, terrain, scenery,
+                    stations, motels, signs, cameras, headlamps, crates
 vendor/three/       three.js r169 (MIT), vendored so the game runs offline
 ```
 
@@ -233,6 +249,21 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   mercado sube entre **8 y 30 centavos**, a veces más, y al despertar te dicen
   cuánto cuesta ahora. Todos los surtidores suben a la vez. El tope, pase lo
   que pase, son **8,99 $**.
+- **La barra de sueño es el reloj.** No es solo una barra de aguante: es la
+  hora que es. Sales del garaje a las **07:00** con el sol bajo de la mañana y,
+  según baja la barra, el sol cruza el cielo: mediodía a la mitad, hora dorada
+  a tres cuartos y el sol en el horizonte cuando te queda un cuarto. **La
+  última luz se va con el último trozo de barra, a las 22:00.** A partir de ahí
+  el mundo se para: se queda de noche, la luna se queda arriba y por mucho que
+  conduzcas no vuelve a amanecer. Solo lo hace una cama: despiertas al alba del
+  día siguiente y el contador de días sube.
+- **Conducir de noche es otro juego.** Los faros se encienden solos al
+  anochecer y a partir de ahí son lo único que tienes: cien metros de asfalto y
+  lo que haya plantado en ellos. El desierto se queda en siluetas bajo la luna,
+  las señales devuelven la luz de los faros y una gasolinera a cuarenta
+  segundos es un resplandor en el horizonte mucho antes de ser un edificio.
+  Llegar de noche es el castigo natural por ir despacio — y también es cuando
+  mejor se ve el juego.
 - **El sueño va por tiempo, no por kilómetros.** Seis minutos al volante te
   llevan de estar fresco a caerte de sueño, y lo único que lo arregla es un
   **motel** — la cama es gratis, pero la noche te la cobran en el surtidor, y

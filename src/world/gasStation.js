@@ -6,6 +6,7 @@
  * exposes a refuelling zone on the apron next to the pumps.
  */
 import * as THREE from 'three';
+import { glowAtNight } from './nightlights.js';
 import { roadPoint, roadYaw, EDGE } from '../track.js';
 import { hashRand } from '../rng.js';
 import {
@@ -157,12 +158,15 @@ function materials() {
     transparent: true,
     opacity: 0.55,
   });
-  MATS.lightPanel = new THREE.MeshStandardMaterial({
-    color: '#e7ded0',
-    emissive: '#ffe9bd',
-    emissiveIntensity: 0.28,
-    roughness: 0.5,
-  });
+  MATS.lightPanel = glowAtNight(
+    new THREE.MeshStandardMaterial({
+      color: '#e7ded0',
+      emissive: '#ffe9bd',
+      emissiveIntensity: 0.28,
+      roughness: 0.5,
+    }),
+    1.35
+  );
   MATS.stucco = new THREE.MeshStandardMaterial({
     color: '#d9c7a4',
     roughness: 0.95,
@@ -217,7 +221,9 @@ function totemTexture() {
 /** Repaints a totem's price board, disposing the texture it replaces. */
 function setPriceBoard(mesh, index) {
   const previous = mesh.material.map;
-  mesh.material.map = priceBoardTexture(fuelPricePerGallon(index));
+  const art = priceBoardTexture(fuelPricePerGallon(index));
+  mesh.material.map = art;
+  mesh.material.emissiveMap = art;
   mesh.material.needsUpdate = true;
   if (previous) previous.dispose();
 }
@@ -283,27 +289,41 @@ function buildStationModel(index) {
   sign.position.set(2.2, 0, 20);
   root.add(sign);
   sign.add(box(0.55, 9, 0.55, mat.steel, 0, 4.5, 0));
-  const faceMaterial = () =>
-    new THREE.MeshStandardMaterial({
-      map: totemTexture(),
-      emissive: '#5a1410',
-      emissiveIntensity: 0.55,
-      roughness: 0.6,
-    });
+  const faceMaterial = () => {
+    const art = totemTexture();
+    return glowAtNight(
+      new THREE.MeshStandardMaterial({
+        map: art,
+        emissiveMap: art,
+        emissive: '#8a4a3a',
+        emissiveIntensity: 0.35,
+        roughness: 0.6,
+      }),
+      1.5
+    );
+  };
   const totemFaces = [faceMaterial(), faceMaterial()];
+  // Faces up and down the highway, not across it, so drivers can read it.
   const face = new THREE.Mesh(
-    new THREE.BoxGeometry(0.35, 4.2, 4.2),
-    [...totemFaces, mat.white, mat.white, mat.white, mat.white]
+    new THREE.BoxGeometry(4.2, 4.2, 0.35),
+    [mat.white, mat.white, mat.white, mat.white, ...totemFaces]
   );
   face.position.set(0, 9.5, 0);
   face.castShadow = true;
   sign.add(face);
+  const priceArt = priceBoardTexture(fuelPricePerGallon(index));
   const price = new THREE.Mesh(
-    new THREE.BoxGeometry(0.3, 2.0, 3.6),
-    new THREE.MeshStandardMaterial({
-      map: priceBoardTexture(fuelPricePerGallon(index)),
-      roughness: 0.7,
-    })
+    new THREE.BoxGeometry(3.6, 2.0, 0.3),
+    glowAtNight(
+      new THREE.MeshStandardMaterial({
+        map: priceArt,
+        emissiveMap: priceArt,
+        emissive: '#ffe9bd',
+        emissiveIntensity: 0.1,
+        roughness: 0.7,
+      }),
+      1.4
+    )
   );
   price.position.set(0, 6.2, 0);
   sign.add(price);
@@ -363,7 +383,10 @@ export class GasStations {
     for (const slot of this.slots) {
       const signs = slot.model.userData.signs;
       for (const m of signs.totemFaces) {
-        m.map = totemTexture();
+        const art = totemTexture();
+        if (m.map) m.map.dispose();
+        m.map = art;
+        m.emissiveMap = art;
         m.needsUpdate = true;
       }
       const board = slot.advance.userData.board;

@@ -22,7 +22,7 @@ const STRINGS = {
     'loading.text': 'Building the highway…',
 
     'menu.strap':
-      'Route 66, high noon, no cell service. Every gas station is a checkpoint — <b>skip one and you die out there.</b>',
+      'Route 66, dawn to dark, no cell service. Every gas station is a checkpoint — <b>skip one and you die out there.</b>',
     'menu.start': 'START ENGINE',
     'menu.language': 'Language',
 
@@ -45,6 +45,7 @@ const STRINGS = {
     'car.4x4.tagline': 'Slow, unstoppable, huge tank',
 
     'hud.day': 'Day',
+    'hud.time': 'Time',
     'hud.distance': 'Distance',
     'hud.stops': 'Stops made',
     'hud.best': 'Best',
@@ -138,7 +139,7 @@ const STRINGS = {
     'loading.text': 'Construyendo la carretera…',
 
     'menu.strap':
-      'Ruta 66, sol de mediodía, sin cobertura. Cada gasolinera es un punto de control: <b>si te saltas una, te quedas tirado.</b>',
+      'Ruta 66, del amanecer a la noche cerrada, sin cobertura. Cada gasolinera es un punto de control: <b>si te saltas una, te quedas tirado.</b>',
     'menu.start': 'ARRANCAR MOTOR',
     'menu.language': 'Idioma',
 
@@ -161,6 +162,7 @@ const STRINGS = {
     'car.4x4.tagline': 'Lento, imparable, depósito enorme',
 
     'hud.day': 'Día',
+    'hud.time': 'Hora',
     'hud.distance': 'Distancia',
     'hud.stops': 'Paradas',
     'hud.best': 'Récord',

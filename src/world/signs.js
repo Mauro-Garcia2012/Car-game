@@ -12,6 +12,7 @@
  * badge and the roadside always agree.
  */
 import * as THREE from 'three';
+import { glowAtNight } from './nightlights.js';
 import { roadPoint, roadYaw, EDGE } from '../track.js';
 import { hashRand } from '../rng.js';
 import { speedLimitTexture, signTexture } from '../textures.js';
@@ -105,14 +106,17 @@ function faceMaterial(mph) {
   if (!faceCache.has(mph)) {
     faceCache.set(
       mph,
-      new THREE.MeshStandardMaterial({
-        map: speedLimitTexture(mph),
-        roughness: 0.55,
-        metalness: 0.05,
-        // Sign sheeting is retroreflective, so it stays bright at dusk.
-        emissive: '#2a2a28',
-        emissiveIntensity: 0.35,
-      })
+      glowAtNight(
+        new THREE.MeshStandardMaterial({
+          map: speedLimitTexture(mph),
+          roughness: 0.55,
+          metalness: 0.05,
+          // Sign sheeting is retroreflective, so it lights up at night.
+          emissive: '#8a8a80',
+          emissiveIntensity: 0.35,
+        }),
+        0.9
+      )
     );
   }
   return faceCache.get(mph);

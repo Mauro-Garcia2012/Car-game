@@ -54,6 +54,8 @@ export class UI {
       limitValue: $('limit-value'),
       day: $('hud-day'),
       cash: $('hud-cash'),
+      clock: $('hud-clock'),
+      clockChip: $('clock-chip'),
       sleepBar: $('sleep-bar'),
       sleepFill: $('sleep-fill'),
       motel: $('hud-motel'),
@@ -272,6 +274,11 @@ export class UI {
 
     e.day.textContent = String(s.day);
     e.cash.textContent = `$${s.cash.toFixed(0)}`;
+
+    // The sleep meter and the clock are the same number twice: the light
+    // outside is at whatever hour this says.
+    e.clock.textContent = s.clock;
+    e.clockChip.classList.toggle('night', s.night > 0.6);
 
     // Sleep: a clock, not a distance. The motel is the only refill.
     const sleepRatio = Math.max(0, s.sleep);

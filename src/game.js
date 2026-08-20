@@ -15,7 +15,7 @@ import {
 } from './world/gasStation.js';
 import { Motels, motelDistance, nextMotelIndex } from './world/motel.js';
 import { Crates, BIG_PRIZE } from './world/crates.js';
-import { Fatigue } from './fatigue.js';
+import { Fatigue, AWAKE_TIME } from './fatigue.js';
 import {
   Fares,
   extraLitresFor,
@@ -25,6 +25,9 @@ import {
 } from './fares.js';
 import { RoadSigns, SpeedCameras, speedLimitAt, FINE } from './world/signs.js';
 import { createSky } from './world/sky.js';
+import { Headlights } from './world/headlights.js';
+import { setNightGlow } from './world/nightlights.js';
+import { clockFor, DAY_START_HOUR, NIGHT_HOUR } from './daynight.js';
 import { Vehicle, SURFACE } from './vehicle.js';
 import { Traffic } from './traffic.js';
 import { DustSystem } from './effects.js';
@@ -35,6 +38,8 @@ import { terrainHeight } from './world/road.js';
 const REFUEL_RATE = 14; // litres per second
 const REFUEL_SPEED_LIMIT = 3.2; // m/s — you have to actually stop
 const CHECKIN_TIME = 2.5; // seconds parked before the room key appears
+/** Seconds the sky takes to run from midnight back round to dawn. */
+const DAWN_SWEEP = 2.6;
 /** Cash in the glovebox at the start. There is no way to earn more yet. */
 const START_CASH = 500;
 const CAMERA_MODES = ['chase', 'hood', 'orbit'];
@@ -58,6 +63,9 @@ export class Game {
     this.checkingIn = 0;
     this.cash = START_CASH;
     this.day = 1;
+    // The sleep meter is the clock: 0 is dawn, 1 is nightfall.
+    this.dayPhase = 0;
+    this.nightOverrun = 0;
     this.fatigue = new Fatigue();
     this.fares = new Fares();
     this.offer = null;
@@ -106,6 +114,7 @@ export class Game {
 
     this.carGroup = new THREE.Group();
     this.scene.add(this.carGroup);
+    this.headlights = new Headlights();
     this.setCar(carById('sport').id);
 
     this.camPos = new THREE.Vector3();
@@ -149,6 +158,8 @@ export class Game {
 
   setCar(id) {
     if (this.carModel) {
+      // Off the old model before its geometries go, or the beams go with it.
+      this.headlights.detach();
       this.carGroup.remove(this.carModel);
       this.carModel.traverse((o) => {
         if (o.isMesh) o.geometry.dispose();
@@ -158,6 +169,7 @@ export class Game {
     this.spec = spec;
     this.carModel = model;
     this.carGroup.add(model);
+    this.headlights.attach(model);
     this.vehicle = new Vehicle(spec, model);
     this.vehicle.reset(0);
     if (this.state === 'menu') this.parkForMenu();
@@ -195,6 +207,8 @@ export class Game {
     this.cash = START_CASH;
     this.spent = 0;
     this.day = 1;
+    this.dayPhase = 0;
+    this.nightOverrun = 0;
     resetMarket();
     this.stations.refreshPrices();
     this.cameras.reset(0);
@@ -256,9 +270,39 @@ export class Game {
     else if (this.state === 'over') this.simulate(dt, true);
 
     this.dust.update(dt);
+    this.advanceClock(dt);
     this.sky.update(this.vehicle.position);
     this.updateCamera(dt);
     this.renderer.render(this.scene, this.camera);
+  }
+
+  /**
+   * Moves the sky to whatever hour the driver's own reserves say it is.
+   *
+   * Forwards it simply tracks the sleep meter, so the light drains at the
+   * same rate the driver does and the last of the dusk goes with the last of
+   * the meter. Backwards — the moment a bed resets the meter — it sweeps
+   * rather than cuts, and that sweep is the night passing.
+   */
+  advanceClock(dt) {
+    const target = 1 - this.fatigue.level;
+    if (target < this.dayPhase - 0.001) {
+      this.dayPhase = Math.max(target, this.dayPhase - dt / DAWN_SWEEP);
+    } else {
+      this.dayPhase = target;
+    }
+
+    // Past nightfall the sky holds, but the hands keep going round.
+    if (this.state === 'playing' && this.fatigue.level <= 0) {
+      this.nightOverrun += (dt * (NIGHT_HOUR - DAY_START_HOUR)) / AWAKE_TIME;
+    } else if (this.dayPhase < 0.999) {
+      this.nightOverrun = 0;
+    }
+
+    const light = this.sky.setPhase(this.dayPhase, this.clock.elapsedTime);
+    this.headlights.setLevel(light.lamps);
+    setNightGlow(Math.min(1, Math.max(0, (light.neon - 0.9) / 1.5)));
+    this.renderer.toneMappingExposure = light.exposure;
   }
 
   menuIdle(dt) {
@@ -621,6 +665,8 @@ export class Game {
       cash: this.cash,
       pumpPrice: this.pumpPrice || 0,
       sleep: this.fatigue.level,
+      clock: clockFor(this.dayPhase, this.nightOverrun),
+      night: this.sky.light.lamps,
       drowsiness: this.fatigue.drowsiness,
       asleep: this.fatigue.asleep,
       toMotel,
