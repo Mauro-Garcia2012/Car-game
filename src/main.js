@@ -19,6 +19,7 @@ const ui = new UI({
   onResume: () => game.setPaused(false),
   onQuit: () => game.toMenu(),
   onRetry: () => game.start(game.spec.id),
+  onAcceptFare: () => game && game.acceptFare(),
 });
 
 input.bindTouch(document.getElementById('touch-controls'));

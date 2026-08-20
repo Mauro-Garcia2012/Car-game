@@ -60,6 +60,7 @@
             <i data-i18n="controls.drive">/ arrows drive</i></span
           >
           <span><kbd>Space</kbd> <i data-i18n="controls.handbrake">handbrake</i></span>
+          <span><kbd>E</kbd> <i data-i18n="controls.fare">take a fare</i></span>
           <span><kbd>C</kbd> <i data-i18n="controls.camera">camera</i></span>
           <span><kbd>P</kbd> <i data-i18n="controls.pause">pause</i></span>
           <span><kbd>M</kbd> <i data-i18n="controls.mute">mute</i></span>
@@ -79,6 +80,10 @@
         <div class="stat day">
           <label data-i18n="hud.day">Day</label>
           <strong id="hud-day">1</strong>
+        </div>
+        <div class="stat fare hidden" id="fare-chip">
+          <label data-i18n="hud.passenger">Passenger</label>
+          <strong id="fare-remaining">—</strong>
         </div>
         <div class="stat">
           <label data-i18n="hud.distance">Distance</label>
@@ -105,6 +110,29 @@
         <div class="refuel-bar"><i id="refuel-fill"></i></div>
         <span id="refuel-litres">0 L</span>
         <em id="refuel-price"></em>
+      </div>
+
+      <div id="fare-panel" class="refuel-panel fare-panel hidden">
+        <label data-i18n="hud.passenger">PASSENGER</label>
+        <div class="fare-rows">
+          <div>
+            <span data-i18n="hud.fareTo">Ride to</span
+            ><strong id="fare-dest">—</strong>
+          </div>
+          <div>
+            <span data-i18n="hud.fareDistance">Distance</span
+            ><strong id="fare-distance">—</strong>
+          </div>
+          <div>
+            <span data-i18n="hud.farePay">Pays</span
+            ><strong id="fare-pay" class="pay">—</strong>
+          </div>
+          <div>
+            <span data-i18n="hud.fareFuel">Extra fuel</span
+            ><strong id="fare-fuel" class="burn">—</strong>
+          </div>
+        </div>
+        <button id="fare-accept" type="button">TAKE IT</button>
       </div>
 
       <div id="checkin-panel" class="refuel-panel hidden">

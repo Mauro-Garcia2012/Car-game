@@ -33,6 +33,7 @@ export class Input {
         this.keys.add(mapped);
         e.preventDefault();
       }
+      if (e.code === 'KeyE') this.onAction('accept');
       if (e.code === 'KeyC') this.onAction('camera');
       if (e.code === 'KeyR') this.onAction('restart');
       if (e.code === 'KeyP' || e.code === 'Escape') this.onAction('pause');

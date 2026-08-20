@@ -411,6 +411,10 @@ kbd {
   min-width: 72px;
 }
 
+.stat.fare strong {
+  color: #7fd0ff;
+}
+
 .stat.day strong {
   color: var(--amber);
 }
@@ -501,6 +505,73 @@ kbd {
   font-size: 11px;
   letter-spacing: 0.1em;
   opacity: 0.75;
+}
+
+.fare-panel {
+  /* Sits below the refuel panel, so both can be up at the same pump. */
+  top: 44%;
+  width: min(420px, 82vw);
+  text-align: left;
+}
+
+.fare-panel > label {
+  display: block;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.fare-rows {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.fare-rows div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.fare-rows strong {
+  font-family: var(--display);
+  font-size: 15px;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  color: #fff2d8;
+  opacity: 1;
+}
+
+.fare-rows strong.pay {
+  color: #6ee08a;
+}
+
+.fare-rows strong.burn {
+  color: #ffb020;
+}
+
+#fare-accept {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--sand);
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+#fare-accept.ready {
+  background: linear-gradient(180deg, #6ee08a, #2f9d63);
+  color: #06240f;
+  border-color: rgba(220, 255, 230, 0.5);
 }
 
 #checkin-panel .refuel-bar i {

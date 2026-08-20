@@ -37,6 +37,7 @@ static host.
 | Brake / reverse | `S` / `↓` | Left trigger |
 | Steer | `A` `D` / `←` `→` | Left stick |
 | Handbrake | `Space` / `Shift` | `A` |
+| Take the fare on offer | `E` | |
 | Camera (chase / bonnet / orbit) | `C` | |
 | Pause | `P` or `Esc` | |
 | Restart | `R` | |
@@ -55,14 +56,22 @@ automatically.
   (under ~12 km/h). **Fuel costs money.** The whole highway shares one market
   price, opening at **$4.29 a gallon**; each station is only a few cents off
   its neighbours, and hauling fuel further out adds a little more.
-  You start with **$500 in the glovebox and there is no way to earn more
-  yet**, so the wallet is a second countdown running under the fuel gauge.
+  You start with **$500 in the glovebox**, and carrying passengers is the way
+  to top it up — enough to keep going, never enough to stop watching it.
 - **Prices only move overnight.** Every night you spend in a motel the market
   jumps **8 to 30 cents**, occasionally more, and you are told what it costs
   now the moment you wake up. Every pump moves together. Nothing on this road
   will ever ask more than **$8.99**. Each night also turns the calendar over,
   and the **day counter** in the corner is the clock the whole run is measured
   against.
+- **Passengers pay.** Somebody is waiting at about half the stops, wanting a
+  lift to a gas station or motel further up the road. Roll in, stop, and the
+  offer tells you everything **before** you take it: how many metres the ride
+  is, what it pays, and how much extra fuel the extra weight will drink, in
+  litres and dollars. Press `E` (or tap it) to take it. A passenger burns
+  **12% more fuel**, and while one is aboard the HUD counts the metres down to
+  their stop. Stop where they asked and you get paid; drive **500 m past it**
+  and they get out for nothing.
 - **Photo enforcement, very occasionally.** About one speed camera every 13 km,
   each one signposted 300 m ahead. Cross it more than 8 km/h over the posted
   limit and the flash goes off: **$50 gone**. Slow down for it and it costs you
@@ -130,6 +139,7 @@ src/
   track.js          the analytic highway curve (everything hangs off this)
   vehicle.js        arcade car physics and the fuel model
   fatigue.js        sleep: drains on the clock, degrades the driving
+  fares.js          passengers: who is waiting where, and what they pay
   traffic.js        AI pickups and semis
   input.js          keyboard, touch and gamepad
   audio.js          synthesised engine, tyres and beeps (no audio files)
@@ -191,6 +201,7 @@ pausa.
 | Frenar / marcha atrás | `S` / `↓` | Gatillo izquierdo |
 | Girar | `A` `D` / `←` `→` | Stick izquierdo |
 | Freno de mano | `Espacio` / `Shift` | `A` |
+| Aceptar el viaje ofrecido | `E` | |
 | Cámara (persecución / capó / órbita) | `C` | |
 | Pausa | `P` o `Esc` | |
 | Reiniciar | `R` | |
@@ -239,6 +250,14 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   radar suelto.
 - **Cada noche pasa un día**, y el contador de días de la esquina es el reloj
   contra el que se mide toda la partida.
+- **Los pasajeros pagan.** En la mitad de las paradas hay alguien esperando
+  que quiere llegar a una gasolinera o a un motel más adelante. Párate y la
+  oferta te dice todo **antes** de aceptar: cuántos metros es el viaje, cuánto
+  te paga y cuánta gasolina de más va a gastar, en litros y en dólares. Pulsa
+  `E` (o tócalo) para aceptar. Llevar a alguien gasta un **12% más**, y
+  mientras va contigo el HUD va **descontando los metros** que quedan hasta su
+  parada. Si paras donde te pidió, cobras; si te pasas **500 m**, se baja sin
+  pagarte.
 - **Radares, muy de vez en cuando.** Uno cada 13 km más o menos, siempre
   avisado con un cartel 300 m antes. Si pasas a más de 8 km/h por encima del
   límite, salta el flash: **$50 menos**. Si levantas el pie, no te cuesta nada

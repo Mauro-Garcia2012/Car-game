@@ -40,6 +40,8 @@ export class Vehicle {
     this.bodyPitch = 0;
     this.bounce = 0;
     this.surface = SURFACE.ROAD;
+    /** Multiplier on fuel burn — above 1 when carrying a passenger. */
+    this.load = 1;
     this.engineOn = true;
     this.rpm = 0.15;
     this.gear = 1;
@@ -160,7 +162,7 @@ export class Vehicle {
     // Fuel burn: distance based, plus idle drain and an off-road penalty.
     if (this.engineOn) {
       const penalty = surface === SURFACE.SAND ? 1.7 : surface === SURFACE.SHOULDER ? 1.25 : 1;
-      const perMetre = spec.burn * (0.55 + 0.6 * throttle) * penalty;
+      const perMetre = spec.burn * (0.55 + 0.6 * throttle) * penalty * this.load;
       this.fuel -= perMetre * Math.abs(step) + spec.idleBurn * dt;
       if (this.fuel <= 0) {
         this.fuel = 0;

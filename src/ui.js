@@ -10,8 +10,14 @@ import {
 const $ = (id) => document.getElementById(id);
 const BEST_KEY = 'desert-run.best';
 
-function km(metres) {
-  return `${(metres / 1000).toFixed(2)} km`;
+function km(value) {
+  return `${(value / 1000).toFixed(2)} km`;
+}
+
+/** Fares are quoted in plain metres, counting down as you close on the stop. */
+function metres(value) {
+  const n = Math.max(0, Math.round(value));
+  return `${n.toLocaleString('en-US').replace(/,/g, ' ')} m`;
 }
 
 export class UI {
@@ -56,6 +62,14 @@ export class UI {
       refuelPrice: $('refuel-price'),
       checkinPanel: $('checkin-panel'),
       checkinFill: $('checkin-fill'),
+      fareChip: $('fare-chip'),
+      fareRemaining: $('fare-remaining'),
+      farePanel: $('fare-panel'),
+      fareDest: $('fare-dest'),
+      fareDistance: $('fare-distance'),
+      farePay: $('fare-pay'),
+      fareFuel: $('fare-fuel'),
+      fareAccept: $('fare-accept'),
       overTitle: $('over-title'),
       overText: $('over-text'),
       overDistance: $('over-distance'),
@@ -140,6 +154,8 @@ export class UI {
     $('quit-btn').addEventListener('click', () => this.h.onQuit());
     $('retry-btn').addEventListener('click', () => this.h.onRetry());
     $('garage-btn').addEventListener('click', () => this.h.onQuit());
+    // Tapping the offer is the touch equivalent of pressing E.
+    this.el.fareAccept.addEventListener('click', () => this.h.onAcceptFare());
   }
 
   hideLoading() {
@@ -275,6 +291,25 @@ export class UI {
       e.refuelFill.style.width = `${s.refuelProgress * 100}%`;
       e.refuelLitres.textContent = `${s.refuelLitres.toFixed(0)} L`;
       e.refuelPrice.textContent = `$${(s.pumpPrice * 3.785).toFixed(2)}/gal · −$${s.refuelCost.toFixed(2)}`;
+    }
+
+    // Passenger aboard: metres left, counting down to the drop-off.
+    e.fareChip.classList.toggle('hidden', !s.fare);
+    if (s.fare) e.fareRemaining.textContent = metres(s.fare.metres);
+
+    // Standing offer: distance, fare and what the extra weight will drink.
+    e.farePanel.classList.toggle('hidden', !s.offer);
+    if (s.offer) {
+      e.fareDest.textContent = t(
+        s.offer.destKind === 'motel' ? 'hud.destMotel' : 'hud.destStation'
+      );
+      e.fareDistance.textContent = metres(s.offer.metres);
+      e.farePay.textContent = `+$${s.offer.pay}`;
+      e.fareFuel.textContent = `+${s.offer.litres.toFixed(1)} L (−$${s.offer.cost.toFixed(2)})`;
+      e.fareAccept.textContent = t(
+        s.offer.canAccept ? 'hud.fareAccept' : 'hud.fareStop'
+      );
+      e.fareAccept.classList.toggle('ready', s.offer.canAccept);
     }
 
     e.checkinPanel.classList.toggle('hidden', s.checkingIn <= 0);

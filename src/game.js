@@ -15,6 +15,13 @@ import {
 } from './world/gasStation.js';
 import { Motels, motelDistance, nextMotelIndex } from './world/motel.js';
 import { Fatigue } from './fatigue.js';
+import {
+  Fares,
+  extraLitresFor,
+  PASSENGER_BURN,
+  STATION,
+  MOTEL,
+} from './fares.js';
 import { RoadSigns, SpeedCameras, speedLimitAt, FINE } from './world/signs.js';
 import { createSky } from './world/sky.js';
 import { Vehicle, SURFACE } from './vehicle.js';
@@ -51,6 +58,8 @@ export class Game {
     this.cash = START_CASH;
     this.day = 1;
     this.fatigue = new Fatigue();
+    this.fares = new Fares();
+    this.offer = null;
 
     this.renderer = new THREE.WebGLRenderer({
       canvas,
@@ -126,6 +135,8 @@ export class Game {
       this.setPaused(this.state === 'playing');
     } else if (action === 'restart' && this.state !== 'menu') {
       this.start(this.spec.id);
+    } else if (action === 'accept') {
+      this.acceptFare();
     } else if (action === 'mute') {
       this.audio.setMuted(!this.audio.muted);
     } else if (action === 'enter' && this.state === 'menu') {
@@ -184,6 +195,10 @@ export class Game {
     this.stations.refreshPrices();
     this.cameras.reset(0);
     this.fatigue.reset();
+    this.fares.reset();
+    this.offer = null;
+    this.vehicle.load = 1;
+    this.earned = 0;
     this.lowFuelWarned = false;
     this.drowsyWarned = false;
     this.cameraMode = 0;
@@ -274,6 +289,7 @@ export class Game {
       this.handleSpeedCamera();
       this.handleRefuelling(dt);
       this.handleMotel(dt);
+      this.handleFares();
       this.handleStationBookkeeping();
       this.checkGameOver();
     }
@@ -408,6 +424,58 @@ export class Game {
     }
   }
 
+  /**
+   * Passengers: who is waiting where you are stopped, and whether the person
+   * in the car has arrived. The ride is only ever forward, so the cost of
+   * taking it is the extra fuel and the promise to stop at the far end.
+   */
+  handleFares() {
+    const v = this.vehicle;
+    const kind = this.inZone >= 0 ? STATION : this.motelZone >= 0 ? MOTEL : null;
+    const index = kind === STATION ? this.inZone : this.motelZone;
+    const stopped = Math.abs(v.speed) < REFUEL_SPEED_LIMIT;
+
+    // Dropping off: pay out the moment the car stops at the right place.
+    if (kind && stopped && this.fares.isDestination(kind, index)) {
+      const { pay } = this.fares.active;
+      this.cash += pay;
+      this.earned += pay;
+      this.fares.clear();
+      v.load = 1;
+      this.audio.fanfare();
+      this.flash('msg.dropOff', 'good', 3.4, { pay: `$${pay}` });
+      this.offer = null;
+      return;
+    }
+
+    // The passenger gives up if you drive well past where they asked for.
+    if (this.fares.missed(v.s)) {
+      this.fares.clear();
+      v.load = 1;
+      this.audio.warn();
+      this.flash('msg.fareLost', 'danger', 3.2);
+    }
+
+    // Standing offer at the stop the car is rolling through.
+    this.offer =
+      kind && Math.abs(v.speed) < 15 ? this.fares.offerFor(kind, index) : null;
+    this.canAccept = !!this.offer && stopped;
+    v.load = this.fares.active ? PASSENGER_BURN : 1;
+  }
+
+  /** Takes the fare currently on offer, if the car is stopped beside it. */
+  acceptFare() {
+    if (this.state !== 'playing' || !this.offer || !this.canAccept) return;
+    this.fares.board(this.offer);
+    this.vehicle.load = PASSENGER_BURN;
+    this.audio.blip(880, 0.1, 'triangle', 0.16);
+    this.flash('msg.fareTaken', 'good', 3.4, {
+      metres: Math.round(this.offer.distance),
+      pay: `$${this.offer.pay}`,
+    });
+    this.offer = null;
+  }
+
   handleStationBookkeeping() {
     const v = this.vehicle;
     const idx = Math.max(0, nextStationIndex(v.s) - 1);
@@ -516,6 +584,26 @@ export class Game {
       asleep: this.fatigue.asleep,
       toMotel,
       checkingIn: this.checkingIn / CHECKIN_TIME,
+      fare: this.fares.active
+        ? {
+            metres: Math.round(this.fares.remaining(v.s)),
+            total: Math.round(this.fares.active.distance),
+            pay: this.fares.active.pay,
+            destKind: this.fares.active.dest.kind,
+          }
+        : null,
+      offer: this.offer
+        ? {
+            metres: Math.round(this.offer.distance),
+            pay: this.offer.pay,
+            destKind: this.offer.dest.kind,
+            litres: extraLitresFor(spec, this.offer.distance),
+            cost:
+              extraLitresFor(spec, this.offer.distance) *
+              fuelPricePerLitre(Math.max(0, nextStationIndex(v.s))),
+            canAccept: this.canAccept,
+          }
+        : null,
     });
 
     // Message priority: temporary flashes, then situational advice.
@@ -549,6 +637,8 @@ export class Game {
       this.ui.message('msg.wontMakeIt', 'danger');
     } else if (toStation < 260 && !this.stops.has(idx)) {
       this.ui.message('msg.stationAhead', 'warn');
+    } else if (this.fares.active && this.fares.remaining(v.s) < 350) {
+      this.ui.message('msg.dropOffAhead', 'warn');
     } else if (toMotel < 400 && this.fatigue.level < 0.55) {
       this.ui.message('msg.motelAhead', 'warn');
     } else if (this.fatigue.level < 0.2) {
