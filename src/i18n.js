@@ -22,7 +22,7 @@ const STRINGS = {
     'loading.text': 'Building the highway…',
 
     'menu.strap':
-      'Route 66, dawn to dark, no cell service. Every gas station is a checkpoint — <b>skip one and you die out there.</b>',
+      'Route 66, dawn to dark, no cell service. The pumps are a long way apart — <b>skip one too many and you die out there.</b>',
     'menu.start': 'START ENGINE',
     'menu.language': 'Language',
 
@@ -78,7 +78,7 @@ const STRINGS = {
     'msg.crash': 'CRASH!',
     'msg.bigCrash': 'BIG HIT!',
     'msg.tankFull': 'TANK FULL — HIT THE ROAD',
-    'msg.skipped': 'YOU SKIPPED A FUEL STOP',
+    'msg.skipped': 'YOU RODE PAST A FUEL STOP',
     'msg.filling': 'FILLING UP…',
     'msg.stopToRefuel': 'STOP AT THE PUMPS TO REFUEL',
     'msg.outOfFuel': 'OUT OF FUEL',
@@ -140,7 +140,7 @@ const STRINGS = {
     'loading.text': 'Construyendo la carretera…',
 
     'menu.strap':
-      'Ruta 66, del amanecer a la noche cerrada, sin cobertura. Cada gasolinera es un punto de control: <b>si te saltas una, te quedas tirado.</b>',
+      'Ruta 66, del amanecer a la noche cerrada, sin cobertura. Los surtidores están muy lejos unos de otros: <b>sáltate uno de más y te quedas tirado.</b>',
     'menu.start': 'ARRANCAR MOTOR',
     'menu.language': 'Idioma',
 
@@ -197,7 +197,7 @@ const STRINGS = {
     'msg.crash': '¡CHOQUE!',
     'msg.bigCrash': '¡GRAN GOLPE!',
     'msg.tankFull': 'DEPÓSITO LLENO — ¡EN MARCHA!',
-    'msg.skipped': 'TE SALTASTE UNA GASOLINERA',
+    'msg.skipped': 'TE HAS PASADO UNA GASOLINERA',
     'msg.filling': 'REPOSTANDO…',
     'msg.stopToRefuel': 'DETENTE EN LOS SURTIDORES PARA REPOSTAR',
     'msg.outOfFuel': 'SIN GASOLINA',

@@ -49,9 +49,11 @@ automatically.
 ## The rules
 
 - Gas stations sit **1.95–2.47 km apart** along the highway. A full tank is
-  good for **3.0–3.7 km** of hard driving (3.3–4.2 km if you are gentle with
-  the throttle) — enough for the next station, never enough for the one after
-  it. The moped is the exception and pays for it in time; see the garage.
+  good for **5.2–6.8 km** of hard driving (6.4–8.5 km if you are gentle with
+  the throttle), and the pumps are 1.95–2.47 km apart. So a car clears two of
+  those gaps and starts on a third: **skipping a station is a decision, not a
+  death sentence — skipping two usually is.** The moped runs past five and
+  pays for it in time; see the garage.
 - To refuel, **leave the tarmac, pull onto the apron by the pumps and stop**
   (under ~12 km/h). **Fuel costs money.** The whole highway shares one market
   price, opening at **$4.29 a gallon**; each station is only a few cents off
@@ -142,12 +144,16 @@ strings to `STRINGS` and one more entry to `LANGUAGES`.
 | Type | Mid-engine supercar | GT prototype | Lifted desert truck | 49cc moped |
 | Top speed | 295 km/h | 342 km/h | 209 km/h | **45 km/h** (restricted) |
 | Tank | 55 L | 46 L | 95 L | 4.5 L |
-| Range | ~3.4 km | ~3.3 km | ~4.2 km | **~12.5 km** |
+| Range | ~5.5 km | ~5.2 km | ~6.8 km | **~12.5 km** |
 | Off-road grip | 34% | 20% | 78% | 18% |
 
 The race car is the fastest way between two pumps and the least forgiving if
-you overshoot one; the 4x4 shrugs off the sand and can afford a mistake, but it
-will not outrun anything.
+you overshoot one; the 4x4 shrugs off the sand and can afford one more mistake
+than either, but it will not outrun anything.
+
+Those ranges are what a full tank actually covers driven flat out, measured to
+the last drop rather than quoted off the spec sheet — the sheet assumes you
+cruise, and nobody does.
 
 **The moped plays a different game.** It burns a fiftieth of what the supercar
 does per metre, so four and a half litres will carry it past five gas stations
@@ -272,8 +278,10 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
 ### Las reglas
 
 - Las gasolineras están a **1,95–2,47 km** unas de otras y un depósito lleno da
-  para **3,0–3,7 km** conduciendo fuerte: llegas a la siguiente, nunca a la de
-  después.
+  para **5,2–6,8 km** conduciendo fuerte (6,4–8,5 km si eres suave con el
+  acelerador). O sea que un coche se salta dos huecos y empieza el tercero:
+  **saltarte una gasolinera es una decisión, no una sentencia; saltarte dos
+  suele serlo.** El ciclomotor se pasa cinco y lo paga en tiempo.
 - Para repostar hay que **salir del asfalto, entrar en la explanada de los
   surtidores y detenerse** (por debajo de ~12 km/h). **La gasolina se paga.**
   Toda la carretera comparte un mismo precio de mercado, que abre a **4,29 $ el
@@ -353,7 +361,7 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
 | Tipo | Superdeportivo | Prototipo GT | Camioneta elevada | Ciclomotor 49cc |
 | Vel. máxima | 295 km/h | 342 km/h | 209 km/h | **45 km/h** (limitado) |
 | Depósito | 55 L | 46 L | 95 L | 4,5 L |
-| Autonomía | ~3,4 km | ~3,3 km | ~4,2 km | **~12,5 km** |
+| Autonomía | ~5,5 km | ~5,2 km | ~6,8 km | **~12,5 km** |
 | Agarre fuera de asfalto | 34% | 20% | 78% | 18% |
 
 **El ciclomotor juega a otra cosa.** Gasta la cincuentava parte que el

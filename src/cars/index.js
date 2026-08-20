@@ -3,8 +3,10 @@ import { buildSportCar, buildRaceCar, build4x4, buildMoped } from './models.js';
 
 /**
  * Fuel notes: `burn` is litres per metre at cruising throttle, so
- * range ≈ tank / burn. Stations sit 1950–2570 m apart, which means every car
- * can reach the next one but none of them can skip one.
+ * range ≈ tank / burn. Stations sit 1950–2570 m apart. The cars carry enough
+ * to clear two of those gaps and start on a third, so skipping a pump is a
+ * decision rather than a death sentence — but the margin runs out fast, and
+ * the sleep meter does not care how much petrol you have left.
  *
  * The moped is the deliberate exception. It sips fuel — a fiftieth of what
  * the sports car drinks per metre — so it can run past five stations and
@@ -27,8 +29,8 @@ export const CARS = [
     offroadGrip: 0.34,
     offroadDrag: 5.2,
     tank: 55,
-    burn: 0.0162,
-    idleBurn: 0.055,
+    burn: 0.0081,
+    idleBurn: 0.0275,
     camera: { back: 6.6, height: 2.5, look: 11 },
     hood: { forward: 1.35, height: 1.02 },
     collisionRadius: 1.5,
@@ -47,8 +49,8 @@ export const CARS = [
     offroadGrip: 0.2,
     offroadDrag: 7.5,
     tank: 46,
-    burn: 0.0138,
-    idleBurn: 0.075,
+    burn: 0.0069,
+    idleBurn: 0.0375,
     camera: { back: 6.4, height: 2.4, look: 11 },
     hood: { forward: 1.5, height: 1.0 },
     collisionRadius: 1.55,
@@ -91,8 +93,8 @@ export const CARS = [
     offroadGrip: 0.78,
     offroadDrag: 1.4,
     tank: 95,
-    burn: 0.0226,
-    idleBurn: 0.06,
+    burn: 0.0113,
+    idleBurn: 0.03,
     camera: { back: 8.0, height: 3.6, look: 10 },
     hood: { forward: 1.9, height: 1.78 },
     collisionRadius: 1.8,
