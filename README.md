@@ -87,8 +87,8 @@ automatically.
   (a few stretches drop to 65), **55** on the approach to a gas station and
   **45** past the pumps. The MUTCD R2-1 signs on the shoulder and the little
   replica sign next to the speedo always agree; go over and the replica lights
-  up red. Nothing fines you — the only thing that punishes you out here is the
-  fuel gauge.
+  up red. Nobody stops you for it — the only thing watching is the occasional
+  camera.
 - The run ends when the tank hits zero and the car rolls to a stop, or when the
   car is wrecked. Dying with an empty wallet gets its own ending. Your best
   distance is stored in the browser.
@@ -235,8 +235,8 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   de dos carriles (algún tramo baja a 65), **55** al acercarte a una gasolinera
   y **45** a la altura de los surtidores. Las señales MUTCD del arcén y la
   réplica que verás junto al velocímetro siempre coinciden; si te pasas, la
-  réplica se pone roja. No hay multas: aquí lo único que castiga es la aguja de
-  la gasolina.
+  réplica se pone roja. Nadie te para por ello: lo único que vigila es algún
+  radar suelto.
 - **Cada noche pasa un día**, y el contador de días de la esquina es el reloj
   contra el que se mide toda la partida.
 - **Radares, muy de vez en cuando.** Uno cada 13 km más o menos, siempre
