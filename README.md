@@ -51,7 +51,7 @@ automatically.
 - Gas stations sit **1.95–2.47 km apart** along the highway. A full tank is
   good for **3.0–3.7 km** of hard driving (3.3–4.2 km if you are gentle with
   the throttle) — enough for the next station, never enough for the one after
-  it.
+  it. The moped is the exception and pays for it in time; see the garage.
 - To refuel, **leave the tarmac, pull onto the apron by the pumps and stop**
   (under ~12 km/h). **Fuel costs money.** The whole highway shares one market
   price, opening at **$4.29 a gallon**; each station is only a few cents off
@@ -136,17 +136,27 @@ strings to `STRINGS` and one more entry to `LANGUAGES`.
 
 ## The cars
 
-| | Vipera GT | Falcon R1 | Ridgeback 4x4 |
-| --- | --- | --- | --- |
-| Type | Mid-engine supercar | GT prototype | Lifted desert truck |
-| Top speed | 295 km/h | 342 km/h | 209 km/h |
-| Tank | 55 L | 46 L | 95 L |
-| Range | ~3.4 km | ~3.3 km | ~4.2 km |
-| Off-road grip | 34% | 20% | 78% |
+| | Vipera GT | Falcon R1 | Ridgeback 4x4 | Avispa 49 |
+| --- | --- | --- | --- | --- |
+| Type | Mid-engine supercar | GT prototype | Lifted desert truck | 49cc moped |
+| Top speed | 295 km/h | 342 km/h | 209 km/h | **45 km/h** (restricted) |
+| Tank | 55 L | 46 L | 95 L | 4.5 L |
+| Range | ~3.4 km | ~3.3 km | ~4.2 km | **~12.5 km** |
+| Off-road grip | 34% | 20% | 78% | 18% |
 
 The race car is the fastest way between two pumps and the least forgiving if
 you overshoot one; the 4x4 shrugs off the sand and can afford a mistake, but it
 will not outrun anything.
+
+**The moped plays a different game.** It burns a fiftieth of what the supercar
+does per metre, so four and a half litres will carry it past five gas stations
+and to within a few hundred metres of the sixth: the fuel gauge simply stops
+being the thing you worry about. What replaces it is the clock. Restricted to
+45 km/h it covers 4.5 km in a day's worth of sleep, and the motels are 7.4 km
+apart — so **you cannot reach a bed before the meter empties, ever.** The last
+two or three kilometres of every night are ridden asleep, wandering, blacking
+out a second at a time. It is survivable mostly because falling off at 45 km/h
+costs less than falling off at 250.
 
 ## How it works
 
@@ -183,6 +193,13 @@ A few things worth knowing if you want to poke at it:
   road ribbon, terrain, cacti, gas stations, traffic, the player — is placed
   through `roadPoint(s, lateral)`, so the whole world stays glued to the curve
   and the highway can run forever.
+- **Two ground heights, and using the wrong one is a bug.** `terrainHeight` is
+  the analytic surface; `groundHeight` interpolates the same triangle the
+  renderer actually draws. Out where the desert mesh has eighty metres between
+  columns the two differ by up to eight metres, so scenery planted with the
+  analytic value hovered over dunes the mesh had flattened. Everything that
+  stands in the sand uses `groundHeight`; only the car's own physics uses the
+  smooth analytic one.
 - **Chunk recycling.** The road and desert are ribbons of quads split into
   100 m chunks. When a chunk falls behind the camera, its vertex buffers are
   rewritten for a slot further up the road; scenery is one `InstancedMesh` per
@@ -325,13 +342,23 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
 
 ### Los coches
 
-| | Vipera GT | Falcon R1 | Ridgeback 4x4 |
-| --- | --- | --- | --- |
-| Tipo | Superdeportivo | Prototipo GT | Camioneta elevada |
-| Vel. máxima | 295 km/h | 342 km/h | 209 km/h |
-| Depósito | 55 L | 46 L | 95 L |
-| Autonomía | ~3,4 km | ~3,3 km | ~4,2 km |
-| Fuera de pista | 34% | 20% | 78% |
+| | Vipera GT | Falcon R1 | Ridgeback 4x4 | Avispa 49 |
+| --- | --- | --- | --- | --- |
+| Tipo | Superdeportivo | Prototipo GT | Camioneta elevada | Ciclomotor 49cc |
+| Vel. máxima | 295 km/h | 342 km/h | 209 km/h | **45 km/h** (limitado) |
+| Depósito | 55 L | 46 L | 95 L | 4,5 L |
+| Autonomía | ~3,4 km | ~3,3 km | ~4,2 km | **~12,5 km** |
+| Agarre fuera de asfalto | 34% | 20% | 78% | 18% |
+
+**El ciclomotor juega a otra cosa.** Gasta la cincuentava parte que el
+superdeportivo por metro, así que con cuatro litros y medio se planta más allá
+de cinco gasolineras y a unos cientos de metros de la sexta: la aguja de la
+gasolina deja de ser el problema. Lo que la sustituye es el reloj. Limitado a
+45 km/h recorre 4,5 km con un depósito de sueño lleno, y los moteles están a
+7,4 km — o sea que **no puedes llegar a una cama antes de que se acabe la
+barra, nunca.** Los últimos dos o tres kilómetros de cada noche los haces
+dormido, dando bandazos y con apagones de un segundo. Se sobrevive sobre todo
+porque salirse a 45 km/h cuesta menos que salirse a 250.
 
 ## Licence
 

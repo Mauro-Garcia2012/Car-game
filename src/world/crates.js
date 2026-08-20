@@ -13,7 +13,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
 import { roadPoint, roadYaw, EDGE } from '../track.js';
 import { hashRand } from '../rng.js';
-import { terrainHeight, CHUNK_LEN } from './road.js';
+import { groundHeight, CHUNK_LEN } from './road.js';
 import { stationDistance, nextStationIndex } from './gasStation.js';
 import { motelDistance, nextMotelIndex } from './motel.js';
 
@@ -170,7 +170,7 @@ export class Crates {
         s,
         lateral,
         x: p.x,
-        y: terrainHeight(s, lateral) - 0.05,
+        y: groundHeight(s, lateral) - 0.05,
         z: p.z,
         yaw: roadYaw(s) + hashRand(chunkIndex, 5500 + i) * 2.2,
         tilt: (hashRand(chunkIndex, 5600 + i) - 0.5) * 0.25,

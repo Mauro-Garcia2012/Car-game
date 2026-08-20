@@ -18,7 +18,7 @@ import {
   motelSignTexture,
   vacancyTexture,
 } from '../textures.js';
-import { terrainHeight } from './road.js';
+import { groundHeight } from './road.js';
 import { stationDistance, nextStationIndex, SERVICE_BLUE } from './gasStation.js';
 
 const FIRST_MOTEL = 7200;
@@ -314,13 +314,13 @@ export class Motels {
       slot.index = index;
       const s = motelDistance(index);
       const p = roadPoint(s, 0, this.tmp);
-      slot.model.position.set(p.x, terrainHeight(s, EDGE + 12) + 0.05, p.z);
+      slot.model.position.set(p.x, groundHeight(s, EDGE + 12) + 0.05, p.z);
       slot.model.rotation.y = roadYaw(s);
       slot.model.visible = true;
 
       const sa = Math.max(30, s - 1600);
       const pa = roadPoint(sa, EDGE + 3.5, this.tmp);
-      slot.advance.position.set(pa.x, terrainHeight(sa, EDGE + 3.5), pa.z);
+      slot.advance.position.set(pa.x, groundHeight(sa, EDGE + 3.5), pa.z);
       slot.advance.rotation.y = roadYaw(sa) + 0.22;
       slot.advance.visible = true;
     }

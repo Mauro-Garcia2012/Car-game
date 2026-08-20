@@ -121,7 +121,14 @@ export class Vehicle {
 
     this.speed += a * dt;
     if (Math.abs(this.speed) < 0.05 && throttle === 0) this.speed = 0;
-    this.speed = THREE.MathUtils.clamp(this.speed, -9, topSpeed * 1.02);
+    // A restricted moped has an engine that would pull harder and a limiter
+    // that will not let it: the fade above uses what the motor can do, this
+    // caps what comes out. Without the split it would sag short of the
+    // number on the sticker, the way an unrestricted engine tails off.
+    const ceiling = spec.speedLimit
+      ? Math.min(spec.speedLimit, topSpeed * 1.02)
+      : topSpeed * 1.02;
+    this.speed = THREE.MathUtils.clamp(this.speed, -9, ceiling);
 
     // Steering: bicycle model, with the turn rate capped by available grip.
     const steerLimit = 0.62 / (1 + Math.abs(this.speed) * 0.055);

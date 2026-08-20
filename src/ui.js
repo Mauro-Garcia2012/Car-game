@@ -1,5 +1,5 @@
 /** All DOM: menu, HUD, overlays. The 3D side never touches the document. */
-import { CARS, carRange } from './cars/index.js';
+import { CARS, carRange, carTopSpeed } from './cars/index.js';
 import {
   t,
   applyStaticTranslations,
@@ -19,6 +19,10 @@ function metres(value) {
   const n = Math.max(0, Math.round(value));
   return `${n.toLocaleString('en-US').replace(/,/g, ' ')} m`;
 }
+
+/** Full-scale marks for the two fuel bars: the best in the garage. */
+const TANK_FULL_BAR = Math.max(...CARS.map((c) => c.tank));
+const RANGE_FULL_BAR = Math.max(...CARS.map((c) => carRange(c)));
 
 export class UI {
   constructor(handlers) {
@@ -125,14 +129,14 @@ export class UI {
         <b>${text}</b>
       </div>`;
     this.el.specs.innerHTML = [
-      row(t('spec.topSpeed'), car.stats.speed, `${Math.round(car.topSpeed * 3.6)}`),
+      row(t('spec.topSpeed'), car.stats.speed, `${Math.round(carTopSpeed(car) * 3.6)}`),
       row(t('spec.accel'), car.stats.accel, `${car.power.toFixed(1)}`),
       row(t('spec.grip'), car.stats.grip, `${car.grip.toFixed(2)}`),
       row(t('spec.offroad'), car.offroadGrip, `${Math.round(car.offroadGrip * 100)}%`),
-      row(t('spec.tank'), car.stats.range, `${car.tank} L`, 'range'),
+      row(t('spec.tank'), car.tank / TANK_FULL_BAR, `${car.tank} L`, 'range'),
       row(
         t('spec.range'),
-        Math.min(1, carRange(car) / 4500),
+        carRange(car) / RANGE_FULL_BAR,
         `${(carRange(car) / 1000).toFixed(1)} km`,
         'range'
       ),

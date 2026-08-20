@@ -10,7 +10,7 @@ import { mergeGeometries } from '../../vendor/three/addons/utils/BufferGeometryU
 import { roadPoint, EDGE } from '../track.js';
 import { hashRand } from '../rng.js';
 import { rockTexture } from '../textures.js';
-import { terrainHeight, CHUNK_LEN } from './road.js';
+import { groundHeight, CHUNK_LEN } from './road.js';
 
 const M = new THREE.Matrix4();
 const Q = new THREE.Quaternion();
@@ -253,6 +253,26 @@ function mesaGeometry() {
   return geo;
 }
 
+/** Widest the mesa base gets, per unit of width scale, noise included. */
+const MESA_REACH = 1.6;
+/** And how much desert it has to leave between itself and the road. */
+const MESA_CLEARANCE = 150;
+
+/** Lowest drawn ground under a footprint, so nothing floats over a dip. */
+function lowestGround(s, lat, radiusS, radiusLat) {
+  let low = groundHeight(s, lat);
+  for (const f of [0.55, 1]) {
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2;
+      low = Math.min(
+        low,
+        groundHeight(s + Math.sin(a) * radiusS * f, lat + Math.cos(a) * radiusLat * f)
+      );
+    }
+  }
+  return low;
+}
+
 /* ------------------------------------------------------------------ */
 /* Prop field                                                          */
 /* ------------------------------------------------------------------ */
@@ -389,7 +409,7 @@ export class PropField {
     const p = { x: 0, y: 0, z: 0 };
     const place = (prop, i, s, lat, yaw, scale, tilt = 0) => {
       roadPoint(s, lat, p);
-      prop.set(slot, i, p.x, terrainHeight(s, lat) - 0.05, p.z, yaw, scale, tilt);
+      prop.set(slot, i, p.x, groundHeight(s, lat) - 0.05, p.z, yaw, scale, tilt);
     };
 
     // Cacti and boulders keep clear of the shoulder; brush creeps closer.
@@ -438,7 +458,7 @@ export class PropField {
       const lat = EDGE + 7.5;
       place(this.pole, i, s, lat, 0.06, 0.95 + hashRand(chunkIndex, i) * 0.12);
       roadPoint(s, lat, p);
-      wirePts.push({ x: p.x, y: terrainHeight(s, lat) + 8.0, z: p.z });
+      wirePts.push({ x: p.x, y: groundHeight(s, lat) + 8.0, z: p.z });
     }
     this.updateWires(slot, wirePts, s0);
 
@@ -456,21 +476,30 @@ export class PropField {
         continue;
       }
       const side = hashRand(chunkIndex, 1400 + i) > 0.5 ? 1 : -1;
-      const lat = side * (320 + hashRand(chunkIndex, 1500 + i) * 900);
-      const s = s0 + r * CHUNK_LEN;
-      roadPoint(s, lat, p);
       const w = 60 + hashRand(chunkIndex, 1600 + i) * 190;
       const h = 45 + hashRand(chunkIndex, 1700 + i) * 90;
+      const stretch = 0.7 + hashRand(chunkIndex, 1800 + i) * 0.7;
+
+      // Push it out by its own footprint. The lateral used to be picked
+      // without reference to the width, so a wide butte placed at the near
+      // end of the range reached back over the highway.
+      const reach = MESA_REACH * w;
+      const lat =
+        side * (reach + MESA_CLEARANCE + hashRand(chunkIndex, 1500 + i) * 620);
+      const s = s0 + r * CHUNK_LEN;
+      roadPoint(s, lat, p);
       this.mesa.setNonUniform(
         slot,
         i,
         p.x,
-        terrainHeight(s, lat) - 4,
+        // Sunk to the lowest ground it stands on, so no part of the base
+        // hangs in the air over a hollow.
+        lowestGround(s, lat, reach * stretch, reach) - 2.5,
         p.z,
         r * 7,
         w,
         h,
-        w * (0.7 + hashRand(chunkIndex, 1800 + i) * 0.7)
+        w * stretch
       );
     }
 

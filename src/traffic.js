@@ -8,7 +8,7 @@
  */
 import * as THREE from 'three';
 import { roadPoint, roadYaw } from './track.js';
-import { terrainHeight } from './world/road.js';
+import { groundHeight } from './world/road.js';
 import { MAT, paint, part, profilePiece, makeWheel } from './cars/parts.js';
 
 const LANE = 2.45;
@@ -218,7 +218,7 @@ export class Traffic {
         continue;
       }
       const p = roadPoint(it.s, it.lateral, this.tmp);
-      it.model.position.set(p.x, terrainHeight(it.s, it.lateral), p.z);
+      it.model.position.set(p.x, groundHeight(it.s, it.lateral), p.z);
       it.model.rotation.y = roadYaw(it.s) + (it.dir < 0 ? Math.PI : 0);
       for (const w of it.model.userData.wheels) {
         w.rotation.x -= (it.speed * dt) / 0.45;

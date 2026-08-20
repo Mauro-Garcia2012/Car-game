@@ -16,7 +16,7 @@ import { glowAtNight } from './nightlights.js';
 import { roadPoint, roadYaw, EDGE } from '../track.js';
 import { hashRand } from '../rng.js';
 import { speedLimitTexture, signTexture } from '../textures.js';
-import { terrainHeight } from './road.js';
+import { groundHeight } from './road.js';
 import { stationDistance, nextStationIndex } from './gasStation.js';
 
 /** Posted limits, in mph, exactly as they are painted on the signs. */
@@ -192,7 +192,7 @@ export class RoadSigns {
         slot.panel.material[4] = faceMaterial(sign.mph);
         const lateral = EDGE + 2.6;
         const p = roadPoint(sign.s, lateral, this.tmp);
-        slot.group.position.set(p.x, terrainHeight(sign.s, lateral), p.z);
+        slot.group.position.set(p.x, groundHeight(sign.s, lateral), p.z);
         // Turned a few degrees towards the road, like a real sign.
         slot.group.rotation.y = roadYaw(sign.s) - 0.09;
       }
@@ -363,13 +363,13 @@ export class SpeedCameras {
         const s = cameraDistance(index);
         const lateral = EDGE + 2.2;
         const p = roadPoint(s, lateral, this.tmp);
-        slot.camera.position.set(p.x, terrainHeight(s, lateral), p.z);
+        slot.camera.position.set(p.x, groundHeight(s, lateral), p.z);
         slot.camera.rotation.y = roadYaw(s) - 0.12;
         slot.camera.visible = true;
 
         const sw = Math.max(20, s - WARNING_AT);
         const pw = roadPoint(sw, EDGE + 3.0, this.tmp);
-        slot.warning.position.set(pw.x, terrainHeight(sw, EDGE + 3.0), pw.z);
+        slot.warning.position.set(pw.x, groundHeight(sw, EDGE + 3.0), pw.z);
         slot.warning.rotation.y = roadYaw(sw) - 0.1;
         slot.warning.visible = true;
       }

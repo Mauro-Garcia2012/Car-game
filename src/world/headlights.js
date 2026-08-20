@@ -53,13 +53,16 @@ function lampAnchors(model) {
     if (p.x < left.x) left = p;
     if (p.x > right.x) right = p;
   }
-  return [left, right];
+  // A moped has one lamp. Returning it twice would stack two spotlights in
+  // the same spot and light the road like a car.
+  return left.distanceTo(right) < 0.12 ? [left] : [left, right];
 }
 
 export class Headlights {
   constructor() {
     this.rig = new THREE.Group();
     this.level = 0;
+    this.active = 2;
 
     this.lamps = [];
     for (let i = 0; i < 2; i++) {
@@ -91,11 +94,13 @@ export class Headlights {
     if (!anchors) return;
     model.add(this.rig);
 
+    this.active = anchors.length;
     anchors.forEach((p, i) => {
       const { spot, target } = this.lamps[i];
       spot.position.copy(p);
       target.position.set(p.x * 0.6, p.y - AIM_DROP, p.z - AIM_AHEAD);
     });
+    this.setLevel(this.level);
   }
 
   detach() {
@@ -107,7 +112,9 @@ export class Headlights {
    */
   setLevel(level) {
     this.level = level;
-    for (const { spot } of this.lamps) spot.intensity = level * BEAM_INTENSITY;
+    this.lamps.forEach(({ spot }, i) => {
+      spot.intensity = i < this.active ? level * BEAM_INTENSITY : 0;
+    });
 
     // Every lamp and lens in the world, the player's and the traffic's.
     MAT.headlight.emissiveIntensity = 1.4 + level * 2.6;

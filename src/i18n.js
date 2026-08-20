@@ -43,6 +43,7 @@ const STRINGS = {
     'car.sport.tagline': 'Mid-engine road weapon',
     'car.race.tagline': 'GT prototype, thirsty and vicious',
     'car.4x4.tagline': 'Slow, unstoppable, huge tank',
+    'car.moped.tagline': 'Sips fuel, 45 km/h, sleeps badly',
 
     'hud.day': 'Day',
     'hud.time': 'Time',
@@ -160,6 +161,7 @@ const STRINGS = {
     'car.sport.tagline': 'Superdeportivo de motor central',
     'car.race.tagline': 'Prototipo GT, sediento y salvaje',
     'car.4x4.tagline': 'Lento, imparable, depósito enorme',
+    'car.moped.tagline': 'No gasta nada, 45 km/h, y duerme fatal',
 
     'hud.day': 'Día',
     'hud.time': 'Hora',

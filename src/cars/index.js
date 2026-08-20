@@ -1,10 +1,17 @@
 /** Car catalogue: looks, handling and — most importantly — fuel. */
-import { buildSportCar, buildRaceCar, build4x4 } from './models.js';
+import { buildSportCar, buildRaceCar, build4x4, buildMoped } from './models.js';
 
 /**
  * Fuel notes: `burn` is litres per metre at cruising throttle, so
  * range ≈ tank / burn. Stations sit 1950–2570 m apart, which means every car
  * can reach the next one but none of them can skip one.
+ *
+ * The moped is the deliberate exception. It sips fuel — a fiftieth of what
+ * the sports car drinks per metre — so it can run past five stations and
+ * very nearly a sixth on four and a half litres. What it cannot do is
+ * outrun the clock: capped at 45 km/h it cannot reach a motel bed before
+ * the sleep meter empties, so the last stretch of every night is ridden
+ * asleep. It trades the fuel problem for the sleep one.
  */
 export const CARS = [
   {
@@ -48,6 +55,27 @@ export const CARS = [
     stats: { speed: 1.0, accel: 1.0, grip: 1.0, range: 0.5 },
   },
   {
+    id: 'moped',
+    name: 'AVISPA 49',
+    taglineKey: 'car.moped.tagline',
+    color: '#2e6f4e',
+    build: buildMoped,
+    topSpeed: 15.5, // what the engine would pull, unrestricted
+    speedLimit: 12.5, // and the restrictor: 45 km/h, not a hair more
+    power: 3.6,
+    brakePower: 12,
+    grip: 0.9,
+    offroadGrip: 0.18, // skinny tyres, and sand eats them
+    offroadDrag: 6.5,
+    tank: 4.5,
+    burn: 0.00027,
+    idleBurn: 0.0006,
+    camera: { back: 4.4, height: 1.9, look: 9 },
+    hood: { forward: 0.5, height: 1.42 },
+    collisionRadius: 0.8,
+    stats: { speed: 0.13, accel: 0.2, grip: 0.9, range: 1 },
+  },
+  {
     id: '4x4',
     name: 'RIDGEBACK 4X4',
     taglineKey: 'car.4x4.tagline',
@@ -69,6 +97,8 @@ export const CARS = [
   },
 ];
 
+export const MOPED_TOP_KMH = 45;
+
 export function carById(id) {
   return CARS.find((c) => c.id === id) || CARS[0];
 }
@@ -85,7 +115,21 @@ export function createCar(id) {
   return { spec, model };
 }
 
-/** Range in metres on a full tank at cruising throttle. */
+/** The speed shown on the sticker: the restrictor's, if there is one. */
+export function carTopSpeed(spec) {
+  return spec.speedLimit ?? spec.topSpeed;
+}
+
+/**
+ * Range in metres on a full tank at cruising throttle.
+ *
+ * The engine's idle draw is counted too, over the time the trip takes. It
+ * is a rounding error on a car doing 250 km/h and a third of the tank on a
+ * moped doing 45, so leaving it out would have quoted the moped a range it
+ * has no way of reaching.
+ */
 export function carRange(spec) {
-  return spec.tank / spec.burn;
+  const cruise = carTopSpeed(spec) * 0.86;
+  const perMetre = spec.burn * (0.55 + 0.6 * 0.75) + spec.idleBurn / cruise;
+  return spec.tank / perMetre;
 }

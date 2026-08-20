@@ -16,7 +16,7 @@ import {
   priceBoardTexture,
 } from '../textures.js';
 import { t } from '../i18n.js';
-import { terrainHeight } from './road.js';
+import { groundHeight } from './road.js';
 
 const FIRST_STATION = 1500;
 const MIN_GAP = 1950;
@@ -541,13 +541,13 @@ export class GasStations {
       setPriceBoard(slot.model.userData.signs.price, index);
       const s = stationDistance(index);
       const p = roadPoint(s, 0, this.tmp);
-      slot.model.position.set(p.x, terrainHeight(s, EDGE + 10) + 0.06, p.z);
+      slot.model.position.set(p.x, groundHeight(s, EDGE + 10) + 0.06, p.z);
       slot.model.rotation.y = roadYaw(s);
       slot.model.visible = true;
 
       const sa = Math.max(20, s - 500);
       const pa = roadPoint(sa, EDGE + 3.5, this.tmp);
-      slot.advance.position.set(pa.x, terrainHeight(sa, EDGE + 3.5), pa.z);
+      slot.advance.position.set(pa.x, groundHeight(sa, EDGE + 3.5), pa.z);
       slot.advance.rotation.y = roadYaw(sa) + 0.22;
       slot.advance.visible = true;
     }

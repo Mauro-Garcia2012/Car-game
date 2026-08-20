@@ -52,6 +52,43 @@ export function terrainHeight(s, lateral) {
   return road - 0.55 + blend * (dune * (0.25 + 0.75 * far) + 0.55);
 }
 
+/**
+ * The height of the desert *as drawn*, rather than as computed.
+ *
+ * `terrainHeight` is the analytic surface; the mesh is a grid of triangles
+ * sampled from it, and out where the columns are eighty metres apart the two
+ * are not the same thing. Anything placed with the analytic value ends up
+ * floating over a dune the mesh cut the top off, or sunk into a hollow the
+ * mesh never dug. So scenery asks this instead: it walks the same grid the
+ * ribbon is built on and interpolates the same triangle the renderer draws.
+ */
+export function groundHeight(s, lateral) {
+  const step = CHUNK_LEN / ROWS;
+  const rf = s / step;
+  const r0 = Math.floor(rf);
+  const tr = rf - r0;
+  const sA = r0 * step;
+  const sB = sA + step;
+
+  const lats = TERRAIN_LATERALS;
+  const clamped = Math.max(lats[0], Math.min(lats[lats.length - 1], lateral));
+  let c = 0;
+  while (c < lats.length - 2 && lats[c + 1] < clamped) c++;
+  const latC = lats[c];
+  const latD = lats[c + 1];
+  const tc = (clamped - latC) / (latD - latC);
+
+  const hA = terrainHeight(sA, latC);
+  const hB = terrainHeight(sA, latD);
+  const hD = terrainHeight(sB, latC);
+  const hE = terrainHeight(sB, latD);
+
+  // The cell is split a-b-d / b-e-d, so which half we are in decides the plane.
+  return tr + tc <= 1
+    ? hA + tc * (hB - hA) + tr * (hD - hA)
+    : hB + tr * (hE - hB) + (1 - tc) * (hD - hE);
+}
+
 class Ribbon {
   constructor(laterals, material, { uvScaleV, uvAcross, heightFn }) {
     this.laterals = laterals;

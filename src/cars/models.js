@@ -238,6 +238,223 @@ export function buildSportCar(color = '#d81f2a') {
 }
 
 /* ------------------------------------------------------------------ */
+/* Moped — the 49cc option                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A Spanish-style step-through moped, pedals and all.
+ *
+ * Named around the real thing rather than after it: the machine everybody
+ * pictures here is a trademark, and the rest of the garage is invented
+ * names too.
+ *
+ * The fork, bars, lamp and front mudguard are parented to the front wheel's
+ * hub so they steer with it — on two wheels a front tyre that turns while
+ * the handlebars stay put is the first thing you notice.
+ */
+export function buildMoped(color = '#2e6f4e') {
+  const car = new THREE.Group();
+  const body = paint(color, { metalness: 0.4, roughness: 0.35 });
+  const black = MAT.matteBlack;
+
+  const tube = (r, len, mat, x, y, z, rot = [0, 0, 0], seg = 10) => {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, seg), mat);
+    m.position.set(x, y, z);
+    m.rotation.set(rot[0], rot[1], rot[2]);
+    m.castShadow = true;
+    return m;
+  };
+
+  const FRONT_Z = -0.62;
+  const REAR_Z = 0.58;
+  const RADIUS = 0.33;
+  const GRIP_X = 0.25; // where the hands go, and so where the arms aim
+  const BAR_Y = 0.66; // both measured inside the steering group, which
+  const BAR_Z = 0.18; // hangs off the front hub, not the middle of the bike
+
+  // ---- frame ------------------------------------------------------------
+  // Step-through: the spine drops from the head to the floor, runs flat
+  // under the rider's feet and climbs again to the saddle.
+  car.add(tube(0.045, 0.86, MAT.chrome, 0, 0.66, -0.46, [0.72, 0, 0]));  // down tube
+  car.add(tube(0.05, 0.62, MAT.chrome, 0, 0.34, 0.06, [Math.PI / 2, 0, 0])); // spine
+  car.add(tube(0.045, 0.5, MAT.chrome, 0, 0.55, 0.36, [-0.75, 0, 0]));   // seat tube
+  for (const side of [-1, 1]) {
+    // Footboard and its rail.
+    car.add(part(0.16, 0.05, 0.56, black, side * 0.16, 0.3, 0.02));
+    car.add(tube(0.02, 0.52, MAT.chrome, side * 0.24, 0.31, 0.02, [Math.PI / 2, 0, 0], 8));
+    // Rear swing arm.
+    car.add(tube(0.028, 0.5, black, side * 0.1, 0.4, 0.36, [1.05, 0, 0], 8));
+    // Shock absorber.
+    car.add(tube(0.032, 0.34, MAT.chrome, side * 0.11, 0.52, 0.5, [0.35, 0, 0], 8));
+  }
+
+  // Leg shield and the little front panel behind it.
+  car.add(
+    profilePiece(
+      [
+        [-0.5, 0.36],
+        [-0.6, 0.72],
+        [-0.56, 1.0],
+        [-0.42, 1.0],
+        [-0.44, 0.7],
+        [-0.36, 0.38],
+      ],
+      0.46,
+      body,
+      { bevel: 0.03 }
+    )
+  );
+
+  // Engine, cylinder head and the crankcase behind the pedals.
+  car.add(slab(0.26, 0.24, 0.34, black, 0.08, 0.34, 0.28, [0, 0, 0], 0.05));
+  const barrel = tube(0.075, 0.2, MAT.darkMetal, 0, 0.44, 0.16, [0, 0, Math.PI / 2], 12);
+  car.add(barrel);
+  for (let i = 0; i < 5; i++) {
+    car.add(tube(0.1, 0.016, MAT.darkMetal, -0.06 + i * 0.04, 0.44, 0.16, [0, 0, Math.PI / 2], 12));
+  }
+
+  // Exhaust: header curling down the right side into a stubby silencer.
+  car.add(tube(0.028, 0.42, MAT.chrome, 0.16, 0.26, 0.3, [0.4, 0.5, 0], 8));
+  car.add(tube(0.055, 0.42, MAT.chrome, 0.21, 0.24, 0.6, [Math.PI / 2, 0, 0], 12));
+  car.add(exhaustTip(0.21, 0.24, 0.83, 0.038, 0.08));
+
+  // Pedals, because this is a moped and not a scooter.
+  for (const side of [-1, 1]) {
+    car.add(tube(0.022, 0.2, MAT.chrome, side * 0.13, 0.26, 0.24, [0, 0, Math.PI / 2], 8));
+    car.add(tube(0.02, 0.16, MAT.chrome, side * 0.22, 0.2, side > 0 ? 0.16 : 0.32, [0.4, 0, 0], 8));
+    car.add(part(0.09, 0.03, 0.14, black, side * 0.22, 0.14, side > 0 ? 0.1 : 0.38));
+  }
+
+  // ---- tank, saddle and tail -------------------------------------------
+  car.add(slab(0.24, 0.2, 0.42, body, 0, 0.72, 0.34, [0, 0, 0], 0.07));
+  const saddle = slab(0.28, 0.11, 0.52, MAT.interior, 0, 0.87, 0.42, [0, 0, 0], 0.055);
+  car.add(saddle);
+  car.add(part(0.3, 0.04, 0.06, MAT.chrome, 0, 0.83, 0.68)); // grab rail
+  // Rear rack.
+  car.add(part(0.26, 0.025, 0.3, MAT.chrome, 0, 0.86, 0.82));
+  for (const side of [-1, 1]) {
+    car.add(tube(0.014, 0.2, MAT.chrome, side * 0.11, 0.77, 0.9, [0.5, 0, 0], 6));
+  }
+  car.add(part(0.14, 0.09, 0.05, MAT.tail, 0, 0.72, 0.95));
+  car.add(part(0.2, 0.14, 0.02, MAT.white, 0, 0.58, 0.97)); // number plate
+  // Rear mudguard.
+  car.add(fenderArch(RADIUS + 0.09, 0.2, 0, RADIUS, REAR_Z, body, 0.045));
+
+  // ---- rider -------------------------------------------------------------
+  const jacket = paint('#2b3550', { metalness: 0.05, roughness: 0.85 });
+  const jeans = paint('#3d4a63', { metalness: 0.02, roughness: 0.95 });
+  const skin = paint('#c69a72', { metalness: 0, roughness: 0.8 });
+  const rider = new THREE.Group();
+  rider.position.set(0, 0, 0.06);
+  car.add(rider);
+  rider.add(slab(0.34, 0.44, 0.26, jacket, 0, 1.16, 0.24, [0.28, 0, 0], 0.1));
+  rider.add(slab(0.3, 0.16, 0.22, jacket, 0, 1.36, 0.14, [0, 0, 0], 0.07)); // shoulders
+  const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.14, 18, 14), MAT.chrome);
+  helmet.position.set(0, 1.52, 0.1);
+  helmet.castShadow = true;
+  rider.add(helmet);
+  rider.add(part(0.2, 0.09, 0.08, MAT.glass, 0, 1.5, -0.01)); // visor
+  for (const side of [-1, 1]) {
+    // Upper arm and forearm aimed at where the grips actually ended up,
+    // rather than at where they were guessed to be.
+    const grip = new THREE.Vector3(
+      side * GRIP_X,
+      RADIUS + BAR_Y,
+      FRONT_Z + BAR_Z
+    );
+    const shoulder = new THREE.Vector3(side * 0.2, 1.33, 0.16);
+    const elbow = shoulder
+      .clone()
+      .lerp(grip, 0.48)
+      .add(new THREE.Vector3(side * 0.04, -0.07, 0.04));
+    for (const [from, to, r, mat] of [
+      [shoulder, elbow, 0.048, jacket],
+      [elbow, grip, 0.04, skin],
+    ]) {
+      const dir = to.clone().sub(from);
+      const seg = tube(r, dir.length(), mat, 0, 0, 0, [0, 0, 0], 8);
+      seg.position
+        .copy(from)
+        .add(to)
+        .multiplyScalar(0.5)
+        .sub(rider.position);
+      seg.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        dir.normalize()
+      );
+      rider.add(seg);
+    }
+    rider.add(
+      part(0.07, 0.07, 0.09, black, grip.x, grip.y, grip.z - rider.position.z)
+    );
+    // Thigh along the saddle, shin down to the footboard.
+    rider.add(tube(0.075, 0.4, jeans, side * 0.13, 0.94, 0.2, [1.42, 0, 0], 8));
+    rider.add(tube(0.06, 0.42, jeans, side * 0.15, 0.62, 0.06, [0.28, 0, 0], 8));
+    rider.add(part(0.11, 0.08, 0.24, black, side * 0.16, 0.37, -0.04)); // boot
+  }
+
+  // ---- wheels ------------------------------------------------------------
+  const wheels = [
+    { x: 0, z: FRONT_Z, radius: RADIUS, width: 0.085, spokes: 6, front: true, rimMaterial: MAT.darkMetal },
+    { x: 0, z: REAR_Z, radius: RADIUS, width: 0.095, spokes: 6, front: false, rimMaterial: MAT.darkMetal },
+  ];
+  mountWheels(car, wheels);
+
+  // ---- steering assembly, hung off the front hub -------------------------
+  const front = car.userData.wheels.find((w) => w.front).root;
+  const steer = new THREE.Group();
+  front.add(steer);
+
+  // Fork legs from the hub up to the head, with the usual rake back.
+  const RAKE = 0.24;
+  for (const side of [-1, 1]) {
+    steer.add(tube(0.026, 0.64, MAT.chrome, side * 0.085, 0.31, 0.075, [RAKE, 0, 0], 8));
+  }
+  steer.add(tube(0.036, 0.2, MAT.chrome, 0, 0.6, 0.15, [RAKE, 0, 0], 8));
+
+  // Handlebars, grips, levers and mirrors.
+  steer.add(tube(0.022, 0.58, MAT.chrome, 0, BAR_Y, BAR_Z, [0, 0, Math.PI / 2], 8));
+  for (const side of [-1, 1]) {
+    steer.add(tube(0.031, 0.13, black, side * GRIP_X, BAR_Y, BAR_Z, [0, 0, Math.PI / 2], 8));
+    steer.add(part(0.1, 0.02, 0.03, MAT.chrome, side * 0.19, BAR_Y - 0.03, BAR_Z - 0.07));
+    steer.add(
+      wingMirror(side, side * (GRIP_X + 0.02), BAR_Y + 0.05, BAR_Z, MAT.chrome, {
+        scale: 0.7,
+      })
+    );
+  }
+
+  // Headlamp: one round lamp in a chrome shell, speedo behind it.
+  const shell = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.115, 0.1, 0.12, 18),
+    MAT.chrome
+  );
+  shell.rotation.x = Math.PI / 2;
+  shell.position.set(0, 0.5, -0.02);
+  shell.castShadow = true;
+  steer.add(shell);
+  const lens = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.1, 0.1, 0.03, 18),
+    MAT.headlight
+  );
+  lens.rotation.x = Math.PI / 2;
+  lens.position.set(0, 0.5, -0.08);
+  steer.add(lens);
+  const clock = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.055, 0.055, 0.05, 14),
+    black
+  );
+  clock.rotation.x = Math.PI / 2 - 0.45;
+  clock.position.set(0, BAR_Y + 0.06, BAR_Z + 0.05);
+  steer.add(clock);
+
+  // Front mudguard, wrapped round the hub.
+  steer.add(fenderArch(RADIUS + 0.07, 0.17, 0, 0, 0, body, 0.04));
+
+  return car;
+}
+
+/* ------------------------------------------------------------------ */
 /* Race car — GT prototype                                             */
 /* ------------------------------------------------------------------ */
 
