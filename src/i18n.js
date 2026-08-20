@@ -97,6 +97,9 @@ const STRINGS = {
     'msg.dropOffAhead': 'YOUR PASSENGER GETS OUT AT THIS STOP',
     'msg.dropOff': 'DROPPED OFF — {pay} IN YOUR POCKET',
     'msg.fareLost': 'YOU DROVE PAST THEIR STOP — NO FARE',
+    'msg.crateEmpty': 'EMPTY CRATE — NOTHING BUT SAND',
+    'msg.crateSmall': 'CRATE OPENED — {cash}',
+    'msg.crateBig': 'JACKPOT CRATE — {cash}!',
 
     'pause.title': 'PAUSED',
     'pause.text': "Take a breath. The desert isn't going anywhere.",
@@ -211,6 +214,9 @@ const STRINGS = {
     'msg.dropOffAhead': 'TU PASAJERO SE BAJA EN ESTA PARADA',
     'msg.dropOff': 'ENTREGADO — {pay} EN EL BOLSILLO',
     'msg.fareLost': 'TE PASASTE DE SU PARADA — SIN COBRAR',
+    'msg.crateEmpty': 'CAJA VACÍA — SOLO ARENA',
+    'msg.crateSmall': 'CAJA ABIERTA — {cash}',
+    'msg.crateBig': '¡CAJA PREMIADA — {cash}!',
 
     'pause.title': 'EN PAUSA',
     'pause.text': 'Respira. El desierto no se va a ir a ninguna parte.',

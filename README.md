@@ -72,6 +72,11 @@ automatically.
   **12% more fuel**, and while one is aboard the HUD counts the metres down to
   their stop. Stop where they asked and you get paid; drive **500 m past it**
   and they get out for nothing.
+- **Crates in the sand.** Every 300 m or so a crate sits about **10 m off the
+  tarmac**, fallen off somebody's truck. Three out of four hold nothing at all,
+  roughly one in five is worth **$10**, and about **3%** are worth **$100**.
+  Swerving out for one costs you fuel, seconds and the grip of the sand, so
+  every crate is a small bet — and once you have broken one open it stays open.
 - **Photo enforcement, very occasionally.** About one speed camera every 13 km,
   each one signposted 300 m ahead. Cross it more than 8 km/h over the posted
   limit and the flash goes off: **$50 gone**. Slow down for it and it costs you
@@ -148,7 +153,8 @@ src/
   textures.js       every texture, painted on a <canvas>
   rng.js            deterministic hash noise
   cars/             the three player cars, built from extruded side profiles
-  world/            sky, road, terrain, scenery, stations, motels, signs, cameras
+  world/            sky, road, terrain, scenery, stations, motels, signs,
+                    cameras, roadside crates
 vendor/three/       three.js r169 (MIT), vendored so the game runs offline
 ```
 
@@ -258,6 +264,11 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   mientras va contigo el HUD va **descontando los metros** que quedan hasta su
   parada. Si paras donde te pidió, cobras; si te pasas **500 m**, se baja sin
   pagarte.
+- **Cajas en la arena.** Cada 300 m más o menos hay una caja a unos **10 m de
+  la carretera**, caída del camión de alguien. Tres de cada cuatro no llevan
+  nada, alrededor de una de cada cinco lleva **$10** y un **3%** lleva **$100**.
+  Salirte a por una te cuesta gasolina, segundos y el agarre de la arena, así
+  que cada caja es una pequeña apuesta; y una vez abierta, se queda abierta.
 - **Radares, muy de vez en cuando.** Uno cada 13 km más o menos, siempre
   avisado con un cartel 300 m antes. Si pasas a más de 8 km/h por encima del
   límite, salta el flash: **$50 menos**. Si levantas el pie, no te cuesta nada

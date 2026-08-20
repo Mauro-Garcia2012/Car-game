@@ -14,6 +14,7 @@ import {
   ZONE_HALF,
 } from './world/gasStation.js';
 import { Motels, motelDistance, nextMotelIndex } from './world/motel.js';
+import { Crates, BIG_PRIZE } from './world/crates.js';
 import { Fatigue } from './fatigue.js';
 import {
   Fares,
@@ -93,6 +94,8 @@ export class Game {
     this.road = new RoadSystem(this.scene);
     this.props = new PropField(this.scene, this.road.slotCount);
     this.road.addListener(this.props);
+    this.crates = new Crates(this.scene, this.road.slotCount);
+    this.road.addListener(this.crates);
     this.stations = new GasStations(this.scene);
     onLanguageChange(() => this.stations.retranslate());
     this.signs = new RoadSigns(this.scene);
@@ -181,6 +184,7 @@ export class Game {
     this.vehicle.reset(0);
     this.vehicle.yaw = roadYaw(0);
     this.traffic.reset();
+    this.crates.reset();
     this.dust.clear();
     this.stops.clear();
     this.skipped.clear();
@@ -287,6 +291,7 @@ export class Game {
     if (!frozen) {
       this.handleCollisions();
       this.handleSpeedCamera();
+      this.handleCrates();
       this.handleRefuelling(dt);
       this.handleMotel(dt);
       this.handleFares();
@@ -345,6 +350,42 @@ export class Game {
     this.audio.blip(1400, 0.09, 'square', 0.2);
     this.ui.cameraFlash();
     this.flash('msg.ticket', 'danger', 3.2, { fine: `$${fine.toFixed(0)}` });
+  }
+
+  /**
+   * Crates off the shoulder. Most are empty, so the swerve is a gamble: the
+   * detour costs fuel and seconds, and only now and then does it pay.
+   */
+  handleCrates() {
+    const v = this.vehicle;
+    const loot = this.crates.collect(v.s, v.lateral);
+    if (!loot) return;
+
+    // Splinters and sand where the crate was.
+    for (let i = 0; i < 14; i++) {
+      this.dust.emit(loot.x, loot.y + 0.5, loot.z, {
+        spread: 1.3,
+        size: 2.2,
+        life: 1.0,
+        rise: 1.6,
+        color: [0.66, 0.5, 0.3],
+      });
+    }
+
+    if (loot.cash <= 0) {
+      this.audio.blip(150, 0.14, 'sine', 0.12);
+      this.flash('msg.crateEmpty', 'warn', 1.8);
+      return;
+    }
+
+    this.cash += loot.cash;
+    this.earned += loot.cash;
+    const big = loot.cash >= BIG_PRIZE;
+    if (big) this.audio.fanfare();
+    else this.audio.blip(920, 0.12, 'triangle', 0.16);
+    this.flash(big ? 'msg.crateBig' : 'msg.crateSmall', 'good', big ? 3.4 : 2.4, {
+      cash: `$${loot.cash}`,
+    });
   }
 
   handleRefuelling(dt) {
