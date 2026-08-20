@@ -407,6 +407,14 @@ kbd {
   color: #fff2d8;
 }
 
+.stat.day {
+  min-width: 72px;
+}
+
+.stat.day strong {
+  color: var(--amber);
+}
+
 .hud-message {
   position: absolute;
   top: 16%;
@@ -760,6 +768,31 @@ kbd {
   transition: opacity 0.3s ease;
 }
 
+#camera-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0;
+  background: #ffffff;
+}
+
+#camera-flash.pop {
+  animation: shutter 0.42s ease-out;
+}
+
+@keyframes shutter {
+  0% {
+    opacity: 0.85;
+  }
+  35% {
+    opacity: 0.15;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 #drowsy-veil.asleep {
   background: rgba(2, 2, 3, 0.94);
   transition: opacity 0.12s ease;
@@ -848,7 +881,7 @@ body.touch .touch-controls {
 
 .result-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   margin-bottom: 20px;
 }
@@ -890,8 +923,13 @@ body.touch .touch-controls {
   .fuel-block {
     width: 54vw;
   }
-  .hud-top .stat:nth-child(3) {
+  /* Day, distance and cash survive on a phone; the rest can go. */
+  .hud-top .stat:nth-child(3),
+  .hud-top .stat:nth-child(5) {
     display: none;
+  }
+  .result-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
   .menu-panel {
     width: 100vw;

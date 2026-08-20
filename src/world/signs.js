@@ -1,5 +1,5 @@
 /**
- * Speed limit signs, Nevada style.
+ * Speed limit signs and the very occasional speed camera, Nevada style.
  *
  * Out on a rural two-lane highway in Clark County the posted limit is 70 mph
  * (a couple of stretches drop to 65), it steps down to 55 on the approach to
@@ -14,7 +14,7 @@
 import * as THREE from 'three';
 import { roadPoint, roadYaw, EDGE } from '../track.js';
 import { hashRand } from '../rng.js';
-import { speedLimitTexture } from '../textures.js';
+import { speedLimitTexture, signTexture } from '../textures.js';
 import { terrainHeight } from './road.js';
 import { stationDistance, nextStationIndex } from './gasStation.js';
 
@@ -194,5 +194,210 @@ export class RoadSigns {
       }
       slot.group.visible = true;
     }
+  }
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Speed cameras                                                       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Photo enforcement, and there is almost none of it: one every 13 km or so,
+ * which on a normal run means you might meet two. A warning board stands
+ * 300 m ahead of each one, so getting caught is a choice.
+ */
+const FIRST_CAMERA = 11000;
+const CAMERA_GAP = 13000;
+const CAMERA_SPREAD = 4000;
+/** Grace over the posted limit before the shutter goes, in km/h. */
+const TOLERANCE_KMH = 8;
+/** What the ticket costs. */
+export const FINE = 50;
+const WARNING_AT = 300;
+
+const cameras = [FIRST_CAMERA];
+
+export function cameraDistance(i) {
+  while (cameras.length <= i) {
+    const k = cameras.length - 1;
+    cameras.push(
+      cameras[k] + CAMERA_GAP + Math.round(hashRand(k, 907) * CAMERA_SPREAD)
+    );
+  }
+  return cameras[i];
+}
+
+export function nextCameraIndex(s) {
+  let i = 0;
+  while (cameraDistance(i) < s) i++;
+  return i;
+}
+
+function buildCamera() {
+  const g = new THREE.Group();
+  const post = new THREE.MeshStandardMaterial({
+    color: '#8f949a',
+    roughness: 0.5,
+    metalness: 0.7,
+  });
+  const shell = new THREE.MeshStandardMaterial({
+    color: '#4a4f56',
+    roughness: 0.55,
+    metalness: 0.6,
+  });
+  const lens = new THREE.MeshStandardMaterial({
+    color: '#0b0d10',
+    roughness: 0.15,
+    metalness: 0.4,
+  });
+  const flash = new THREE.MeshStandardMaterial({
+    color: '#d8dce2',
+    emissive: '#ffffff',
+    emissiveIntensity: 0.15,
+    roughness: 0.3,
+  });
+
+  const pole = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.6, 0.16), post);
+  pole.position.y = 2.3;
+  pole.castShadow = true;
+  g.add(pole);
+
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.52, 0.9), shell);
+  head.position.set(-0.35, 4.3, 0);
+  head.castShadow = true;
+  g.add(head);
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.14, 1.0), shell)).position.set(
+    -0.35,
+    4.62,
+    0
+  );
+
+  // Lens and flash face back down the road, at the traffic coming towards it.
+  const eye = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.18, 0.12, 14), lens);
+  eye.rotation.x = Math.PI / 2;
+  eye.position.set(-0.35, 4.3, 0.48);
+  g.add(eye);
+
+  const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.3, 0.1), flash);
+  lamp.position.set(-0.35, 3.82, 0.44);
+  g.add(lamp);
+  g.userData.lamp = lamp;
+
+  // The regulatory plate every photo-enforced stretch has to carry.
+  const board = new THREE.Mesh(
+    new THREE.BoxGeometry(0.8, 0.8, 0.05),
+    new THREE.MeshStandardMaterial({
+      map: signTexture(['SPEED', 'PHOTO', 'ENFORCED'], {
+        bg: '#f4f3ef',
+        fg: '#15171a',
+      }),
+      roughness: 0.6,
+    })
+  );
+  board.position.set(0, 2.4, 0.12);
+  board.castShadow = true;
+  g.add(board);
+  return g;
+}
+
+function buildCameraWarning() {
+  const g = new THREE.Group();
+  const post = new THREE.MeshStandardMaterial({
+    color: '#9aa0a6',
+    roughness: 0.5,
+    metalness: 0.7,
+  });
+  const pole = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.0, 0.1), post);
+  pole.position.y = 1.5;
+  g.add(pole);
+  const board = new THREE.Mesh(
+    new THREE.BoxGeometry(1.5, 1.5, 0.06),
+    new THREE.MeshStandardMaterial({
+      map: signTexture(['SPEED', 'PHOTO', 'ENFORCED', 'AHEAD'], {
+        bg: '#f4f3ef',
+        fg: '#15171a',
+      }),
+      roughness: 0.6,
+    })
+  );
+  board.position.set(0, 3.4, 0);
+  board.castShadow = true;
+  g.add(board);
+  return g;
+}
+
+export class SpeedCameras {
+  constructor(scene, poolSize = 2) {
+    this.slots = [];
+    for (let i = 0; i < poolSize; i++) {
+      const camera = buildCamera();
+      const warning = buildCameraWarning();
+      camera.visible = false;
+      warning.visible = false;
+      scene.add(camera, warning);
+      this.slots.push({ index: -1, camera, warning, flashFor: 0 });
+    }
+    this.lastS = 0;
+    this.fired = new Set();
+    this.tmp = { x: 0, y: 0, z: 0 };
+  }
+
+  reset(s = 0) {
+    this.lastS = s;
+    this.fired.clear();
+    for (const slot of this.slots) slot.flashFor = 0;
+  }
+
+  update(dt, playerS) {
+    const base = Math.max(0, nextCameraIndex(playerS) - 1);
+    for (let k = 0; k < this.slots.length; k++) {
+      const slot = this.slots[k];
+      const index = base + k;
+      if (slot.index !== index) {
+        slot.index = index;
+        const s = cameraDistance(index);
+        const lateral = EDGE + 2.2;
+        const p = roadPoint(s, lateral, this.tmp);
+        slot.camera.position.set(p.x, terrainHeight(s, lateral), p.z);
+        slot.camera.rotation.y = roadYaw(s) - 0.12;
+        slot.camera.visible = true;
+
+        const sw = Math.max(20, s - WARNING_AT);
+        const pw = roadPoint(sw, EDGE + 3.0, this.tmp);
+        slot.warning.position.set(pw.x, terrainHeight(sw, EDGE + 3.0), pw.z);
+        slot.warning.rotation.y = roadYaw(sw) - 0.1;
+        slot.warning.visible = true;
+      }
+      if (slot.flashFor > 0) {
+        slot.flashFor -= dt;
+        const lit = slot.flashFor > 0;
+        slot.camera.userData.lamp.material.emissiveIntensity = lit ? 4 : 0.15;
+      }
+    }
+  }
+
+  /**
+   * Call once a frame with the car's speed. Returns the camera index that
+   * just took your picture, or -1.
+   */
+  check(playerS, speedKmh) {
+    const from = this.lastS;
+    this.lastS = playerS;
+    if (playerS <= from) return -1;
+
+    for (const slot of this.slots) {
+      const index = slot.index;
+      if (index < 0 || this.fired.has(index)) continue;
+      const s = cameraDistance(index);
+      if (from >= s || playerS < s) continue; // not crossed this frame
+      this.fired.add(index);
+      const limitKmh = speedLimitAt(s) * 1.60934;
+      if (speedKmh > limitKmh + TOLERANCE_KMH) {
+        slot.flashFor = 0.18;
+        return index;
+      }
+    }
+    return -1;
   }
 }

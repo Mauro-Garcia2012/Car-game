@@ -15,7 +15,7 @@ import {
 } from './world/gasStation.js';
 import { Motels, motelDistance, nextMotelIndex } from './world/motel.js';
 import { Fatigue } from './fatigue.js';
-import { RoadSigns, speedLimitAt } from './world/signs.js';
+import { RoadSigns, SpeedCameras, speedLimitAt, FINE } from './world/signs.js';
 import { createSky } from './world/sky.js';
 import { Vehicle, SURFACE } from './vehicle.js';
 import { Traffic } from './traffic.js';
@@ -49,6 +49,7 @@ export class Game {
     this.refuelling = false;
     this.checkingIn = 0;
     this.cash = START_CASH;
+    this.day = 1;
     this.fatigue = new Fatigue();
 
     this.renderer = new THREE.WebGLRenderer({
@@ -86,6 +87,7 @@ export class Game {
     this.stations = new GasStations(this.scene);
     onLanguageChange(() => this.stations.retranslate());
     this.signs = new RoadSigns(this.scene);
+    this.cameras = new SpeedCameras(this.scene);
     this.motels = new Motels(this.scene);
     this.traffic = new Traffic(this.scene);
     this.dust = new DustSystem(this.scene);
@@ -177,8 +179,10 @@ export class Game {
     this.checkingIn = 0;
     this.cash = START_CASH;
     this.spent = 0;
+    this.day = 1;
     resetMarket();
     this.stations.refreshPrices();
+    this.cameras.reset(0);
     this.fatigue.reset();
     this.lowFuelWarned = false;
     this.drowsyWarned = false;
@@ -220,6 +224,7 @@ export class Game {
       textParams,
       distance: this.vehicle.distance,
       stops: this.stops.size,
+      days: this.day,
     });
   }
 
@@ -260,11 +265,13 @@ export class Game {
     this.road.update(v.s);
     this.stations.update(v.s);
     this.signs.update(v.s);
+    this.cameras.update(dt, v.s);
     this.motels.update(v.s);
     this.traffic.update(dt, v.s);
 
     if (!frozen) {
       this.handleCollisions();
+      this.handleSpeedCamera();
       this.handleRefuelling(dt);
       this.handleMotel(dt);
       this.handleStationBookkeeping();
@@ -310,6 +317,18 @@ export class Game {
         this.flash(severity > 0.55 ? 'msg.bigCrash' : 'msg.crash', 'danger', 1.4);
       }
     }
+  }
+
+  /** Photo enforcement: rare, signposted, and $50 a shot. */
+  handleSpeedCamera() {
+    const v = this.vehicle;
+    const caught = this.cameras.check(v.s, Math.abs(v.speed) * 3.6);
+    if (caught < 0) return;
+    const fine = Math.min(this.cash, FINE);
+    this.cash -= fine;
+    this.audio.blip(1400, 0.09, 'square', 0.2);
+    this.ui.cameraFlash();
+    this.flash('msg.ticket', 'danger', 3.2, { fine: `$${fine.toFixed(0)}` });
   }
 
   handleRefuelling(dt) {
@@ -374,6 +393,7 @@ export class Game {
       this.checkingIn = 0;
       this.fatigue.sleep();
       this.beds.add(index);
+      this.day += 1; // a night in a bed is what turns the calendar over
       this.audio.fanfare();
       // Every pump on the highway moves overnight, and you find out at dawn.
       // The figure quoted is what the next station down the road now charges.
@@ -381,6 +401,7 @@ export class Game {
       this.stations.refreshPrices();
       const nextPump = fuelPricePerGallon(nextStationIndex(v.s));
       this.flash('msg.sleptPrice', 'good', 4.5, {
+        day: this.day,
         delta: `$${hike.delta.toFixed(2)}`,
         price: `$${nextPump.toFixed(2)}`,
       });
@@ -471,6 +492,7 @@ export class Game {
     const toMotel = motelDistance(motelIdx) - v.s;
 
     this.ui.update({
+      day: this.day,
       speedKmh: Math.abs(v.speed) * 3.6,
       speedLimit,
       topKmh: spec.topSpeed * 3.6,

@@ -60,7 +60,13 @@ automatically.
 - **Prices only move overnight.** Every night you spend in a motel the market
   jumps **8 to 30 cents**, occasionally more, and you are told what it costs
   now the moment you wake up. Every pump moves together. Nothing on this road
-  will ever ask more than **$8.99**.
+  will ever ask more than **$8.99**. Each night also turns the calendar over,
+  and the **day counter** in the corner is the clock the whole run is measured
+  against.
+- **Photo enforcement, very occasionally.** About one speed camera every 13 km,
+  each one signposted 300 m ahead. Cross it more than 8 km/h over the posted
+  limit and the flash goes off: **$50 gone**. Slow down for it and it costs you
+  nothing but a few seconds.
 - **Sleep runs on the clock, not the odometer.** Six minutes of driving takes
   you from wide awake to nodding off, and the only place to fix it is a
   **motel** — the bed is free, but the night costs you at the pump, and they
@@ -132,7 +138,7 @@ src/
   textures.js       every texture, painted on a <canvas>
   rng.js            deterministic hash noise
   cars/             the three player cars, built from extruded side profiles
-  world/            sky, road, terrain, scenery, gas stations, motels, signage
+  world/            sky, road, terrain, scenery, stations, motels, signs, cameras
 vendor/three/       three.js r169 (MIT), vendored so the game runs offline
 ```
 
@@ -231,6 +237,12 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   réplica que verás junto al velocímetro siempre coinciden; si te pasas, la
   réplica se pone roja. No hay multas: aquí lo único que castiga es la aguja de
   la gasolina.
+- **Cada noche pasa un día**, y el contador de días de la esquina es el reloj
+  contra el que se mide toda la partida.
+- **Radares, muy de vez en cuando.** Uno cada 13 km más o menos, siempre
+  avisado con un cartel 300 m antes. Si pasas a más de 8 km/h por encima del
+  límite, salta el flash: **$50 menos**. Si levantas el pie, no te cuesta nada
+  más que unos segundos.
 - La barra verde del HUD es tu autonomía y la marca blanca es la próxima
   gasolinera. **Cuando la marca se pone roja, ya no llegas.** La barra azul es
   el sueño, y a su derecha tienes los kilómetros hasta el próximo motel.

@@ -46,11 +46,13 @@ export class UI {
       refuelLitres: $('refuel-litres'),
       limitSign: $('limit-sign'),
       limitValue: $('limit-value'),
+      day: $('hud-day'),
       cash: $('hud-cash'),
       sleepBar: $('sleep-bar'),
       sleepFill: $('sleep-fill'),
       motel: $('hud-motel'),
       veil: $('drowsy-veil'),
+      cameraFlash: $('camera-flash'),
       refuelPrice: $('refuel-price'),
       checkinPanel: $('checkin-panel'),
       checkinFill: $('checkin-fill'),
@@ -58,6 +60,7 @@ export class UI {
       overText: $('over-text'),
       overDistance: $('over-distance'),
       overStops: $('over-stops'),
+      overDays: $('over-days'),
       overBest: $('over-best'),
     };
 
@@ -164,9 +167,9 @@ export class UI {
   }
 
   /** @param {{titleKey:string, textKey:string, textParams:object,
-   *           distance:number, stops:number}} result */
+   *           distance:number, stops:number, days:number}} result */
   showGameOver(result) {
-    const { titleKey, textKey, textParams, distance, stops } = result;
+    const { titleKey, textKey, textParams, distance, stops, days } = result;
     this.lastResult = result;
     this.best = Math.max(this.best, distance);
     localStorage.setItem(BEST_KEY, String(Math.round(this.best)));
@@ -174,8 +177,17 @@ export class UI {
     this.el.overText.textContent = t(textKey, textParams);
     this.el.overDistance.textContent = km(distance);
     this.el.overStops.textContent = String(stops);
+    this.el.overDays.textContent = String(days);
     this.el.overBest.textContent = km(this.best);
     this.el.gameover.classList.remove('hidden');
+  }
+
+  /** Blows out the screen for a moment, the way a camera flash does. */
+  cameraFlash() {
+    const el = this.el.cameraFlash;
+    el.classList.remove('pop');
+    void el.offsetWidth; // restart the animation
+    el.classList.add('pop');
   }
 
   /** Shows a HUD message by translation key, so it survives a language swap. */
@@ -194,7 +206,8 @@ export class UI {
   }
 
   /**
-   * @param {{speedKmh:number, topKmh:number, speedLimit:number, gear:number,
+   * @param {{day:number, speedKmh:number, topKmh:number, speedLimit:number,
+   *          gear:number,
    *          engineOn:boolean,
    *          fuel:number, tank:number, rangeLeft:number, toStation:number,
    *          distance:number, stops:number, damage:number, cash:number,
@@ -241,6 +254,7 @@ export class UI {
     e.stops.textContent = String(s.stops);
     e.damage.style.width = `${s.damage}%`;
 
+    e.day.textContent = String(s.day);
     e.cash.textContent = `$${s.cash.toFixed(0)}`;
 
     // Sleep: a clock, not a distance. The motel is the only refill.

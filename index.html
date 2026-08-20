@@ -70,9 +70,16 @@
     <!-- Tunnel vision as the driver nods off ------------------------->
     <div id="drowsy-veil"></div>
 
+    <!-- The speed camera going off -------------------------------------->
+    <div id="camera-flash"></div>
+
     <!-- HUD ----------------------------------------------------------->
     <div id="hud" class="hidden">
       <div class="hud-top">
+        <div class="stat day">
+          <label data-i18n="hud.day">Day</label>
+          <strong id="hud-day">1</strong>
+        </div>
         <div class="stat">
           <label data-i18n="hud.distance">Distance</label>
           <strong id="hud-distance">0.00 km</strong>
@@ -203,6 +210,10 @@
           <div>
             <label data-i18n="over.stops">Fuel stops</label
             ><strong id="over-stops">—</strong>
+          </div>
+          <div>
+            <label data-i18n="over.days">Days</label
+            ><strong id="over-days">—</strong>
           </div>
           <div>
             <label data-i18n="over.best">Best run</label

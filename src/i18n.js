@@ -43,6 +43,7 @@ const STRINGS = {
     'car.race.tagline': 'GT prototype, thirsty and vicious',
     'car.4x4.tagline': 'Slow, unstoppable, huge tank',
 
+    'hud.day': 'Day',
     'hud.distance': 'Distance',
     'hud.stops': 'Stops made',
     'hud.best': 'Best',
@@ -76,11 +77,12 @@ const STRINGS = {
     'msg.stopToSleep': 'PARK AT THE MOTEL TO SLEEP',
     'msg.checkingIn': 'CHECKING IN…',
     'msg.sleptPrice':
-      'SLEPT LIKE A ROCK\nGAS WENT UP {delta} OVERNIGHT — NOW {price}/GAL',
+      'DAY {day} — SLEPT LIKE A ROCK\nGAS WENT UP {delta} OVERNIGHT — NOW {price}/GAL',
     'msg.drowsy': 'YOU ARE GETTING SLEEPY',
     'msg.fallingAsleep': "YOU CAN'T KEEP YOUR EYES OPEN",
     'msg.asleep': 'ASLEEP AT THE WHEEL',
     'msg.noCash': 'NO CASH FOR FUEL',
+    'msg.ticket': 'PHOTO ENFORCED — {fine} TICKET',
 
     'pause.title': 'PAUSED',
     'pause.text': "Take a breath. The desert isn't going anywhere.",
@@ -98,6 +100,7 @@ const STRINGS = {
       'Dry tank, empty wallet, {km} km short of the next pumps. Out here that is the same thing as the end of the road.',
     'over.distance': 'Distance',
     'over.stops': 'Fuel stops',
+    'over.days': 'Days',
     'over.best': 'Best run',
     'over.retry': 'DRIVE AGAIN',
     'over.changeCar': 'CHANGE CAR',
@@ -139,6 +142,7 @@ const STRINGS = {
     'car.race.tagline': 'Prototipo GT, sediento y salvaje',
     'car.4x4.tagline': 'Lento, imparable, depósito enorme',
 
+    'hud.day': 'Día',
     'hud.distance': 'Distancia',
     'hud.stops': 'Paradas',
     'hud.best': 'Récord',
@@ -173,11 +177,12 @@ const STRINGS = {
     'msg.stopToSleep': 'APARCA EN EL MOTEL PARA DORMIR',
     'msg.checkingIn': 'REGISTRÁNDOTE…',
     'msg.sleptPrice':
-      'HAS DORMIDO DE UN TIRÓN\nLA GASOLINA SUBIÓ {delta} ESTA NOCHE — AHORA {price}/GAL',
+      'DÍA {day} — HAS DORMIDO DE UN TIRÓN\nLA GASOLINA SUBIÓ {delta} ESTA NOCHE — AHORA {price}/GAL',
     'msg.drowsy': 'TE ESTÁ ENTRANDO SUEÑO',
     'msg.fallingAsleep': 'NO PUEDES MANTENER LOS OJOS ABIERTOS',
     'msg.asleep': 'TE HAS DORMIDO AL VOLANTE',
     'msg.noCash': 'NO TE QUEDA DINERO PARA GASOLINA',
+    'msg.ticket': 'RADAR — MULTA DE {fine}',
 
     'pause.title': 'EN PAUSA',
     'pause.text': 'Respira. El desierto no se va a ir a ninguna parte.',
@@ -195,6 +200,7 @@ const STRINGS = {
       'Depósito seco, cartera vacía y a {km} km de los surtidores. Aquí fuera eso es exactamente el final del camino.',
     'over.distance': 'Distancia',
     'over.stops': 'Repostajes',
+    'over.days': 'Días',
     'over.best': 'Mejor viaje',
     'over.retry': 'CONDUCIR OTRA VEZ',
     'over.changeCar': 'CAMBIAR DE COCHE',
