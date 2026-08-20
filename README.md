@@ -138,6 +138,8 @@ will not outrun anything.
 ```
 index.html          markup for the menu, HUD and overlays
 styles.css          UI skin
+tools/
+  build-single.sh   packs the game into one self-contained HTML file
 src/
   main.js           boot and the animation loop
   game.js           game state, rules, refuelling, camera work
