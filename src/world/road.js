@@ -12,8 +12,8 @@ import { noise2 } from '../rng.js';
 import { asphaltTexture, sandTexture } from '../textures.js';
 
 export const CHUNK_LEN = 100;
-const ROWS = 14; // quads along the chunk (~7 m each)
-const ROAD_COLS = 8;
+const ROWS = 30; // quads along the chunk (~3.3 m each)
+const ROAD_COLS = 14;
 const CHUNKS_AHEAD = 18;
 const CHUNKS_BEHIND = 2;
 
@@ -26,7 +26,7 @@ const ROAD_LATERALS = Array.from(
 /** Desert samples: dense next to the shoulder, sparse towards the horizon. */
 const TERRAIN_LATERALS = (() => {
   const half = [];
-  const K = 16;
+  const K = 26;
   for (let k = 0; k <= K; k++) {
     half.push(EDGE + 1600 * Math.pow(k / K, 2.7));
   }

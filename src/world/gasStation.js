@@ -219,13 +219,122 @@ function totemTexture() {
 }
 
 /** Repaints a totem's price board, disposing the texture it replaces. */
-function setPriceBoard(mesh, index) {
-  const previous = mesh.material.map;
+function setPriceBoard(board, index) {
+  const previous = board.material.map;
   const art = priceBoardTexture(fuelPricePerGallon(index));
-  mesh.material.map = art;
-  mesh.material.emissiveMap = art;
-  mesh.material.needsUpdate = true;
+  board.material.map = art;
+  board.material.emissiveMap = art;
+  board.material.needsUpdate = true;
   if (previous) previous.dispose();
+}
+
+/** How far off the centre line the pylon stands: past the shoulder. */
+const TOTEM_LATERAL = 11.5;
+
+/**
+ * The pylon sign you read from a kilometre out: brand cabinet on top, price
+ * board under it, both mounted on a single tapered column.
+ *
+ * The cabinets are deeper than the column, so it disappears inside them
+ * instead of splitting the digits in half, and the lit faces are separate
+ * panels inset into a dark bezel rather than painted straight onto a box —
+ * which is what makes it read as a sign rather than a billboard on a stick.
+ */
+function buildTotem(mat, index) {
+  const sign = new THREE.Group();
+
+  // Concrete footing.
+  const plinth = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.25, 1.5, 0.7, 20),
+    mat.concrete
+  );
+  plinth.position.y = 0.35;
+  plinth.castShadow = true;
+  plinth.receiveShadow = true;
+  sign.add(plinth);
+
+  // Tapered column, with a collar where it meets the footing.
+  const column = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.34, 0.52, 12.6, 24),
+    mat.steel
+  );
+  column.position.y = 6.3;
+  column.castShadow = true;
+  sign.add(column);
+  const collar = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.62, 0.62, 0.28, 20),
+    mat.dark
+  );
+  collar.position.y = 0.84;
+  sign.add(collar);
+
+  /**
+   * One lit cabinet: a dark bezel with a glowing panel inset in each face.
+   * @returns {{group:THREE.Group, faces:THREE.MeshStandardMaterial[]}}
+   */
+  const cabinet = (w, h, y, faceMaterial) => {
+    const group = new THREE.Group();
+    group.position.y = y;
+    const depth = 0.95; // wider than the column, which hides inside it
+    group.add(box(w, h, depth, mat.dark, 0, 0, 0));
+    const faces = [];
+    for (const side of [1, -1]) {
+      const m = faceMaterial();
+      const panel = new THREE.Mesh(
+        new THREE.PlaneGeometry(w - 0.34, h - 0.34),
+        m
+      );
+      panel.position.z = (side * depth) / 2 + side * 0.012;
+      if (side < 0) panel.rotation.y = Math.PI;
+      group.add(panel);
+      faces.push(m);
+    }
+    // A lip round the panel, so the bezel catches the light.
+    for (const [dx, dy, bw, bh] of [
+      [0, h / 2 - 0.09, w, 0.18],
+      [0, -h / 2 + 0.09, w, 0.18],
+      [-w / 2 + 0.09, 0, 0.18, h],
+      [w / 2 - 0.09, 0, 0.18, h],
+    ]) {
+      group.add(box(bw, bh, depth + 0.1, mat.steel, dx, dy, 0));
+    }
+    sign.add(group);
+    return faces;
+  };
+
+  const brandFace = () => {
+    const art = totemTexture();
+    return glowAtNight(
+      new THREE.MeshStandardMaterial({
+        map: art,
+        emissiveMap: art,
+        emissive: '#8a4a3a',
+        emissiveIntensity: 0.35,
+        roughness: 0.6,
+      }),
+      1.5
+    );
+  };
+  const totemFaces = cabinet(4.8, 4.4, 12.9, brandFace);
+
+  // One material shared by both price panels: they always agree, and the
+  // price repaint only has to touch a single texture.
+  const priceArt = priceBoardTexture(fuelPricePerGallon(index));
+  const priceMaterial = glowAtNight(
+    new THREE.MeshStandardMaterial({
+      map: priceArt,
+      emissiveMap: priceArt,
+      emissive: '#ffe9bd',
+      emissiveIntensity: 0.1,
+      roughness: 0.7,
+    }),
+    1.4
+  );
+  cabinet(4.4, 2.5, 9.3, () => priceMaterial);
+  const price = { material: priceMaterial };
+
+  sign.userData = { totemFaces, price };
+  return sign;
 }
 
 function buildStationModel(index) {
@@ -243,16 +352,41 @@ function buildStationModel(index) {
   const canopy = new THREE.Group();
   canopy.position.set(11, 0, 0);
   root.add(canopy);
-  const roof = box(15, 0.75, 22, mat.white, 0, 6.2, 0);
-  canopy.add(roof);
+  canopy.add(box(15, 0.75, 22, mat.white, 0, 6.2, 0));
+  // Fascia band, chamfered top and bottom so the edge catches a highlight
+  // instead of reading as one flat slab.
   canopy.add(box(15.3, 0.42, 22.3, mat.red, 0, 5.72, 0));
+  for (const [y, inset] of [[5.99, 0.16], [5.45, 0.16]]) {
+    canopy.add(box(15.3 - inset, 0.14, 22.3 - inset, mat.red, 0, y, 0));
+  }
   const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(14.2, 21.2), mat.lightPanel);
   ceiling.rotation.x = Math.PI / 2;
   ceiling.position.set(0, 5.5, 0);
   canopy.add(ceiling);
+  // Light troughs across the soffit.
+  for (let i = -4; i <= 4; i++) {
+    canopy.add(box(13.6, 0.1, 0.36, mat.dark, 0, 5.56, i * 2.3));
+  }
+  // Columns: a round post on a square base with a collar at the head.
   for (const px of [-5.6, 5.6]) {
     for (const pz of [-8.5, 8.5]) {
-      canopy.add(box(0.7, 5.6, 0.7, mat.steel, px, 2.8, pz));
+      const post = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.34, 0.38, 5.6, 16),
+        mat.steel
+      );
+      post.position.set(px, 2.8, pz);
+      post.castShadow = true;
+      post.receiveShadow = true;
+      canopy.add(post);
+      canopy.add(box(0.95, 0.3, 0.95, mat.concrete, px, 0.15, pz));
+      canopy.add(box(0.78, 0.22, 0.78, mat.steel, px, 5.45, pz));
+      // Rubber guard round the foot: every forecourt column has one.
+      const guard = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.46, 0.5, 0.85, 14),
+        mat.dark
+      );
+      guard.position.set(px, 0.72, pz);
+      canopy.add(guard);
     }
   }
 
@@ -260,6 +394,17 @@ function buildStationModel(index) {
   for (const iz of [-5.5, 5.5]) {
     const island = box(3.4, 0.22, 7.5, mat.concrete, 11, 0.13, iz);
     root.add(island);
+    // Painted kerb edge and a bollard at each end.
+    for (const side of [-1, 1]) {
+      root.add(box(0.14, 0.26, 7.5, mat.white, 11 + side * 1.7, 0.13, iz));
+      const bollard = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.13, 0.15, 1.1, 12),
+        mat.red
+      );
+      bollard.position.set(11, 0.79, iz + side * 3.4);
+      bollard.castShadow = true;
+      root.add(bollard);
+    }
     for (const pz of [-1.8, 1.8]) {
       const pump = buildPump(mat);
       pump.position.set(11, 0.24, iz + pz);
@@ -274,6 +419,19 @@ function buildStationModel(index) {
   root.add(store);
   store.add(box(11, 4.2, 15, mat.stucco, 0, 2.1, 0));
   store.add(box(11.6, 0.6, 15.6, mat.red, 0, 4.4, 0));
+  store.add(box(11.3, 0.16, 15.3, mat.white, 0, 4.02, 0)); // coping under it
+  // Pilasters down the flanks, so the walls are not bare rectangles.
+  for (const pz of [-6.4, -2.1, 2.1, 6.4]) {
+    store.add(box(0.3, 4.2, 0.7, mat.white, -5.5, 2.1, pz));
+  }
+  // Roof plant and a vent stack.
+  store.add(box(2.2, 0.7, 1.7, mat.steel, -1.2, 5.0, 3.4));
+  const stack = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.24, 0.24, 1.3, 12),
+    mat.steel
+  );
+  stack.position.set(3.2, 5.3, 4.6);
+  store.add(stack);
   const glassFront = new THREE.Mesh(new THREE.PlaneGeometry(12.5, 2.4), mat.glass);
   glassFront.rotation.y = -Math.PI / 2;
   glassFront.position.set(-5.55, 2.2, 0);
@@ -284,49 +442,13 @@ function buildStationModel(index) {
   const awning = box(2.2, 0.16, 15, mat.red, -6.4, 4.0, 0);
   store.add(awning);
 
-  // Roadside totem sign.
-  const sign = new THREE.Group();
-  sign.position.set(2.2, 0, 20);
+  // Roadside pylon sign. It stands out on the apron, well clear of the
+  // tarmac, and the pole runs up behind the cabinets rather than through
+  // them — the two things that were wrong with the last one.
+  const sign = buildTotem(mat, index);
+  sign.position.set(TOTEM_LATERAL, 0, 20);
   root.add(sign);
-  sign.add(box(0.55, 9, 0.55, mat.steel, 0, 4.5, 0));
-  const faceMaterial = () => {
-    const art = totemTexture();
-    return glowAtNight(
-      new THREE.MeshStandardMaterial({
-        map: art,
-        emissiveMap: art,
-        emissive: '#8a4a3a',
-        emissiveIntensity: 0.35,
-        roughness: 0.6,
-      }),
-      1.5
-    );
-  };
-  const totemFaces = [faceMaterial(), faceMaterial()];
-  // Faces up and down the highway, not across it, so drivers can read it.
-  const face = new THREE.Mesh(
-    new THREE.BoxGeometry(4.2, 4.2, 0.35),
-    [mat.white, mat.white, mat.white, mat.white, ...totemFaces]
-  );
-  face.position.set(0, 9.5, 0);
-  face.castShadow = true;
-  sign.add(face);
-  const priceArt = priceBoardTexture(fuelPricePerGallon(index));
-  const price = new THREE.Mesh(
-    new THREE.BoxGeometry(3.6, 2.0, 0.3),
-    glowAtNight(
-      new THREE.MeshStandardMaterial({
-        map: priceArt,
-        emissiveMap: priceArt,
-        emissive: '#ffe9bd',
-        emissiveIntensity: 0.1,
-        roughness: 0.7,
-      }),
-      1.4
-    )
-  );
-  price.position.set(0, 6.2, 0);
-  sign.add(price);
+  const { totemFaces, price } = sign.userData;
 
   // Kept so the signage can be repainted when the language or price changes.
   root.userData.signs = { totemFaces, price };

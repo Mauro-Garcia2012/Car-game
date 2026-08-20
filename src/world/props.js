@@ -32,46 +32,60 @@ function transformed(geo, { pos = [0, 0, 0], rot = [0, 0, 0], scale = null }) {
 /* Geometry builders                                                   */
 /* ------------------------------------------------------------------ */
 
-/** A ribbed saguaro with one or two arms. */
+/**
+ * A ribbed saguaro. Built as a lathe so the ribbing is real geometry rather
+ * than a texture, with two arms and the little areole bumps down the ribs.
+ */
 function cactusGeometry() {
   const parts = [];
-  const trunk = new THREE.CylinderGeometry(0.42, 0.55, 5.4, 12, 3);
-  // Squash a few rings inward to fake the vertical ribbing of a saguaro.
-  const pos = trunk.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i);
-    const z = pos.getZ(i);
-    const a = Math.atan2(z, x);
-    const r = Math.hypot(x, z) * (1 + 0.07 * Math.sin(a * 12));
-    pos.setX(i, Math.cos(a) * r);
-    pos.setZ(i, Math.sin(a) * r);
-  }
-  parts.push(transformed(trunk, { pos: [0, 2.7, 0] }));
-  parts.push(
-    transformed(new THREE.SphereGeometry(0.42, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), {
-      pos: [0, 5.4, 0],
-    })
-  );
 
-  // Arms: a quarter torus elbow topped with a vertical limb.
+  /** One fluted limb, capped with a dome. */
+  const limb = (radius, height, segments = 15, rings = 8) => {
+    const profile = [];
+    for (let i = 0; i <= rings; i++) {
+      const t = i / rings;
+      // Slightly fatter at the base, tapering, then rounding over the top.
+      const swell = 1 + 0.1 * Math.sin(t * Math.PI) - 0.12 * t;
+      profile.push(new THREE.Vector2(radius * swell, t * height));
+    }
+    const dome = 4;
+    for (let i = 1; i <= dome; i++) {
+      const a = (i / dome) * (Math.PI / 2);
+      profile.push(
+        new THREE.Vector2(
+          radius * 0.88 * Math.cos(a),
+          height + radius * 0.85 * Math.sin(a)
+        )
+      );
+    }
+    const geo = new THREE.LatheGeometry(profile, segments);
+
+    // Flutes: pinch the radius on a sine around the axis.
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const z = pos.getZ(i);
+      const r = Math.hypot(x, z);
+      if (r < 1e-4) continue;
+      const a = Math.atan2(z, x);
+      const k = 1 + 0.075 * Math.sin(a * 13);
+      pos.setX(i, Math.cos(a) * r * k);
+      pos.setZ(i, Math.sin(a) * r * k);
+    }
+    geo.computeVertexNormals();
+    return geo;
+  };
+
+  parts.push(limb(0.5, 5.0, 16, 9));
+
+  // Arms: a quarter-torus elbow lifting into a vertical limb.
   const arm = (side, height, y) => {
-    const elbow = new THREE.TorusGeometry(0.75, 0.3, 8, 12, Math.PI / 2);
+    const elbow = new THREE.TorusGeometry(0.75, 0.29, 7, 12, Math.PI / 2);
     parts.push(
-      transformed(elbow, {
-        rot: [0, side > 0 ? 0 : Math.PI, 0],
-        pos: [side * 0.0, y, 0],
-      })
+      transformed(elbow, { rot: [0, side > 0 ? 0 : Math.PI, 0], pos: [0, y, 0] })
     );
     parts.push(
-      transformed(new THREE.CylinderGeometry(0.29, 0.31, height, 10), {
-        pos: [side * 0.75, y + height / 2, 0],
-      })
-    );
-    parts.push(
-      transformed(
-        new THREE.SphereGeometry(0.29, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2),
-        { pos: [side * 0.75, y + height, 0] }
-      )
+      transformed(limb(0.3, height, 11, 5), { pos: [side * 0.75, y, 0] })
     );
   };
   arm(1, 1.7, 2.6);
@@ -79,51 +93,87 @@ function cactusGeometry() {
   return mergeGeometries(parts, false);
 }
 
-function rockGeometry(seed, detail = 1) {
+/**
+ * A weathered boulder: a subdivided icosahedron pushed around by a couple of
+ * octaves of hash noise, then flattened where it meets the sand.
+ */
+function rockGeometry(seed, detail = 2) {
   const geo = new THREE.IcosahedronGeometry(1, detail);
   const pos = geo.attributes.position;
+  const lump = (x, y, z, f, sd) =>
+    hashRand(
+      Math.round(x * f) * 3 + Math.round(y * f) * 61 + Math.round(z * f) * 131,
+      sd
+    );
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i);
     const y = pos.getY(i);
     const z = pos.getZ(i);
+    // Big lobes, then a finer chip on top of them.
     const n =
-      0.72 +
-      0.5 * hashRand(Math.round((x + 2) * 97) + Math.round((y + 2) * 31), seed) +
-      0.18 * hashRand(Math.round((z + 2) * 53), seed + 7);
-    pos.setXYZ(i, x * n * 1.25, Math.max(-0.15, y * n * 0.8), z * n);
+      0.74 +
+      0.42 * lump(x, y, z, 3.1, seed) +
+      0.14 * lump(x, y, z, 9.7, seed + 7) +
+      0.06 * lump(x, y, z, 23.3, seed + 19);
+    pos.setXYZ(i, x * n * 1.25, Math.max(-0.12, y * n * 0.78), z * n);
   }
   geo.computeVertexNormals();
   return geo;
 }
 
-/** Dry desert shrub built from a few crossed cones. */
+/** Dry desert shrub: a clump of thin tapered branches. */
 function bushGeometry() {
   const parts = [];
-  for (let i = 0; i < 7; i++) {
-    const a = (i / 7) * Math.PI * 2;
+  const blades = 10;
+  for (let i = 0; i < blades; i++) {
+    const a = (i / blades) * Math.PI * 2 + hashRand(i, 71) * 0.5;
+    const lean = 0.3 + hashRand(i, 83) * 0.35;
+    const len = 0.85 + hashRand(i, 97) * 0.55;
     parts.push(
-      transformed(new THREE.ConeGeometry(0.16, 1.0 + (i % 3) * 0.25, 5), {
-        rot: [0.42 * Math.cos(a), 0, 0.42 * Math.sin(a)],
-        pos: [Math.cos(a) * 0.22, 0.5, Math.sin(a) * 0.22],
+      transformed(new THREE.ConeGeometry(0.075, len, 5, 1), {
+        rot: [lean * Math.cos(a), 0, lean * Math.sin(a)],
+        pos: [Math.cos(a) * 0.2, len * 0.46, Math.sin(a) * 0.2],
       })
     );
   }
   return mergeGeometries(parts, false);
 }
 
-/** Weathered timber pole with a crossarm and glass insulators. */
+/** Weathered timber pole with two crossarms and glass insulators. */
 function poleGeometry() {
   const parts = [
-    transformed(new THREE.CylinderGeometry(0.16, 0.22, 9.2, 8), { pos: [0, 4.6, 0] }),
-    transformed(new THREE.BoxGeometry(2.6, 0.18, 0.22), { pos: [0, 8.3, 0] }),
-    transformed(new THREE.BoxGeometry(0.16, 0.7, 0.16), { pos: [0, 7.95, 0] }),
+    transformed(new THREE.CylinderGeometry(0.16, 0.23, 9.2, 14), {
+      pos: [0, 4.6, 0],
+    }),
+    // Cap, so the top is not an open-looking disc.
+    transformed(new THREE.CylinderGeometry(0.17, 0.16, 0.12, 14), {
+      pos: [0, 9.24, 0],
+    }),
   ];
-  for (const x of [-1.05, 0, 1.05]) {
-    parts.push(
-      transformed(new THREE.CylinderGeometry(0.09, 0.11, 0.26, 7), {
-        pos: [x, 8.53, 0],
-      })
-    );
+  for (const [y, span] of [[8.3, 2.6], [7.3, 1.8]]) {
+    parts.push(transformed(new THREE.BoxGeometry(span, 0.18, 0.22), { pos: [0, y, 0] }));
+    // Knee braces under the arm.
+    for (const side of [-1, 1]) {
+      parts.push(
+        transformed(new THREE.BoxGeometry(0.7, 0.09, 0.11), {
+          rot: [0, 0, side * 0.72],
+          pos: [side * 0.29, y - 0.28, 0],
+        })
+      );
+    }
+    const xs = span > 2 ? [-1.05, 0, 1.05] : [-0.7, 0.7];
+    for (const x of xs) {
+      parts.push(
+        transformed(new THREE.CylinderGeometry(0.085, 0.11, 0.2, 10), {
+          pos: [x, y + 0.19, 0],
+        })
+      );
+      parts.push(
+        transformed(new THREE.CylinderGeometry(0.055, 0.055, 0.14, 8), {
+          pos: [x, y + 0.35, 0],
+        })
+      );
+    }
   }
   return mergeGeometries(parts, false);
 }
@@ -132,27 +182,72 @@ function poleGeometry() {
 function markerGeometry() {
   return mergeGeometries(
     [
-      transformed(new THREE.BoxGeometry(0.12, 1.05, 0.09), { pos: [0, 0.52, 0] }),
+      transformed(new THREE.CylinderGeometry(0.055, 0.07, 1.05, 8), {
+        pos: [0, 0.52, 0],
+      }),
       transformed(new THREE.BoxGeometry(0.1, 0.18, 0.12), { pos: [0, 0.86, 0] }),
     ],
     false
   );
 }
 
-/** Stacked butte: a wide base, a stepped shoulder and a flat cap. */
+/**
+ * A stacked butte, lathed from a stepped profile.
+ *
+ * The old one was three nine-sided drums, which from the road read as a
+ * stack of hexagonal tins. This walks a real sedimentary section instead:
+ * every band is a vertical cliff face, a set-back ledge and a small
+ * overhanging lip, so the strata are geometry and catch their own shadow.
+ */
 function mesaGeometry() {
-  const parts = [
-    transformed(new THREE.CylinderGeometry(1.0, 1.32, 1.0, 9, 1), { pos: [0, 0.5, 0] }),
-    transformed(new THREE.CylinderGeometry(0.72, 1.02, 0.55, 9, 1), { pos: [0, 1.25, 0] }),
-    transformed(new THREE.CylinderGeometry(0.66, 0.74, 0.22, 9, 1), { pos: [0, 1.62, 0] }),
-  ];
-  const geo = mergeGeometries(parts, false);
+  const profile = [];
+  const push = (r, y) => profile.push(new THREE.Vector2(r, y));
+
+  // Talus: the debris apron that piles up at the foot of the cliff.
+  push(1.42, 0.0);
+  push(1.31, 0.1);
+  push(1.21, 0.19);
+  push(1.14, 0.27);
+
+  // The cliff: near vertical, stepped by thin strata, each with a lip that
+  // catches its own shadow line.
+  let r = 1.14;
+  let y = 0.27;
+  for (let i = 0; i < 7; i++) {
+    const h = 0.15;
+    y += h * 0.78;
+    push(r, y);
+    r -= 0.022;
+    y += h * 0.22;
+    push(r, y);
+    push(r + 0.013, y + 0.008);
+    r -= 0.004;
+  }
+
+  // Caprock: harder rock, so it stands a little proud and then goes flat.
+  push(r + 0.03, y + 0.02);
+  push(r + 0.036, y + 0.13);
+  push(r - 0.02, y + 0.19);
+  push(r * 0.86, y + 0.22);
+  push(0, y + 0.24);
+
+  const geo = new THREE.LatheGeometry(profile, 26);
+
+  // Break the circle: no butte in the desert is a lathe.
   const pos = geo.attributes.position;
   for (let i = 0; i < pos.count; i++) {
-    const k = Math.round(pos.getX(i) * 31) + Math.round(pos.getZ(i) * 17);
-    const j = 0.94 + hashRand(k, 3) * 0.14;
-    pos.setX(i, pos.getX(i) * j);
-    pos.setZ(i, pos.getZ(i) * j);
+    const x = pos.getX(i);
+    const z = pos.getZ(i);
+    const rr = Math.hypot(x, z);
+    if (rr < 1e-4) continue;
+    const a = Math.atan2(z, x);
+    const k =
+      1 +
+      0.12 * Math.sin(a * 3 + 1.2) +
+      0.06 * Math.sin(a * 7 - 0.4) +
+      0.03 * Math.sin(a * 13 + 2.1);
+    pos.setX(i, Math.cos(a) * rr * k);
+    pos.setZ(i, Math.sin(a) * rr * k);
   }
   geo.computeVertexNormals();
   return geo;
@@ -250,13 +345,13 @@ export class PropField {
       flatShading: true,
     });
 
-    this.cactus = new InstancedProp(scene, cactusGeometry(), cactusMat, 8, slots, {
+    this.cactus = new InstancedProp(scene, cactusGeometry(), cactusMat, 6, slots, {
       shadows: true,
     });
     this.rockA = new InstancedProp(scene, rockGeometry(5), rockMat, 10, slots, {
       shadows: true,
     });
-    this.rockB = new InstancedProp(scene, rockGeometry(19, 0), rockMat, 12, slots);
+    this.rockB = new InstancedProp(scene, rockGeometry(19, 1), rockMat, 12, slots);
     this.bush = new InstancedProp(scene, bushGeometry(), bushMat, 20, slots);
     this.pole = new InstancedProp(scene, poleGeometry(), woodMat, 3, slots);
     this.marker = new InstancedProp(scene, markerGeometry(), markerMat, 7, slots);

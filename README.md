@@ -196,7 +196,20 @@ A few things worth knowing if you want to poke at it:
 - **The cars are extruded side profiles.** Each body panel is a 2D outline
   extruded across the car, then squeezed laterally by a `bodySculpt()` function
   that pinches the nose and tail and adds tumblehome. That is what turns a slab
-  into something car-shaped without any modelling tools.
+  into something car-shaped without any modelling tools. The outlines are
+  resampled to a fine step before extruding, so the squeeze has somewhere to
+  bend, and the result is shaded with `toCreasedNormals` — smooth across the
+  curvature, sharp along the panel creases.
+- **Fittings follow the sculpt.** Mirrors, door shut lines, handles and side
+  intakes are placed through `flankX()`, which asks the sculpt where the body
+  surface actually is at that height and station along the car. Bolted on at a
+  fixed offset instead, they sink into the paint at one end and float off it
+  at the other.
+- **A triangle budget, roughly.** A frame is about 930k triangles over ~1,140
+  draw calls, shadow pass included. The scenery is where it goes and where it
+  is easiest to overspend: the saguaros alone were half a million triangles
+  before they were cut back, because a prop with 168 instances on screen pays
+  for every ring you give it.
 
 ## Español
 

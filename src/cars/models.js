@@ -18,6 +18,10 @@ import {
   makeWheel,
   wheelWell,
   fenderArch,
+  wingMirror,
+  exhaustTip,
+  doorFurniture,
+  flankX,
 } from './parts.js';
 import { signTexture } from '../textures.js';
 
@@ -155,17 +159,27 @@ export function buildSportCar(color = '#d81f2a') {
     );
   }
 
-  // Nose: splitter, intakes and slim LED headlights.
+  // Nose: splitter, grille, intakes and slim LED headlights. Everything
+  // here sits proud of the bodywork — the sculpted nose is a smooth dome,
+  // and anything flush with it simply disappears into the paint.
   car.add(slab(1.76, 0.07, 0.52, trim, 0, 0.18, -2.1));
-  car.add(part(0.9, 0.15, 0.12, MAT.matteBlack, 0, 0.36, -2.2));
-  for (const side of [-1, 1]) {
-    car.add(part(0.36, 0.13, 0.14, MAT.matteBlack, side * 0.54, 0.3, -2.1));
-    car.add(
-      part(0.44, 0.085, 0.13, MAT.headlight, side * 0.5, 0.58, -2.06, [0.35, 0, 0])
-    );
-    car.add(part(0.11, 0.055, 0.09, MAT.amber, side * 0.7, 0.5, -2.0));
-    car.add(part(0.4, 0.03, 0.24, MAT.matteBlack, side * 0.4, 0.79, -1.35));
+  car.add(part(0.98, 0.17, 0.1, MAT.matteBlack, 0, 0.37, -2.21));
+  for (let i = 0; i < 4; i++) {
+    car.add(part(0.9, 0.022, 0.06, MAT.chrome, 0, 0.315 + i * 0.038, -2.265));
   }
+  for (const side of [-1, 1]) {
+    car.add(part(0.36, 0.13, 0.12, MAT.matteBlack, side * 0.56, 0.3, -2.14));
+    // Lamp unit: a dark socket with the lens standing out of it.
+    car.add(part(0.5, 0.14, 0.1, MAT.matteBlack, side * 0.46, 0.6, -2.13, [0.35, 0, 0]));
+    car.add(
+      part(0.46, 0.09, 0.1, MAT.headlight, side * 0.46, 0.605, -2.17, [0.35, 0, 0])
+    );
+    car.add(part(0.13, 0.05, 0.07, MAT.amber, side * 0.73, 0.52, -2.06));
+    // Bonnet vent and its shut line.
+    car.add(part(0.4, 0.03, 0.24, MAT.matteBlack, side * 0.4, 0.79, -1.35));
+    car.add(part(0.022, 0.03, 1.0, MAT.shutLine, side * 0.66, 0.9, -1.5));
+  }
+  car.add(part(1.34, 0.022, 0.03, MAT.shutLine, 0, 0.9, -2.0));
 
   // Tail: light bar, ducktail, diffuser and quad pipes.
   car.add(part(1.34, 0.1, 0.07, MAT.tail, 0, 0.7, 2.19));
@@ -188,13 +202,22 @@ export function buildSportCar(color = '#d81f2a') {
     car.add(part(0.05, 0.2, 0.28, trim, i * 0.26, 0.28, 2.08));
   }
   for (const x of [-0.34, -0.14, 0.14, 0.34]) {
-    const pipe = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.062, 0.072, 0.16, 12),
-      MAT.chrome
+    car.add(exhaustTip(x, 0.44, 2.14, 0.062, 0.17));
+  }
+
+  // Doors and mirrors, hung off the real surface of the flank.
+  for (const side of [-1, 1]) {
+    car.add(
+      doorFurniture(side, 0.66, {
+        top: 0.97, bottom: 0.3, width: 1.94, sculpt,
+        handleY: 0.84, handleZ: 0.2,
+      })
     );
-    pipe.rotation.x = Math.PI / 2;
-    pipe.position.set(x, 0.44, 2.14);
-    car.add(pipe);
+    car.add(
+      wingMirror(side, side * flankX(1.94, sculpt, 0.99, -0.9), 0.99, -0.9, body, {
+        scale: 1.05,
+      })
+    );
   }
 
   // Cockpit hint behind the glass.
@@ -377,6 +400,16 @@ export function buildRaceCar(color = '#1c6fd8') {
   }
   car.add(part(0.14, 0.14, 0.06, MAT.tail, 0, 1.44, 2.38)); // rain light
   car.add(part(1.05, 0.13, 0.12, MAT.matteBlack, 0, 0.34, -2.36)); // radiator inlet
+
+  // Doors and mirrors: even a prototype has to carry them to be homologated.
+  for (const side of [-1, 1]) {
+    car.add(doorFurniture(side, 0.54, { top: 1.04, bottom: 0.34, width: 2.06, sculpt }));
+    car.add(
+      wingMirror(side, side * flankX(2.06, sculpt, 1.1, -1.05), 1.1, -1.05, body, {
+        scale: 1.15,
+      })
+    );
+  }
 
   // Livery stripes over the spine.
   car.add(part(0.3, 0.02, 4.2, accent, 0, 1.0, -0.1));
@@ -563,7 +596,7 @@ export function build4x4(color = '#c8791f') {
     car.add(part(0.14, 0.5, 0.4, MAT.darkMetal, side * 0.78, 1.44, 1.35)); // jerry can
     car.add(part(0.22, 0.1, 2.1, MAT.darkMetal, side * 1.0, 0.56, 0.15)); // rock slider
     car.add(part(0.1, 0.05, 0.2, trim, side * 0.96, 1.66, -1.0));
-    car.add(part(0.11, 0.22, 0.3, trim, side * 1.09, 1.68, -1.08)); // mirror
+    car.add(wingMirror(side, side * 1.12, 1.62, -1.08, MAT.matteBlack, { scale: 1.5 }));
     car.add(part(0.24, 0.5, 0.12, MAT.tail, side * 0.86, 1.0, 2.72));
   }
   const spare = new THREE.Mesh(

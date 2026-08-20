@@ -182,12 +182,35 @@ function buildMotelModel() {
 
   for (let i = 0; i < ROOMS; i++) {
     const z = -11.5 + i * 4.6;
-    block.add(box(0.14, 2.1, 1.0, mat.door, -4.02, 1.05, z));
-    block.add(box(0.1, 1.2, 1.7, mat.glass, -4.0, 1.7, z + 1.9));
-    block.add(box(0.5, 0.5, 0.7, mat.steel, -4.2, 0.85, z + 1.9)); // A/C unit
-    block.add(box(0.12, 0.28, 0.28, mat.trim, -4.05, 2.45, z)); // room number plate
+    // Door in a recessed reveal, with a step, a handle and a lamp over it.
+    block.add(box(0.2, 2.3, 1.2, mat.trim, -4.0, 1.15, z));
+    block.add(box(0.14, 2.1, 1.0, mat.door, -4.06, 1.05, z));
+    block.add(box(0.07, 0.07, 0.16, mat.steel, -4.16, 1.05, z + 0.36));
+    block.add(box(0.7, 0.1, 1.4, mat.paintLine, -4.4, 0.05, z));
+    const lamp = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.14, 0.09, 0.2, 10),
+      mat.neon
+    );
+    lamp.position.set(-4.16, 2.42, z);
+    block.add(lamp);
+    // Window in a frame.
+    block.add(box(0.16, 1.4, 1.9, mat.trim, -4.0, 1.7, z + 1.9));
+    block.add(box(0.1, 1.2, 1.7, mat.glass, -4.07, 1.7, z + 1.9));
+    // A/C unit: a housing with a grille and a fan hood.
+    block.add(box(0.5, 0.5, 0.7, mat.steel, -4.2, 0.85, z + 1.9));
+    for (let k = 0; k < 3; k++) {
+      block.add(box(0.06, 0.05, 0.62, mat.trim, -4.46, 0.73 + k * 0.12, z + 1.9));
+    }
     if (i < ROOMS - 1) {
-      block.add(box(0.14, 2.9, 0.14, mat.steel, -7.3, 1.45, z + 2.3)); // post
+      // Walkway post with a capital, and a rail between posts.
+      const post = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.075, 0.09, 2.9, 10),
+        mat.steel
+      );
+      post.position.set(-7.3, 1.45, z + 2.3);
+      post.castShadow = true;
+      block.add(post);
+      block.add(box(0.24, 0.12, 0.24, mat.trim, -7.3, 2.86, z + 2.3));
     }
   }
 
@@ -195,6 +218,9 @@ function buildMotelModel() {
   block.add(box(0.12, 2.0, 3.2, mat.glass, -4.0, 1.6, -13.4));
   block.add(box(1.0, 1.9, 0.8, mat.door, -4.6, 0.95, -11.4));
   block.add(box(0.9, 1.7, 0.7, mat.trim, -4.7, 0.85, 12.6)); // ice machine
+  // Chimney-ish roof plant and a swamp cooler, so the roofline is not bare.
+  block.add(box(1.4, 0.9, 1.4, mat.steel, 0.4, 4.05, -6.0));
+  block.add(box(1.0, 0.7, 1.0, mat.steel, 0.8, 3.95, 7.5));
 
   // Parking stalls painted in front of the rooms.
   for (let i = 0; i <= ROOMS; i++) {
