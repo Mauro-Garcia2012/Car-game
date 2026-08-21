@@ -1,5 +1,13 @@
 /** Car catalogue: looks, handling and — most importantly — fuel. */
-import { buildSportCar, buildRaceCar, build4x4, buildMoped } from './models.js';
+import {
+  buildSportCar,
+  buildRaceCar,
+  build4x4,
+  buildMoped,
+  buildLandYacht,
+  buildTrophyTruck,
+  buildSuperbike,
+} from './models.js';
 
 /**
  * Fuel notes: `burn` is litres per metre at cruising throttle, so
@@ -7,6 +15,10 @@ import { buildSportCar, buildRaceCar, build4x4, buildMoped } from './models.js';
  * to clear two of those gaps and start on a third, so skipping a pump is a
  * decision rather than a death sentence — but the margin runs out fast, and
  * the sleep meter does not care how much petrol you have left.
+ *
+ * Three vehicles carry an `unlockAt`: they are not in the showroom until
+ * that many lifetime metres have been driven, and they are handed over at a
+ * pump rather than the moment the odometer ticks over — see `progress.js`.
  *
  * The moped is the deliberate exception. It sips fuel — a fiftieth of what
  * the sports car drinks per metre — so it can run past five stations and
@@ -68,7 +80,10 @@ export const CARS = [
     brakePower: 12,
     grip: 0.9,
     offroadGrip: 0.18, // skinny tyres, and sand eats them
-    offroadDrag: 6.5,
+    // 6.5 was more rolling resistance than the engine makes thrust, which
+    // pinned it at walking pace and turned every trip across a forecourt
+    // into eighty seconds of nothing. Slow, not stuck.
+    offroadDrag: 1.7,
     tank: 4.5,
     burn: 0.00027,
     idleBurn: 0.0006,
@@ -100,9 +115,81 @@ export const CARS = [
     collisionRadius: 1.8,
     stats: { speed: 0.6, accel: 0.55, grip: 0.7, range: 1.0 },
   },
-];
 
-export const MOPED_TOP_KMH = 45;
+  {
+    id: 'yacht',
+    name: 'CORONADO 500',
+    taglineKey: 'car.yacht.tagline',
+    color: '#5d2733',
+    build: buildLandYacht,
+    unlockAt: 100000,
+    topSpeed: 61,
+    power: 7.2,
+    brakePower: 15, // two tonnes of it, and drum brakes at the back
+    grip: 0.7,
+    offroadGrip: 0.24,
+    offroadDrag: 6.0,
+    tank: 110,
+    burn: 0.0138,
+    idleBurn: 0.042,
+    // Detroit steel and five metres of crumple zone: the only thing in the
+    // garage that takes a hit better than standard.
+    crashScale: 0.62,
+    camera: { back: 8.2, height: 3.0, look: 12 },
+    hood: { forward: 1.9, height: 1.28 },
+    collisionRadius: 1.9,
+    stats: { speed: 0.64, accel: 0.45, grip: 0.58, range: 1 },
+  },
+  {
+    id: 'trophy',
+    name: 'VAQUERO TT',
+    taglineKey: 'car.trophy.tagline',
+    color: '#d9d2c4',
+    build: buildTrophyTruck,
+    unlockAt: 500000,
+    topSpeed: 67,
+    power: 11.0,
+    brakePower: 21,
+    grip: 0.8,
+    // The whole point: quick on the sand, where nothing else is.
+    offroadGrip: 0.95,
+    offroadDrag: 0.7,
+    tank: 130,
+    burn: 0.0198,
+    idleBurn: 0.05,
+    crashScale: 0.82,
+    camera: { back: 9.0, height: 4.2, look: 11 },
+    hood: { forward: 2.0, height: 2.3 },
+    collisionRadius: 1.95,
+    stats: { speed: 0.7, accel: 0.68, grip: 0.66, range: 1 },
+  },
+  {
+    id: 'superbike',
+    name: 'SAETA R',
+    taglineKey: 'car.superbike.tagline',
+    color: '#101418',
+    build: buildSuperbike,
+    unlockAt: 1000000,
+    topSpeed: 84,
+    power: 19.5,
+    brakePower: 30,
+    grip: 1.1,
+    offroadGrip: 0.16,
+    offroadDrag: 7.2,
+    tank: 17,
+    // Fast and frugal both, which is the whole reward: a fairing this size
+    // pushes almost no air, so seventeen litres go further than the
+    // supercar's fifty-five.
+    burn: 0.00095,
+    idleBurn: 0.008,
+    // Same as the moped: two wheels and a set of leathers.
+    crashScale: 4.2,
+    camera: { back: 5.4, height: 2.1, look: 10 },
+    hood: { forward: 0.6, height: 1.25 },
+    collisionRadius: 0.85,
+    stats: { speed: 0.88, accel: 0.95, grip: 0.92, range: 1 },
+  },
+];
 
 export function carById(id) {
   return CARS.find((c) => c.id === id) || CARS[0];

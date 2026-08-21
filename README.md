@@ -162,6 +162,24 @@ Those ranges are what a full tank actually covers driven flat out, measured to
 the last drop rather than quoted off the spec sheet — the sheet assumes you
 cruise, and nobody does.
 
+### Three you have not met
+
+Three more sit in the garage behind a locked card that will not even tell you
+what it is hiding. They are earned by **lifetime distance** — every kilometre
+of every run, not one heroic session — and handed over **at a pump**: pass the
+mark on the road, and the keys are on the counter the next time you fill up.
+
+| | Earned at | What it is for |
+| --- | --- | --- |
+| ??? | 100 km | It takes a hit better than anything else here |
+| ??? | 500 km | It does not care whether there is a road |
+| ??? | 1000 km | The fastest thing on the highway, and the furthest on a tank |
+
+Lifetime rather than per-run is a deliberate choice: a thousand kilometres in
+one sitting is nine hours of driving, and a reward nobody can reach is not a
+reward. Unlocks live in `localStorage` and survive everything except clearing
+your browser data.
+
 **The moped plays a different game.** It burns a fiftieth of what the supercar
 does per metre, so four and a half litres will carry it past five gas stations
 and to within a few hundred metres of the sixth: the fuel gauge simply stops
@@ -190,6 +208,7 @@ src/
   track.js          the analytic highway curve (everything hangs off this)
   vehicle.js        arcade car physics and the fuel model
   fatigue.js        sleep: drains on the clock, degrades the driving
+  progress.js       lifetime odometer and the three locked vehicles
   daynight.js       the clock: one sleep meter is one day, dawn to dark
   fares.js          passengers: who is waiting where, and what they pay
   traffic.js        AI pickups and semis
@@ -377,6 +396,25 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
 | Depósito | 55 L | 46 L | 95 L | 4,5 L |
 | Autonomía | ~5,5 km | ~5,2 km | ~6,8 km | **~12,5 km** |
 | Agarre fuera de asfalto | 34% | 20% | 78% | 18% |
+
+### Tres que no conoces
+
+En el garaje hay tres más detrás de una ficha bloqueada que ni siquiera te dice
+qué esconde. Se ganan por **distancia acumulada** —cada kilómetro de cada
+partida, no una sesión heroica— y se entregan **en el surtidor**: pasas la
+marca en la carretera y las llaves están en el mostrador la próxima vez que
+repostes.
+
+| | Se gana a los | Para qué sirve |
+| --- | --- | --- |
+| ??? | 100 km | Encaja un golpe mejor que nada de lo que hay aquí |
+| ??? | 500 km | Le da igual que haya carretera o no |
+| ??? | 1000 km | Lo más rápido de la carretera, y lo que más lejos llega |
+
+Que sea acumulada y no de una sola partida es a propósito: mil kilómetros del
+tirón son nueve horas al volante, y un premio que nadie puede alcanzar no es un
+premio. Los desbloqueos viven en `localStorage` y sobreviven a todo menos a
+borrar los datos del navegador.
 
 **El ciclomotor juega a otra cosa.** Gasta la cincuentava parte que el
 superdeportivo por metro, así que con cuatro litros y medio se planta más allá

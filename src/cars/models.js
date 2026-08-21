@@ -238,6 +238,493 @@ export function buildSportCar(color = '#d81f2a') {
 }
 
 /* ------------------------------------------------------------------ */
+/* Land yacht — the reward for a hundred kilometres                    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A 1970s American personal luxury coupé: five and a half metres of it, a
+ * formal roofline under a vinyl top, opera windows, and bumpers you could
+ * park a caravan against. It is the only thing in the garage that is *safer*
+ * than standard, because it is two tonnes of Detroit steel.
+ */
+export function buildLandYacht(color = '#5d2733') {
+  const car = new THREE.Group();
+  const body = paint(color, { metalness: 0.35, roughness: 0.3 });
+  const vinyl = paint('#221f22', { metalness: 0.02, roughness: 0.95 });
+  const sculpt = bodySculpt({
+    halfLength: 2.85,
+    ends: 0.14, // barely tapered: this thing is a shoebox and proud of it
+    endStart: 0.72,
+    top: 0.1,
+    beltline: 1.12,
+    roofY: 1.62,
+    bottom: 0.08,
+    floorY: 0.34,
+  });
+  const opt = { sculpt };
+
+  // Long flat flanks with a knife-edge crease along the top of the wing.
+  const lower = [
+    [-2.78, 0.5],
+    [-2.82, 0.98],
+    [-2.5, 1.12],
+    [-1.2, 1.14],
+    [1.1, 1.14],
+    [2.45, 1.1],
+    [2.8, 0.96],
+    [2.82, 0.46],
+    [2.6, 0.3],
+    [1.4, 0.26],
+    [-1.4, 0.26],
+    [-2.6, 0.32],
+  ];
+  car.add(profilePiece(lower, 2.06, body, { ...opt, bevel: 0.07 }));
+
+  // Formal greenhouse: upright screen, thick C-pillar, small opera window.
+  const cabin = [
+    [-1.05, 1.14],
+    [-0.62, 1.6],
+    [0.72, 1.62],
+    [1.16, 1.15],
+  ];
+  car.add(profilePiece(cabin, 1.78, MAT.glass, { ...opt, bevel: 0.02 }));
+  car.add(
+    profilePiece(
+      [
+        [-0.5, 1.52],
+        [-0.34, 1.66],
+        [1.0, 1.66],
+        [1.24, 1.16],
+        [0.86, 1.18],
+        [0.72, 1.56],
+      ],
+      1.82,
+      vinyl,
+      { ...opt, bevel: 0.03 }
+    )
+  );
+  for (const side of [-1, 1]) {
+    // Opera window in the vinyl, and the chrome that frames it.
+    car.add(part(0.05, 0.26, 0.3, MAT.matteBlack, side * 0.9, 1.4, 0.86));
+    car.add(part(0.03, 0.3, 0.34, MAT.chrome, side * 0.92, 1.4, 0.86));
+    // Full-length chrome rub strip.
+    car.add(part(0.04, 0.07, 4.1, MAT.chrome, side * flankX(2.06, sculpt, 0.62, 0), 0.62, 0));
+  }
+
+  // Nose: stacked lamps behind a huge eggcrate grille, big chrome bumper.
+  car.add(slab(2.0, 0.34, 0.34, MAT.chrome, 0, 0.56, -2.86, [0, 0, 0], 0.08));
+  car.add(part(1.9, 0.46, 0.14, MAT.matteBlack, 0, 0.94, -2.82));
+  for (let i = -6; i <= 6; i++) {
+    car.add(part(0.035, 0.42, 0.06, MAT.chrome, i * 0.14, 0.94, -2.87));
+  }
+  for (let i = 0; i < 3; i++) {
+    car.add(part(1.86, 0.03, 0.06, MAT.chrome, 0, 0.78 + i * 0.16, -2.87));
+  }
+  for (const side of [-1, 1]) {
+    for (const dy of [-0.13, 0.13]) {
+      car.add(part(0.3, 0.22, 0.1, MAT.chrome, side * 0.72, 1.02 + dy, -2.83));
+      car.add(part(0.24, 0.17, 0.06, MAT.headlight, side * 0.72, 1.02 + dy, -2.87));
+    }
+    car.add(part(0.26, 0.1, 0.06, MAT.amber, side * 0.72, 0.76, -2.86));
+    car.add(wingMirror(side, side * flankX(2.06, sculpt, 1.16, -1.05), 1.16, -1.05, MAT.chrome, { scale: 1.1 }));
+    car.add(
+      doorFurniture(side, 0.72, {
+        top: 1.12, bottom: 0.3, width: 2.06, sculpt,
+        handleY: 0.98, handleZ: 0.28,
+      })
+    );
+  }
+  // Hood ornament.
+  car.add(part(0.06, 0.14, 0.06, MAT.chrome, 0, 1.2, -2.62));
+
+  // Tail: full-width lamp panel and another slab of bumper.
+  car.add(slab(2.0, 0.34, 0.34, MAT.chrome, 0, 0.56, 2.86, [0, 0, 0], 0.08));
+  car.add(part(1.84, 0.26, 0.08, MAT.tail, 0, 0.94, 2.85));
+  for (let i = -3; i <= 3; i++) {
+    car.add(part(0.05, 0.28, 0.05, MAT.chrome, i * 0.28, 0.94, 2.89));
+  }
+  car.add(part(0.5, 0.2, 0.03, MAT.plate, 0, 0.62, 2.9)); // plate
+  for (const x of [-0.5, 0.5]) car.add(exhaustTip(x, 0.4, 2.82, 0.055, 0.16));
+
+  const wheels = [
+    { x: -0.92, z: -1.86, radius: 0.4, width: 0.24, spokes: 8, front: true, rimMaterial: MAT.chrome },
+    { x: 0.92, z: -1.86, radius: 0.4, width: 0.24, spokes: 8, front: true, rimMaterial: MAT.chrome },
+    { x: -0.92, z: 1.82, radius: 0.4, width: 0.26, spokes: 8, front: false, rimMaterial: MAT.chrome },
+    { x: 0.92, z: 1.82, radius: 0.4, width: 0.26, spokes: 8, front: false, rimMaterial: MAT.chrome },
+  ];
+  mountWheels(car, wheels);
+  dressArches(car, wheels, body, { grow: 0.05, thickness: 0.05 });
+  return car;
+}
+
+/* ------------------------------------------------------------------ */
+/* Trophy truck — the reward for five hundred                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A desert racing truck: tube frame, a foot of suspension travel at each
+ * corner and a light bar you could land a plane by.
+ *
+ * It is the only thing here that is genuinely fast off the tarmac, which
+ * means it is the only one that can treat the road as optional and cut the
+ * corners the highway takes.
+ */
+export function buildTrophyTruck(color = '#d9d2c4') {
+  const car = new THREE.Group();
+  const body = paint(color, { metalness: 0.15, roughness: 0.55 });
+  const cage = MAT.matteBlack;
+  const sculpt = bodySculpt({
+    halfLength: 2.7,
+    ends: 0.3,
+    endStart: 0.5,
+    top: 0.2,
+    beltline: 1.5,
+    roofY: 2.15,
+    bottom: 0.24,
+    floorY: 0.9,
+  });
+  const opt = { sculpt };
+
+  const tube = (r, len, mat, x, y, z, rot = [0, 0, 0], seg = 8) => {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, seg), mat);
+    m.position.set(x, y, z);
+    m.rotation.set(rot[0], rot[1], rot[2]);
+    m.castShadow = true;
+    return m;
+  };
+
+  // Slab-sided body pod, high off the ground with a chopped nose.
+  const lower = [
+    [-2.55, 1.0],
+    [-2.6, 1.42],
+    [-1.75, 1.56],
+    [-0.9, 1.58],
+    [1.35, 1.5],
+    [2.2, 1.34],
+    [2.5, 1.16],
+    [2.45, 0.86],
+    [1.2, 0.8],
+    [-1.4, 0.8],
+    [-2.3, 0.86],
+  ];
+  car.add(profilePiece(lower, 2.16, body, { ...opt, bevel: 0.06 }));
+
+  // Cab: a low glasshouse set well back, the way a trophy truck sits.
+  const cabin = [
+    [-0.85, 1.56],
+    [-0.5, 2.1],
+    [0.62, 2.12],
+    [1.0, 1.52],
+  ];
+  car.add(profilePiece(cabin, 1.7, MAT.glass, { ...opt, bevel: 0.02 }));
+  car.add(
+    profilePiece(
+      [
+        [-0.45, 2.02],
+        [-0.3, 2.16],
+        [0.7, 2.16],
+        [0.9, 1.96],
+      ],
+      1.74,
+      body,
+      { ...opt, bevel: 0.03 }
+    )
+  );
+
+  // Exo-cage over the cab and back down to the bed.
+  for (const side of [-1, 1]) {
+    car.add(tube(0.045, 1.5, cage, side * 0.86, 1.9, -0.5, [0.55, 0, 0]));
+    car.add(tube(0.045, 1.35, cage, side * 0.86, 1.85, 1.1, [-0.7, 0, 0]));
+    car.add(tube(0.04, 1.7, cage, side * 0.86, 2.24, 0.28, [Math.PI / 2, 0, 0]));
+    car.add(tube(0.038, 1.3, cage, side * 0.86, 1.4, 1.85, [0.4, 0, 0]));
+  }
+  car.add(tube(0.04, 1.72, cage, 0, 2.32, -0.44, [0, 0, Math.PI / 2]));
+  car.add(tube(0.04, 1.72, cage, 0, 2.3, 0.95, [0, 0, Math.PI / 2]));
+
+  // Light bar across the cage.
+  car.add(part(1.66, 0.16, 0.16, cage, 0, 2.44, -0.52));
+  for (let i = -3; i <= 3; i++) {
+    const lamp = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.085, 0.085, 0.06, 14),
+      MAT.headlight
+    );
+    lamp.rotation.x = Math.PI / 2;
+    lamp.position.set(i * 0.23, 2.44, -0.6);
+    car.add(lamp);
+  }
+
+  // Nose: skid plate, mesh and a pair of lamps low down.
+  car.add(slab(1.9, 0.16, 0.5, cage, 0, 0.82, -2.5, [0, 0, 0], 0.05));
+  car.add(part(1.5, 0.5, 0.1, cage, 0, 1.24, -2.62));
+  for (let i = -4; i <= 4; i++) {
+    car.add(part(0.04, 0.46, 0.05, MAT.darkMetal, i * 0.16, 1.24, -2.66));
+  }
+  for (const side of [-1, 1]) {
+    const lamp = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.17, 0.17, 0.1, 16),
+      MAT.headlight
+    );
+    lamp.rotation.x = Math.PI / 2;
+    lamp.position.set(side * 0.62, 1.24, -2.66);
+    car.add(lamp);
+    car.add(part(0.2, 0.09, 0.06, MAT.amber, side * 0.62, 1.02, -2.62));
+    // Mudflap behind each wheel.
+    car.add(part(0.36, 0.5, 0.03, cage, side * 0.98, 0.55, 2.5));
+    car.add(wingMirror(side, side * flankX(2.16, sculpt, 1.62, -0.9), 1.62, -0.9, cage, { scale: 1.3 }));
+  }
+
+  // Bed: spare wheel flat, fuel cell and a whip aerial.
+  car.add(part(1.7, 0.1, 1.5, cage, 0, 1.5, 1.75));
+  car.add(part(1.0, 0.42, 0.9, MAT.darkMetal, 0, 1.76, 1.4));
+  const spare = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.44, 0.44, 0.3, 20),
+    MAT.rubber
+  );
+  spare.rotation.x = Math.PI / 2;
+  spare.position.set(0, 1.72, 2.15);
+  car.add(spare);
+  car.add(tube(0.014, 1.8, cage, 0.86, 2.5, 2.2, [0.08, 0, 0], 6));
+  car.add(part(1.7, 0.24, 0.1, MAT.tail, 0, 1.32, 2.52));
+
+  const wheels = [
+    { x: -1.06, z: -1.72, radius: 0.6, width: 0.44, spokes: 6, front: true, knobby: true, rimMaterial: MAT.darkMetal },
+    { x: 1.06, z: -1.72, radius: 0.6, width: 0.44, spokes: 6, front: true, knobby: true, rimMaterial: MAT.darkMetal },
+    { x: -1.06, z: 1.78, radius: 0.6, width: 0.48, spokes: 6, front: false, knobby: true, rimMaterial: MAT.darkMetal },
+    { x: 1.06, z: 1.78, radius: 0.6, width: 0.48, spokes: 6, front: false, knobby: true, rimMaterial: MAT.darkMetal },
+  ];
+  mountWheels(car, wheels);
+  // Long-travel A-arms, visible because nothing covers them.
+  for (const w of wheels) {
+    const inner = Math.sign(w.x) * 0.4;
+    for (const dy of [-0.16, 0.2]) {
+      const arm = tube(0.05, Math.abs(w.x - inner), cage, (w.x + inner) / 2, w.radius + dy, w.z, [0, 0, Math.PI / 2]);
+      car.add(arm);
+    }
+    car.add(tube(0.055, 0.8, MAT.chrome, w.x * 0.72, w.radius + 0.5, w.z, [0, 0, Math.sign(w.x) * 0.42]));
+  }
+  return car;
+}
+
+/* ------------------------------------------------------------------ */
+/* Superbike — the reward for a thousand                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A litre bike, and the only thing in the garage that is fast *and* frugal:
+ * three hundred an hour out of a seventeen-litre tank, because a fairing
+ * that size pushing that little air barely has to try.
+ *
+ * Same construction as the moped — fork, bars and lamps parented to the
+ * front hub so they steer together — with the rider folded down over the
+ * tank instead of sitting up in the breeze.
+ */
+export function buildSuperbike(color = '#101418') {
+  const car = new THREE.Group();
+  const body = paint(color, { metalness: 0.5, roughness: 0.22 });
+  const gold = paint('#c9a227', { metalness: 0.75, roughness: 0.28 });
+  const leather = paint('#1b1d24', { metalness: 0.1, roughness: 0.6 });
+  const black = MAT.matteBlack;
+
+  const tube = (r, len, mat, x, y, z, rot = [0, 0, 0], seg = 10) => {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, seg), mat);
+    m.position.set(x, y, z);
+    m.rotation.set(rot[0], rot[1], rot[2]);
+    m.castShadow = true;
+    return m;
+  };
+  /** A limb from A to B, so the rider's joints actually meet. */
+  const bone = (from, to, r, mat) => {
+    const dir = to.clone().sub(from);
+    const m = tube(r, dir.length(), mat, 0, 0, 0, [0, 0, 0], 8);
+    m.position.copy(from).add(to).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+    return m;
+  };
+
+  const FRONT_Z = -0.8;
+  const REAR_Z = 0.74;
+  const RADIUS = 0.34;
+  const GRIP_X = 0.3;
+  const BAR_Y = 0.38; // clip-ons, low on the fork, measured from the hub
+  const BAR_Z = 0.2;
+  const barWorld = (side) =>
+    new THREE.Vector3(side * GRIP_X, RADIUS + BAR_Y, FRONT_Z + BAR_Z);
+
+  // ---- frame and engine --------------------------------------------------
+  car.add(slab(0.34, 0.34, 0.56, MAT.darkMetal, 0, 0.46, 0.0, [0, 0, 0], 0.06));
+  for (let i = 0; i < 4; i++) {
+    car.add(tube(0.028, 0.46, MAT.chrome, -0.15 + i * 0.1, 0.4, -0.34, [0.95, 0, 0], 6));
+  }
+  for (const side of [-1, 1]) {
+    // Twin spars sweeping from the head back to the swingarm pivot.
+    car.add(
+      profilePiece(
+        [
+          [-0.6, 0.62],
+          [-0.52, 0.82],
+          [0.22, 0.74],
+          [0.26, 0.56],
+        ],
+        0.09,
+        gold,
+        { lateral: side * 0.2, bevel: 0.02 }
+      )
+    );
+    car.add(tube(0.042, 0.78, gold, side * 0.15, 0.42, 0.4, [1.36, 0, 0], 8));
+    car.add(part(0.06, 0.13, 0.1, black, side * 0.21, 0.44, 0.2));
+    car.add(tube(0.02, 0.12, MAT.chrome, side * 0.28, 0.42, 0.2, [0, 0, Math.PI / 2], 6));
+  }
+  // Shock, header and can.
+  car.add(tube(0.04, 0.32, gold, 0, 0.62, 0.3, [0.3, 0, 0], 8));
+  car.add(tube(0.055, 0.62, MAT.chrome, 0.09, 0.32, 0.36, [1.3, 0.22, 0], 10));
+  car.add(slab(0.16, 0.16, 0.36, MAT.darkMetal, 0.17, 0.5, 0.8, [0, 0.16, 0], 0.06));
+  car.add(exhaustTip(0.17, 0.5, 1.0, 0.07, 0.2));
+
+  // ---- bodywork: nose fairing, tank, tail, all clear of each other -------
+  car.add(
+    profilePiece(
+      [
+        [-1.06, 0.5],
+        [-1.1, 0.8],
+        [-0.98, 1.0],
+        [-0.74, 1.06],
+        [-0.6, 0.86],
+        [-0.56, 0.52],
+        [-0.8, 0.42],
+      ],
+      0.42,
+      body,
+      { bevel: 0.035 }
+    )
+  );
+  // Side panels hugging the engine.
+  for (const side of [-1, 1]) {
+    car.add(
+      profilePiece(
+        [
+          [-0.95, 0.44],
+          [-0.86, 0.72],
+          [-0.34, 0.66],
+          [-0.18, 0.36],
+          [-0.6, 0.3],
+        ],
+        0.07,
+        body,
+        { lateral: side * 0.2, bevel: 0.02 }
+      )
+    );
+  }
+  car.add(slab(0.26, 0.18, 0.05, MAT.glass, 0, 1.06, -0.9, [0.72, 0, 0], 0.04));
+  // Tank, saddle, tail.
+  car.add(
+    profilePiece(
+      [
+        [-0.58, 0.78],
+        [-0.44, 0.94],
+        [-0.02, 0.96],
+        [0.14, 0.86],
+        [0.12, 0.72],
+        [-0.5, 0.68],
+      ],
+      0.38,
+      body,
+      { bevel: 0.05 }
+    )
+  );
+  car.add(slab(0.24, 0.07, 0.36, leather, 0, 0.9, 0.3, [0, 0, 0], 0.04));
+  car.add(
+    profilePiece(
+      [
+        [0.5, 0.84],
+        [0.62, 0.98],
+        [0.98, 0.96],
+        [0.96, 0.86],
+        [0.62, 0.78],
+      ],
+      0.19,
+      body,
+      { bevel: 0.035 }
+    )
+  );
+  car.add(part(0.15, 0.06, 0.05, MAT.tail, 0, 0.98, 1.02));
+  car.add(part(0.2, 0.13, 0.02, MAT.plate, 0, 0.7, 1.02));
+  car.add(fenderArch(RADIUS + 0.1, 0.3, 0, RADIUS, REAR_Z, black, 0.04));
+
+  // ---- rider, folded over the tank ---------------------------------------
+  const hip = new THREE.Vector3(0, 0.96, 0.32);
+  const neck = new THREE.Vector3(0, 1.18, -0.22);
+  car.add(bone(hip, neck, 0.15, leather));
+  const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.135, 18, 14), body);
+  helmet.position.set(0, 1.24, -0.36);
+  helmet.castShadow = true;
+  car.add(helmet);
+  car.add(part(0.19, 0.085, 0.06, MAT.glass, 0, 1.22, -0.47));
+  car.add(slab(0.3, 0.13, 0.16, gold, 0, 1.2, -0.16, [0.9, 0, 0], 0.06)); // hump
+  for (const side of [-1, 1]) {
+    const grip = barWorld(side);
+    const shoulder = new THREE.Vector3(side * 0.17, 1.16, -0.18);
+    const elbow = shoulder
+      .clone()
+      .lerp(grip, 0.5)
+      .add(new THREE.Vector3(side * 0.07, 0.03, 0.03));
+    car.add(bone(shoulder, elbow, 0.05, leather));
+    car.add(bone(elbow, grip, 0.042, leather));
+    car.add(part(0.07, 0.07, 0.09, black, grip.x, grip.y, grip.z));
+    // Knee up against the tank, boot back on the peg.
+    const knee = new THREE.Vector3(side * 0.22, 0.82, -0.04);
+    const foot = new THREE.Vector3(side * 0.26, 0.46, 0.24);
+    car.add(bone(new THREE.Vector3(side * 0.13, 0.94, 0.34), knee, 0.085, leather));
+    car.add(bone(knee, foot, 0.062, leather));
+    car.add(part(0.1, 0.08, 0.2, black, foot.x, foot.y - 0.03, foot.z));
+  }
+
+  // ---- wheels --------------------------------------------------------------
+  const wheels = [
+    { x: 0, z: FRONT_Z, radius: RADIUS, width: 0.13, spokes: 5, front: true, rimMaterial: gold },
+    { x: 0, z: REAR_Z, radius: RADIUS, width: 0.24, spokes: 5, front: false, rimMaterial: gold },
+  ];
+  mountWheels(car, wheels);
+
+  // ---- steering, hung off the front hub -----------------------------------
+  const front = car.userData.wheels.find((w) => w.front).root;
+  const steer = new THREE.Group();
+  front.add(steer);
+  const RAKE = 0.42;
+  for (const side of [-1, 1]) {
+    // Upside-down fork: black slider low, gold stanchion above it.
+    steer.add(tube(0.046, 0.34, black, side * 0.1, 0.13, 0.06, [RAKE, 0, 0], 10));
+    steer.add(tube(0.034, 0.4, gold, side * 0.1, 0.44, 0.2, [RAKE, 0, 0], 10));
+    steer.add(tube(0.026, 0.15, black, side * GRIP_X, BAR_Y, BAR_Z, [0, 0, Math.PI / 2 - 0.12], 8));
+    steer.add(part(0.11, 0.02, 0.03, MAT.chrome, side * 0.22, BAR_Y - 0.03, BAR_Z - 0.09));
+    const disc = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.24, 0.24, 0.012, 22),
+      MAT.chrome
+    );
+    disc.rotation.z = Math.PI / 2;
+    disc.position.set(side * 0.08, 0, 0);
+    steer.add(disc);
+    steer.add(part(0.06, 0.14, 0.1, black, side * 0.11, 0.2, -0.05)); // caliper
+  }
+  steer.add(tube(0.038, 0.2, black, 0, 0.62, 0.28, [RAKE, 0, 0], 10));
+  for (const side of [-1, 1]) {
+    steer.add(wingMirror(side, side * 0.19, 0.6, -0.14, body, { scale: 0.72 }));
+  }
+  // Twin projectors stacked in the nose of the fairing.
+  for (const dy of [0, 0.12]) {
+    const lens = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.058, 0.058, 0.03, 16),
+      MAT.headlight
+    );
+    lens.rotation.x = Math.PI / 2;
+    lens.position.set(0, 0.4 + dy, -0.28);
+    steer.add(lens);
+  }
+  steer.add(fenderArch(RADIUS + 0.06, 0.2, 0, 0, 0, body, 0.035));
+
+  return car;
+}
+
+/* ------------------------------------------------------------------ */
 /* Moped — the 49cc option                                             */
 /* ------------------------------------------------------------------ */
 

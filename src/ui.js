@@ -1,5 +1,6 @@
 /** All DOM: menu, HUD, overlays. The 3D side never touches the document. */
 import { CARS, carRange, carTopSpeed } from './cars/index.js';
+import { isUnlocked, totalMetres } from './progress.js';
 import {
   t,
   applyStaticTranslations,
@@ -104,16 +105,57 @@ export class UI {
     this.el.picker.innerHTML = '';
     for (const car of CARS) {
       const card = document.createElement('button');
-      card.className = 'car-card';
       card.dataset.id = car.id;
+      this.el.picker.appendChild(card);
+      this.paintCard(card, car);
+      card.addEventListener('click', () => {
+        if (card.classList.contains('locked')) return;
+        this.selectCar(car.id);
+      });
+    }
+    if (this.locked(this.selected)) this.selected = CARS[0].id;
+    this.selectCar(this.selected, true);
+  }
+
+  /** True while a vehicle is still behind its milestone. */
+  locked(id) {
+    const car = CARS.find((c) => c.id === id);
+    return !!(car && car.unlockAt && !isUnlocked(id));
+  }
+
+  /**
+   * A card is either the vehicle or the promise of one. Locked cards keep
+   * the name hidden — the whole point of these three is that you do not know
+   * what is coming until it is yours.
+   */
+  paintCard(card, car) {
+    const shut = this.locked(car.id);
+    card.className = `car-card${shut ? ' locked' : ''}`;
+    if (!shut) {
       card.innerHTML = `
         <div class="swatch" style="background:${car.color}"></div>
         <h3>${car.name}</h3>
         <p>${t(car.taglineKey)}</p>`;
-      card.addEventListener('click', () => this.selectCar(car.id));
-      this.el.picker.appendChild(card);
+      return;
     }
-    this.selectCar(this.selected, true);
+    const left = Math.max(0, car.unlockAt - totalMetres());
+    card.innerHTML = `
+      <div class="swatch locked-swatch">?</div>
+      <h3>${t('car.locked')}</h3>
+      <p>${t('car.lockedHint', {
+        km: (car.unlockAt / 1000).toFixed(0),
+        left: (left / 1000).toFixed(left < 10000 ? 1 : 0),
+      })}</p>`;
+  }
+
+  /** Opens a card the moment its milestone is claimed at a pump. */
+  unlockCar(car) {
+    for (const card of this.el.picker.children) {
+      if (card.dataset.id === car.id) {
+        this.paintCard(card, car);
+        card.classList.add('just-unlocked');
+      }
+    }
   }
 
   selectCar(id, silent = false) {
@@ -122,6 +164,7 @@ export class UI {
       card.classList.toggle('active', card.dataset.id === id);
     }
     const car = CARS.find((c) => c.id === id);
+    if (this.locked(id)) return; // no peeking at a locked car's numbers
     const row = (label, value, text, cls = '') => `
       <div class="spec-row ${cls}">
         <label>${label}</label>

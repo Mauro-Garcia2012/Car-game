@@ -96,6 +96,10 @@ export const MAT = {
     color: '#141518',
     roughness: 0.85,
   }),
+  plate: new THREE.MeshStandardMaterial({
+    color: '#e7e3d6',
+    roughness: 0.7,
+  }),
 };
 
 /**

@@ -1,6 +1,6 @@
 /** Wires the world, the car, the rules and the camera into a playable game. */
 import * as THREE from 'three';
-import { createCar, carById, carRange } from './cars/index.js';
+import { createCar, carById, carRange, CARS } from './cars/index.js';
 import { RoadSystem } from './world/road.js';
 import { PropField } from './world/props.js';
 import {
@@ -28,6 +28,7 @@ import { createSky } from './world/sky.js';
 import { Headlights } from './world/headlights.js';
 import { setNightGlow } from './world/nightlights.js';
 import { clockFor, DAY_START_HOUR, NIGHT_HOUR } from './daynight.js';
+import { addMetres, claimUnlocked, flush as flushProgress } from './progress.js';
 import { Vehicle, SURFACE } from './vehicle.js';
 import { Traffic } from './traffic.js';
 import { DustSystem } from './effects.js';
@@ -65,6 +66,7 @@ export class Game {
     this.day = 1;
     // The sleep meter is the clock: 0 is dawn, 1 is nightfall.
     this.dayPhase = 0;
+    this.bankedDistance = 0;
     this.nightOverrun = 0;
     this.fatigue = new Fatigue();
     this.fares = new Fares();
@@ -209,6 +211,7 @@ export class Game {
     this.day = 1;
     this.dayPhase = 0;
     this.nightOverrun = 0;
+    this.bankedDistance = 0;
     resetMarket();
     this.stations.refreshPrices();
     this.cameras.reset(0);
@@ -251,6 +254,7 @@ export class Game {
     if (this.state === 'over') return;
     this.state = 'over';
     this.audio.fail();
+    flushProgress();
     this.ui.showGameOver({
       titleKey,
       textKey,
@@ -324,6 +328,11 @@ export class Game {
     if (this.fatigue.blinked) this.audio.blip(180, 0.5, 'sine', 0.12);
 
     v.update(dt, input);
+    if (!frozen) {
+      // Lifetime odometer: what the unlocks are measured against.
+      addMetres(v.distance - this.bankedDistance);
+      this.bankedDistance = v.distance;
+    }
 
     this.road.update(v.s);
     this.stations.update(v.s);
@@ -476,6 +485,22 @@ export class Game {
     this.stops.add(index);
     this.audio.fanfare();
     this.flash('msg.tankFull', 'good', 2.2);
+    this.handOverKeys();
+  }
+
+  /**
+   * The garage catches up with you at the pump.
+   *
+   * Milestones are passed out on the road but only collected here, standing
+   * still with the engine off — partly so the message is readable, partly
+   * because a car appearing in the showroom mid-corner would be absurd.
+   */
+  handOverKeys() {
+    for (const car of claimUnlocked(CARS)) {
+      this.ui.unlockCar(car);
+      this.audio.fanfare();
+      this.flash('msg.unlocked', 'good', 5, { name: car.name });
+    }
   }
 
   /** Parking at a motel and sleeping it off — free, but it costs time. */
