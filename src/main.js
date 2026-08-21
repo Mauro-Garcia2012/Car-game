@@ -19,6 +19,7 @@ const ui = new UI({
   onResume: () => game.setPaused(false),
   onQuit: () => game.toMenu(),
   onRetry: () => game.start(game.spec.id),
+  onResumeRun: () => game.resumeRun(),
   onAcceptFare: () => game && game.acceptFare(),
 });
 
@@ -29,6 +30,7 @@ requestAnimationFrame(() => {
   game = new Game(canvas, ui, input, audio);
   window.__game = game; // handy for debugging from the console
   game.toMenu();
+  ui.showParkedRun(game.parkedRun());
   ui.hideLoading();
 
   const loop = () => {

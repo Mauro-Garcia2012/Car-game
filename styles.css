@@ -415,6 +415,23 @@ kbd {
   color: #7fd0ff;
 }
 
+/* The saved run waiting to be picked back up. */
+.primary.resume {
+  display: grid;
+  gap: 2px;
+  background: linear-gradient(180deg, #2f7d4f, #1d5a37);
+  color: #eafff2;
+}
+
+.primary.resume em {
+  font-family: var(--body, inherit);
+  font-style: normal;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  opacity: 0.82;
+  text-transform: none;
+}
+
 /* A card for something you have not earned yet. */
 .car-card.locked {
   opacity: 0.55;

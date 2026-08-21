@@ -180,6 +180,23 @@ one sitting is nine hours of driving, and a reward nobody can reach is not a
 reward. Unlocks live in `localStorage` and survive everything except clearing
 your browser data.
 
+### The run keeps until you die
+
+A run in progress is parked every couple of seconds and again the moment the
+tab goes away, so **closing the game is not the same as losing.** Come back and
+the garage offers **BACK ON THE ROAD** with the day, the distance, the money
+and the car you were in; the start button becomes *start a new run*, so nobody
+throws two hours away by pressing the big obvious button out of habit.
+
+Everything comes back: where you were on the road, your fuel, your damage, the
+hour of day, how awake you are, the money, which pumps you have already used,
+which crates you have opened, the passenger in the car and where they are
+going, and what the market is charging for petrol tonight.
+
+**Dying deletes it.** That is the whole point of the game ending, and a save
+you could reload after running dry would make the fuel gauge a suggestion.
+Quitting to the garage does not count as dying — the run is still there.
+
 **The moped plays a different game.** It burns a fiftieth of what the supercar
 does per metre, so four and a half litres will carry it past five gas stations
 and to within a few hundred metres of the sixth: the fuel gauge simply stops
@@ -415,6 +432,22 @@ Que sea acumulada y no de una sola partida es a propósito: mil kilómetros del
 tirón son nueve horas al volante, y un premio que nadie puede alcanzar no es un
 premio. Los desbloqueos viven en `localStorage` y sobreviven a todo menos a
 borrar los datos del navegador.
+
+### La partida se guarda hasta que mueras
+
+La partida en curso se aparca cada dos segundos y otra vez en cuanto cierras la
+pestaña, así que **cerrar el juego no es lo mismo que perder.** Al volver, el
+garaje te ofrece **VOLVER A LA CARRETERA** con el día, la distancia, el dinero
+y el coche que llevabas; el botón de empezar pasa a decir *empezar una partida
+nueva*, para que nadie tire dos horas por pulsar el botón grande de siempre.
+
+Vuelve todo: dónde estabas en la carretera, la gasolina, los daños, la hora, lo
+despierto que vas, el dinero, en qué surtidores ya paraste, qué cajas abriste,
+el pasajero que llevas y adónde va, y a cuánto está la gasolina esta noche.
+
+**Morir lo borra.** Para eso se acaba la partida, y un guardado que pudieras
+recargar después de quedarte seco convertiría la aguja de la gasolina en una
+sugerencia. Salir al garaje no cuenta como morir: la partida sigue ahí.
 
 **El ciclomotor juega a otra cosa.** Gasta la cincuentava parte que el
 superdeportivo por metro, así que con cuatro litros y medio se planta más allá

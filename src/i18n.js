@@ -24,6 +24,9 @@ const STRINGS = {
     'menu.strap':
       'Route 66, dawn to dark, no cell service. The pumps are a long way apart — <b>skip one too many and you die out there.</b>',
     'menu.start': 'START ENGINE',
+    'menu.resume': 'BACK ON THE ROAD',
+    'menu.resumeAt': 'Day {day} · {km} · {cash} · {car}',
+    'menu.startFresh': 'START A NEW RUN',
     'menu.language': 'Language',
 
     'controls.drive': '/ arrows drive',
@@ -148,6 +151,9 @@ const STRINGS = {
     'menu.strap':
       'Ruta 66, del amanecer a la noche cerrada, sin cobertura. Los surtidores están muy lejos unos de otros: <b>sáltate uno de más y te quedas tirado.</b>',
     'menu.start': 'ARRANCAR MOTOR',
+    'menu.resume': 'VOLVER A LA CARRETERA',
+    'menu.resumeAt': 'Día {day} · {km} · {cash} · {car}',
+    'menu.startFresh': 'EMPEZAR UNA PARTIDA NUEVA',
     'menu.language': 'Idioma',
 
     'controls.drive': '/ flechas para conducir',

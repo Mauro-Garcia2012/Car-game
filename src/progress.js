@@ -84,9 +84,53 @@ export function claimUnlocked(cars) {
   return won;
 }
 
+/* ------------------------------------------------------------------ */
+/* The run in progress                                                 */
+/* ------------------------------------------------------------------ */
+
+const RUN_KEY = 'desert-run.run';
+/** Bump when the shape of a saved run changes; older saves are dropped. */
+const RUN_FORMAT = 1;
+
+/**
+ * Parks a run so it can be picked up later.
+ *
+ * A run survives closing the tab, the browser and the machine. The one thing
+ * it does not survive is dying — the point of the game is that a run ends,
+ * and a save you can reload after a crash would make the fuel gauge a
+ * suggestion.
+ */
+export function saveRun(state) {
+  try {
+    localStorage.setItem(RUN_KEY, JSON.stringify({ v: RUN_FORMAT, ...state }));
+  } catch {
+    // No storage: the run still plays, it just will not come back.
+  }
+}
+
+/** @returns {object|null} the parked run, or null if there is not one. */
+export function loadRun() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(RUN_KEY) || 'null');
+    if (!raw || raw.v !== RUN_FORMAT) return null;
+    return raw;
+  } catch {
+    return null;
+  }
+}
+
+export function clearRun() {
+  try {
+    localStorage.removeItem(RUN_KEY);
+  } catch {
+    // Nothing to do; a save we cannot delete is a save we cannot read either.
+  }
+}
+
 /** Wipes the garage back to its opening state. For testing and for menus. */
 export function resetProgress() {
   state.metres = 0;
   state.unlocked = [];
   save();
+  clearRun();
 }

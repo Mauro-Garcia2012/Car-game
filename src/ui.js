@@ -59,6 +59,9 @@ export class UI {
       limitValue: $('limit-value'),
       day: $('hud-day'),
       cash: $('hud-cash'),
+      resumeRun: $('resume-run-btn'),
+      resumeSummary: $('resume-summary'),
+      startBtn: $('start-btn'),
       clock: $('hud-clock'),
       clockChip: $('clock-chip'),
       sleepBar: $('sleep-bar'),
@@ -199,6 +202,7 @@ export class UI {
 
   bindButtons() {
     $('start-btn').addEventListener('click', () => this.h.onStart(this.selected));
+    this.el.resumeRun.addEventListener('click', () => this.h.onResumeRun());
     $('resume-btn').addEventListener('click', () => this.h.onResume());
     $('quit-btn').addEventListener('click', () => this.h.onQuit());
     $('retry-btn').addEventListener('click', () => this.h.onRetry());
@@ -209,6 +213,26 @@ export class UI {
 
   hideLoading() {
     this.el.loading.classList.add('hidden');
+  }
+
+  /**
+   * Offers the parked run, if there is one. The start button becomes the
+   * explicit way to throw it away, so nobody loses two hours of driving by
+   * pressing the big obvious button out of habit.
+   */
+  showParkedRun(run) {
+    const has = !!run;
+    this.el.resumeRun.classList.toggle('hidden', !has);
+    this.el.startBtn.textContent = t(has ? 'menu.startFresh' : 'menu.start');
+    this.el.startBtn.dataset.i18n = has ? 'menu.startFresh' : 'menu.start';
+    if (!has) return;
+    const car = CARS.find((c) => c.id === run.car);
+    this.el.resumeSummary.textContent = t('menu.resumeAt', {
+      day: run.day,
+      km: km(run.distance),
+      cash: `$${Math.round(run.cash)}`,
+      car: car ? car.name : '',
+    });
   }
 
   showMenu() {

@@ -11,6 +11,8 @@ import {
   fuelPricePerLitre,
   overnightHike,
   resetMarket,
+  marketPrice,
+  setMarketPrice,
   ZONE_HALF,
 } from './world/gasStation.js';
 import { Motels, motelDistance, nextMotelIndex } from './world/motel.js';
@@ -18,6 +20,7 @@ import { Crates, BIG_PRIZE } from './world/crates.js';
 import { Fatigue, AWAKE_TIME } from './fatigue.js';
 import {
   Fares,
+  offerAt,
   extraLitresFor,
   PASSENGER_BURN,
   STATION,
@@ -28,7 +31,14 @@ import { createSky } from './world/sky.js';
 import { Headlights } from './world/headlights.js';
 import { setNightGlow } from './world/nightlights.js';
 import { clockFor, DAY_START_HOUR, NIGHT_HOUR } from './daynight.js';
-import { addMetres, claimUnlocked, flush as flushProgress } from './progress.js';
+import {
+  addMetres,
+  claimUnlocked,
+  flush as flushProgress,
+  saveRun,
+  loadRun,
+  clearRun,
+} from './progress.js';
 import { Vehicle, SURFACE } from './vehicle.js';
 import { Traffic } from './traffic.js';
 import { DustSystem } from './effects.js';
@@ -41,6 +51,8 @@ const REFUEL_SPEED_LIMIT = 3.2; // m/s — you have to actually stop
 const CHECKIN_TIME = 2.5; // seconds parked before the room key appears
 /** Seconds the sky takes to run from midnight back round to dawn. */
 const DAWN_SWEEP = 2.6;
+/** Seconds of driving between writes of the run in progress. */
+const RUN_SAVE_EVERY = 2;
 /** Cash in the glovebox at the start. There is no way to earn more yet. */
 const START_CASH = 500;
 const CAMERA_MODES = ['chase', 'hood', 'orbit'];
@@ -128,7 +140,10 @@ export class Game {
     window.addEventListener('resize', () => this.onResize());
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && this.state === 'playing') this.setPaused(true);
+      if (document.hidden) this.parkRun();
     });
+    // pagehide is the one that fires reliably when a tab really goes away.
+    window.addEventListener('pagehide', () => this.parkRun());
 
     this.input.onAction = (action) => this.onAction(action);
     this.clock = new THREE.Clock();
@@ -212,6 +227,8 @@ export class Game {
     this.dayPhase = 0;
     this.nightOverrun = 0;
     this.bankedDistance = 0;
+    this.saveTick = RUN_SAVE_EVERY;
+    clearRun();
     resetMarket();
     this.stations.refreshPrices();
     this.cameras.reset(0);
@@ -230,6 +247,102 @@ export class Game {
     this.snapCamera();
   }
 
+  /**
+   * Writes the run in progress out, so closing the tab is not the same as
+   * dying. Cheap enough to call every couple of seconds: the whole thing is
+   * a few hundred numbers and two lists of indices.
+   */
+  parkRun() {
+    if (this.state !== 'playing' && this.state !== 'paused') return;
+    const v = this.vehicle;
+    saveRun({
+      car: this.spec.id,
+      s: v.s,
+      lateral: v.lateral,
+      yaw: v.yaw,
+      speed: v.speed,
+      fuel: v.fuel,
+      damage: v.damage,
+      distance: v.distance,
+      cash: this.cash,
+      spent: this.spent,
+      earned: this.earned,
+      day: this.day,
+      dayPhase: this.dayPhase,
+      nightOverrun: this.nightOverrun,
+      sleep: this.fatigue.level,
+      market: marketPrice(),
+      stops: [...this.stops],
+      skipped: [...this.skipped],
+      beds: [...this.beds],
+      crates: [...this.crates.opened],
+      faresUsed: [...this.fares.used],
+      fare: this.fares.active
+        ? { kind: this.fares.active.kind, index: this.fares.active.index }
+        : null,
+      cameraMode: this.cameraMode,
+    });
+    this.saveTick = RUN_SAVE_EVERY;
+  }
+
+  /** Is there a run parked, and what does it look like? */
+  parkedRun() {
+    const run = loadRun();
+    return run && carById(run.car) ? run : null;
+  }
+
+  /** Picks a parked run back up exactly where it was left. */
+  resumeRun() {
+    const run = this.parkedRun();
+    if (!run) return false;
+
+    this.start(run.car); // sets a clean slate, then we overwrite it
+    const v = this.vehicle;
+    v.s = run.s;
+    v.lateral = run.lateral;
+    v.yaw = run.yaw;
+    v.speed = run.speed;
+    v.fuel = run.fuel;
+    v.damage = run.damage;
+    v.distance = run.distance;
+    const p = roadPoint(run.s, run.lateral);
+    v.position.set(p.x, terrainHeight(run.s, run.lateral), p.z);
+
+    this.cash = run.cash;
+    this.spent = run.spent;
+    this.earned = run.earned;
+    this.day = run.day;
+    this.dayPhase = run.dayPhase;
+    this.nightOverrun = run.nightOverrun;
+    this.bankedDistance = run.distance; // already banked on the odometer
+    this.fatigue.level = run.sleep;
+    this.cameraMode = run.cameraMode ?? 0;
+
+    setMarketPrice(run.market);
+    this.stops = new Set(run.stops);
+    this.skipped = new Set(run.skipped);
+    this.beds = new Set(run.beds);
+    this.crates.opened = new Set(run.crates);
+    this.fares.used = new Set(run.faresUsed);
+    this.fares.active = run.fare ? offerAt(run.fare.kind, run.fare.index) : null;
+    v.load = this.fares.active ? PASSENGER_BURN : 1;
+
+    // Rebuild the world around wherever we came back to.
+    this.road.update(v.s);
+    this.stations.update(v.s);
+    this.stations.refreshPrices();
+    this.signs.update(v.s);
+    this.cameras.reset(v.s);
+    this.motels.update(v.s);
+    this.traffic.update(0, v.s);
+    v.syncModel(0);
+    this.advanceClock(0);
+    this.sky.update(v.position);
+    this.snapCamera();
+    this.parkRun(); // start() wiped the save; put it straight back
+    return true;
+  }
+
   setPaused(paused) {
     if (paused && this.state === 'playing') {
       this.state = 'paused';
@@ -242,10 +355,14 @@ export class Game {
   }
 
   toMenu() {
+    // Going back to the garage is not giving up: park the run first, and
+    // offer it again on the way out.
+    this.parkRun();
     this.state = 'menu';
     this.orbitAngle = 2.3; // three-quarter front view to start
     this.ui.setPaused(false);
     this.ui.showMenu();
+    this.ui.showParkedRun(this.parkedRun());
     this.parkForMenu();
     this.snapCamera();
   }
@@ -254,6 +371,7 @@ export class Game {
     if (this.state === 'over') return;
     this.state = 'over';
     this.audio.fail();
+    clearRun();
     flushProgress();
     this.ui.showGameOver({
       titleKey,
@@ -350,6 +468,9 @@ export class Game {
       this.handleFares();
       this.handleStationBookkeeping();
       this.checkGameOver();
+
+      this.saveTick -= dt;
+      if (this.saveTick <= 0) this.parkRun();
     }
 
     this.orbitAngle += dt * 0.3;
