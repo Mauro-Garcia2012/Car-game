@@ -30,6 +30,8 @@ const ATTACH_OFFSET = 95;
 
 /** Half length of the check-in zone, measured along the road. */
 export const ZONE_HALF = 26;
+/** How far off the centre line the neon pylon stands: out on the lot. */
+const PYLON_LATERAL = 13;
 const ZONE_INNER = EDGE + 4;
 const ZONE_OUTER = EDGE + 34;
 
@@ -245,21 +247,58 @@ function buildMotelModel() {
     }
   }
 
-  // Neon sign by the road: MOTEL stacked vertically, VACANCY underneath.
+  // Neon pylon by the road, built like the station's: out on the lot rather
+  // than in the right-hand lane, and with cabinets deeper than the column so
+  // it does not come out through the lettering.
   const sign = new THREE.Group();
-  sign.position.set(3.0, 0, 22);
+  sign.position.set(PYLON_LATERAL, 0, 22);
   root.add(sign);
-  sign.add(box(0.5, 10, 0.5, mat.steel, 0, 5, 0));
-  // Broad faces along the road: a motel sign that only its own car park can
-  // read is no use to anybody, and at night it is the one landmark there is.
-  const neon = new THREE.Mesh(new THREE.BoxGeometry(1.5, 5.0, 0.3), mat.neon);
-  neon.position.set(0, 8.6, 0);
-  neon.castShadow = true;
-  sign.add(neon);
-  const vacancy = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.0, 0.26), mat.vacancy);
-  vacancy.position.set(0, 5.3, 0);
-  sign.add(vacancy);
-  sign.add(box(2.9, 0.3, 0.6, mat.trim, 0, 5.95, 0));
+
+  const plinth = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.0, 1.2, 0.6, 20),
+    mat.stucco
+  );
+  plinth.position.y = 0.3;
+  plinth.castShadow = true;
+  plinth.receiveShadow = true;
+  sign.add(plinth);
+
+  const column = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.28, 0.4, 11.4, 22),
+    mat.steel
+  );
+  column.position.y = 5.7;
+  column.castShadow = true;
+  sign.add(column);
+
+  /** A lit cabinet: dark bezel, glowing panel inset in each face. */
+  const cabinet = (w, h, y, material) => {
+    const g = new THREE.Group();
+    g.position.y = y;
+    const depth = 0.8; // wider than the column, which hides inside it
+    g.add(box(w, h, depth, mat.trim, 0, 0, 0));
+    for (const side of [1, -1]) {
+      const panel = new THREE.Mesh(
+        new THREE.PlaneGeometry(w - 0.28, h - 0.28),
+        material
+      );
+      panel.position.z = (side * depth) / 2 + side * 0.012;
+      if (side < 0) panel.rotation.y = Math.PI;
+      g.add(panel);
+    }
+    for (const [dx, dy, bw, bh] of [
+      [0, h / 2 - 0.08, w, 0.16],
+      [0, -h / 2 + 0.08, w, 0.16],
+      [-w / 2 + 0.08, 0, 0.16, h],
+      [w / 2 - 0.08, 0, 0.16, h],
+    ]) {
+      g.add(box(bw, bh, depth + 0.08, mat.steel, dx, dy, 0));
+    }
+    sign.add(g);
+  };
+
+  cabinet(2.0, 5.4, 9.2, mat.neon);
+  cabinet(3.0, 1.3, 5.6, mat.vacancy);
 
   root.traverse((o) => {
     if (o.isMesh) o.receiveShadow = true;
@@ -271,8 +310,10 @@ function buildMotelModel() {
 function buildAdvanceSign() {
   const mat = materials();
   const g = new THREE.Group();
-  g.add(box(0.16, 3.2, 0.16, mat.steel, -0.9, 1.6, 0));
-  g.add(box(0.16, 3.2, 0.16, mat.steel, 0.9, 1.6, 0));
+  // Posts sit clear behind the board: same depth on the same plane was
+  // two surfaces fighting for the same pixels.
+  g.add(box(0.16, 3.2, 0.16, mat.steel, -0.9, 1.6, 0.16));
+  g.add(box(0.16, 3.2, 0.16, mat.steel, 0.9, 1.6, 0.16));
   const board = new THREE.Mesh(
     new THREE.BoxGeometry(3.2, 2.2, 0.16),
     new THREE.MeshStandardMaterial({

@@ -52,6 +52,11 @@ export function marketPrice() {
   return market;
 }
 
+/** Puts the market back where a saved run left it. */
+export function setMarketPrice(value) {
+  if (Number.isFinite(value)) market = Math.min(MARKET_CAP, Math.max(BASE_PRICE * 0.5, value));
+}
+
 export function resetMarket() {
   market = BASE_PRICE;
 }
@@ -466,8 +471,10 @@ function buildStationModel(index) {
 function buildAdvanceSign() {
   const mat = materials();
   const g = new THREE.Group();
-  g.add(box(0.16, 3.2, 0.16, mat.steel, -0.9, 1.6, 0));
-  g.add(box(0.16, 3.2, 0.16, mat.steel, 0.9, 1.6, 0));
+  // Posts sit clear behind the board: same depth on the same plane was
+  // two surfaces fighting for the same pixels.
+  g.add(box(0.16, 3.2, 0.16, mat.steel, -0.9, 1.6, 0.16));
+  g.add(box(0.16, 3.2, 0.16, mat.steel, 0.9, 1.6, 0.16));
   const board = new THREE.Mesh(
     new THREE.BoxGeometry(3.2, 2.2, 0.16),
     new THREE.MeshStandardMaterial({

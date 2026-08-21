@@ -144,11 +144,14 @@ export class RoadSigns {
     for (let i = 0; i < poolSize; i++) {
       const group = new THREE.Group();
 
+      // Behind the panel, not through it. The post is deeper than the sign
+      // face, so leaving both on z = 0 pushed a steel bar out of the front
+      // and split the number in half. The legend is on +Z, so behind is -Z.
       const pole = new THREE.Mesh(
         new THREE.BoxGeometry(0.075, 3.1, 0.075),
         post
       );
-      pole.position.y = 1.55;
+      pole.position.set(0, 1.55, -0.062);
       pole.castShadow = true;
       group.add(pole);
 
