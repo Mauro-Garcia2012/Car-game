@@ -11,7 +11,7 @@
 import * as THREE from 'three';
 import { glowAtNight } from './nightlights.js';
 import { roadPoint, roadYaw, EDGE } from '../track.js';
-import { hashRand } from '../rng.js';
+import { hashRand, onReseed } from '../rng.js';
 import {
   concreteTexture,
   boardTexture,
@@ -36,11 +36,19 @@ const ZONE_INNER = EDGE + 4;
 const ZONE_OUTER = EDGE + 34;
 
 const motels = [];
+onReseed(() => {
+  motels.length = 0;
+});
+
+/** Where the first bed is. Moves with the seed, like everything else. */
+function firstMotel() {
+  return FIRST_MOTEL + Math.round((hashRand(4002, 5) - 0.5) * 1200);
+}
 
 function computeMotel(i) {
   let s =
     i === 0
-      ? FIRST_MOTEL
+      ? firstMotel()
       : motels[i - 1].s + MOTEL_GAP + Math.round(hashRand(i, 313) * MOTEL_SPREAD);
   let attached = false;
   const n = nextStationIndex(s);
@@ -343,6 +351,11 @@ export class Motels {
       this.slots.push({ index: -1, model, advance });
     }
     this.tmp = { x: 0, y: 0, z: 0 };
+
+    // A new seed moves every motel; forget which one each slot held.
+    onReseed(() => {
+      for (const slot of this.slots) slot.index = null;
+    });
   }
 
   /** Keeps the current and next motel built and positioned. */

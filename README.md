@@ -197,6 +197,11 @@ going, and what the market is charging for petrol tonight.
 you could reload after running dry would make the fuel gauge a suggestion.
 Quitting to the garage does not count as dying — the run is still there.
 
+The road itself is saved with it. Every run rolls a new desert — a different
+centre line, different hills, the pumps and beds in different places, the
+buttes somewhere else — so resuming has to put you back in *that* one rather
+than a fresh one.
+
 **The moped plays a different game.** It burns a fiftieth of what the supercar
 does per metre, so four and a half litres will carry it past five gas stations
 and to within a few hundred metres of the sixth: the fuel gauge simply stops
@@ -259,7 +264,15 @@ A few things worth knowing if you want to poke at it:
   100 m chunks. When a chunk falls behind the camera, its vertex buffers are
   rewritten for a slot further up the road; scenery is one `InstancedMesh` per
   prop type per chunk, refilled from a deterministic hash so a stretch of
-  desert always regenerates the same way.
+  desert always regenerates the same way — within a run. Across runs it does
+  not: see below.
+- **Every run is a different road.** One seed, rolled when you press start,
+  feeds `hashRand` and therefore everything the world is made of: the phases,
+  amplitudes and frequencies of the sines that shape the centre line and the
+  elevation, where the pumps and the beds fall, the dunes, the buttes, the
+  cacti, the crates. Pass the same number to `Game.start(car, seed)` and you
+  get the same desert back down to the metre — which is how it is tested, and
+  how a resumed run lands in the road it left rather than a new one.
 - **Fuel and sleep pull in opposite directions.** Petrol is spent per metre and
   cash per litre, while sleep is spent per second. Driving slowly saves fuel
   and money but costs you the bed; driving fast saves the bed but empties the
@@ -448,6 +461,11 @@ el pasajero que llevas y adónde va, y a cuánto está la gasolina esta noche.
 **Morir lo borra.** Para eso se acaba la partida, y un guardado que pudieras
 recargar después de quedarte seco convertiría la aguja de la gasolina en una
 sugerencia. Salir al garaje no cuenta como morir: la partida sigue ahí.
+
+La carretera se guarda con ella. **Cada partida genera un desierto distinto**
+—otra línea central, otras cuestas, las gasolineras y las camas en otros
+sitios, las mesetas en otra parte—, así que reanudar tiene que devolverte a
+*ese* y no a uno nuevo.
 
 **El ciclomotor juega a otra cosa.** Gasta la cincuentava parte que el
 superdeportivo por metro, así que con cuatro litros y medio se planta más allá

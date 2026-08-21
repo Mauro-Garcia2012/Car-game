@@ -31,6 +31,7 @@ import { createSky } from './world/sky.js';
 import { Headlights } from './world/headlights.js';
 import { setNightGlow } from './world/nightlights.js';
 import { clockFor, DAY_START_HOUR, NIGHT_HOUR } from './daynight.js';
+import { setWorldSeed, worldSeed } from './rng.js';
 import {
   addMetres,
   claimUnlocked,
@@ -208,7 +209,11 @@ export class Game {
     this.motels.update(s);
   }
 
-  start(id) {
+  start(id, seed = (Math.random() * 0xffffffff) >>> 0) {
+    // A new road before anything is placed on it. Everything in the world is
+    // a hash of the chunk number, so one number here is the difference
+    // between a new desert and the same one again.
+    setWorldSeed(seed);
     if (id && (!this.spec || id !== this.spec.id)) this.setCar(id);
     this.vehicle.reset(0);
     this.vehicle.yaw = roadYaw(0);
@@ -244,6 +249,11 @@ export class Game {
     this.ui.showHud();
     this.audio.start();
     this.audio.resume();
+    // Build the world before the first frame asks the camera about it.
+    this.road.update(0);
+    this.stations.update(0);
+    this.signs.update(0);
+    this.motels.update(0);
     this.snapCamera();
   }
 
@@ -281,6 +291,7 @@ export class Game {
         ? { kind: this.fares.active.kind, index: this.fares.active.index }
         : null,
       cameraMode: this.cameraMode,
+      seed: worldSeed(),
     });
     this.saveTick = RUN_SAVE_EVERY;
   }
@@ -296,7 +307,9 @@ export class Game {
     const run = this.parkedRun();
     if (!run) return false;
 
-    this.start(run.car); // sets a clean slate, then we overwrite it
+    // Same car, same road: start() would otherwise roll a fresh desert and
+    // drop the resumed car into a different one.
+    this.start(run.car, run.seed >>> 0);
     const v = this.vehicle;
     v.s = run.s;
     v.lateral = run.lateral;

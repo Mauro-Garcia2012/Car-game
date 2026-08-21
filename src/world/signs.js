@@ -14,7 +14,7 @@
 import * as THREE from 'three';
 import { glowAtNight } from './nightlights.js';
 import { roadPoint, roadYaw, EDGE } from '../track.js';
-import { hashRand } from '../rng.js';
+import { hashRand, onReseed } from '../rng.js';
 import { speedLimitTexture, signTexture } from '../textures.js';
 import { groundHeight } from './road.js';
 import { stationDistance, nextStationIndex } from './gasStation.js';
@@ -173,6 +173,10 @@ export class RoadSigns {
 
     this.lastBuiltAt = -Infinity;
     this.tmp = { x: 0, y: 0, z: 0 };
+    onReseed(() => {
+      this.lastBuiltAt = -Infinity;
+      for (const slot of this.slots) slot.s = null;
+    });
   }
 
   /** Keeps the signs in view built; cheap, and only recomputed every 40 m. */
@@ -224,6 +228,9 @@ export const FINE = 50;
 const WARNING_AT = 300;
 
 const cameras = [FIRST_CAMERA];
+onReseed(() => {
+  cameras.length = 1;
+});
 
 export function cameraDistance(i) {
   while (cameras.length <= i) {

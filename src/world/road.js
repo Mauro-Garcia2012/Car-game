@@ -8,7 +8,7 @@
  */
 import * as THREE from 'three';
 import { centerX, centerY, roadPoint, EDGE, ROAD_HALF } from '../track.js';
-import { noise2 } from '../rng.js';
+import { noise2, onReseed } from '../rng.js';
 import { asphaltTexture, sandTexture } from '../textures.js';
 
 export const CHUNK_LEN = 100;
@@ -206,6 +206,10 @@ export class RoadSystem {
     this.byIndex = new Map();
     /** Listeners get (chunkIndex, s0, slot) on assign and (slot) on release. */
     this.listeners = [];
+
+    // A new seed is a different desert; the chunks are cached by index, so
+    // without this they would keep showing the last run's dunes.
+    onReseed(() => this.invalidate());
   }
 
   /** Anything that also lives per chunk (props, stations) subscribes here. */
@@ -214,6 +218,21 @@ export class RoadSystem {
   }
 
   /** Recycles chunks so the road always covers the player's view. */
+  /**
+   * Throws away every chunk. A new seed is a different desert, and the
+   * chunks are cached by index — without this they would happily keep
+   * showing the last run's dunes.
+   */
+  invalidate() {
+    if (!this.chunks) return;
+    for (const chunk of this.chunks) {
+      if (chunk.index === null) continue;
+      this.byIndex.delete(chunk.index);
+      chunk.index = null;
+      for (const l of this.listeners) l.release(chunk.slot);
+    }
+  }
+
   update(playerS) {
     const first = Math.floor(playerS / CHUNK_LEN) - CHUNKS_BEHIND;
     const last = first + this.chunks.length - 1;

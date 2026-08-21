@@ -8,7 +8,7 @@
 import * as THREE from 'three';
 import { glowAtNight } from './nightlights.js';
 import { roadPoint, roadYaw, EDGE } from '../track.js';
-import { hashRand } from '../rng.js';
+import { hashRand, onReseed } from '../rng.js';
 import {
   concreteTexture,
   signTexture,
@@ -103,7 +103,15 @@ const ZONE_OUTER = EDGE + 26;
 /** US motorist-service signs (gas, food, lodging) are blue, not green. */
 export const SERVICE_BLUE = '#0b4a8f';
 
+// The spacing is memoised as it is walked, so a new seed has to throw the
+// list away or every run keeps the first run's pumps. The opening station
+// moves too, or every road would begin identically however different the
+// rest of it is.
 const distances = [FIRST_STATION];
+onReseed(() => {
+  distances.length = 1;
+  distances[0] = FIRST_STATION + Math.round((hashRand(4001, 5) - 0.5) * 440);
+});
 
 /** Distance along the track of station `i` (0 based), memoised. */
 export function stationDistance(i) {
@@ -505,6 +513,11 @@ export class GasStations {
       this.slots.push({ index: -1, model, advance });
     }
     this.tmp = { x: 0, y: 0, z: 0 };
+
+    // A new seed moves every station; forget which one each slot held.
+    onReseed(() => {
+      for (const slot of this.slots) slot.index = null;
+    });
   }
 
   /** Repaints every roadside sign after a language change. */
@@ -542,7 +555,7 @@ export class GasStations {
     for (let k = 0; k < this.slots.length; k++) {
       const slot = this.slots[k];
       const index = base + k;
-      if (slot.index === index) continue;
+      if (slot.index === index) continue;  // (cleared on reseed)
       slot.index = index;
       // Each slot shows whichever station it is standing in for.
       setPriceBoard(slot.model.userData.signs.price, index);

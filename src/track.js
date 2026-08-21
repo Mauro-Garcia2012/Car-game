@@ -14,39 +14,72 @@
  * world stays glued to the same curve.
  */
 
+import { hashRand, onReseed } from './rng.js';
+
 export const ROAD_HALF = 4.8; // half width of the tarmac (two 4.8 m lanes)
 export const SHOULDER = 2.2; // gravel shoulder on each side
 export const EDGE = ROAD_HALF + SHOULDER; // where the desert starts
 
+/**
+ * The centre line and the elevation, as sums of sines.
+ *
+ * The amplitudes and frequencies below are the shape of the road; the seed
+ * shifts every phase and nudges every amplitude and frequency, which is what
+ * makes one run's highway a different road rather than the same one with
+ * different scenery on it.
+ */
+const LATERAL_WAVES = [
+  { amp: 62, freq: 0.00061 },
+  { amp: 27, freq: 0.00143 },
+  { amp: 9, freq: 0.0047 },
+];
+const HEIGHT_WAVES = [
+  { amp: 9, freq: 0.00092 },
+  { amp: 3.4, freq: 0.0031 },
+];
+
+let lateral = [];
+let height = [];
+let heightLevel = 0;
+
+function shape(waves, salt) {
+  return waves.map((w, i) => ({
+    amp: w.amp * (0.72 + hashRand(salt + i, 11) * 0.56),
+    freq: w.freq * (0.78 + hashRand(salt + 40 + i, 11) * 0.44),
+    phase: hashRand(salt + 80 + i, 11) * Math.PI * 2,
+  }));
+}
+
+onReseed(() => {
+  lateral = shape(LATERAL_WAVES, 7000);
+  height = shape(HEIGHT_WAVES, 7300);
+  // Level the start line: whatever the phases came out as, s = 0 is y = 0,
+  // so the car never begins the run buried or hanging in the air.
+  heightLevel = height.reduce((sum, w) => sum + w.amp * Math.sin(w.phase), 0);
+});
+
 export function centerX(s) {
-  return (
-    62 * Math.sin(s * 0.00061) +
-    27 * Math.sin(s * 0.00143 + 1.7) +
-    9 * Math.sin(s * 0.0047 + 0.6)
-  );
+  let v = 0;
+  for (const w of lateral) v += w.amp * Math.sin(s * w.freq + w.phase);
+  return v;
 }
 
 export function centerDX(s) {
-  return (
-    62 * 0.00061 * Math.cos(s * 0.00061) +
-    27 * 0.00143 * Math.cos(s * 0.00143 + 1.7) +
-    9 * 0.0047 * Math.cos(s * 0.0047 + 0.6)
-  );
+  let v = 0;
+  for (const w of lateral) v += w.amp * w.freq * Math.cos(s * w.freq + w.phase);
+  return v;
 }
 
 export function centerY(s) {
-  return (
-    9 * Math.sin(s * 0.00092 + 0.3) +
-    3.4 * Math.sin(s * 0.0031 + 2.1) -
-    12.4 * Math.sin(0.3)
-  );
+  let v = -heightLevel;
+  for (const w of height) v += w.amp * Math.sin(s * w.freq + w.phase);
+  return v;
 }
 
 export function centerDY(s) {
-  return (
-    9 * 0.00092 * Math.cos(s * 0.00092 + 0.3) +
-    3.4 * 0.0031 * Math.cos(s * 0.0031 + 2.1)
-  );
+  let v = 0;
+  for (const w of height) v += w.amp * w.freq * Math.cos(s * w.freq + w.phase);
+  return v;
 }
 
 /** Heading of the road at `s`, in the same frame as Object3D.rotation.y. */
