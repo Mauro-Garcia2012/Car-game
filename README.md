@@ -149,7 +149,7 @@ strings to `STRINGS` and one more entry to `LANGUAGES`.
 | | Vipera GT | Falcon R1 | Ridgeback 4x4 | Avispa 49 |
 | --- | --- | --- | --- | --- |
 | Type | Mid-engine supercar | GT prototype | Lifted desert truck | 49cc moped |
-| Top speed | 295 km/h | 342 km/h | 209 km/h | **45 km/h** (restricted) |
+| Top speed | 200 km/h | 230 km/h | 150 km/h | **45 km/h** (restricted) |
 | Tank | 55 L | 46 L | 95 L | 4.5 L |
 | Range | ~5.5 km | ~5.2 km | ~6.8 km | **~12.5 km** |
 | Off-road grip | 34% | 20% | 78% | 18% |
@@ -161,6 +161,14 @@ than either, but it will not outrun anything.
 Those ranges are what a full tank actually covers driven flat out, measured to
 the last drop rather than quoted off the spec sheet — the sheet assumes you
 cruise, and nobody does.
+
+**The top speeds are the speeds too.** They did not use to be: aero drag was
+one constant for the whole garage, so drag rather than the spec decided where
+each car ran out of breath, and the supercar advertised 295 km/h and managed
+138. The coefficient is worked out per car from its own power and top speed
+now, so every number above is one the car reaches. That is also why they are
+lower than they were — the old figures were fiction, and making fiction true
+would have doubled everything.
 
 ### Three you have not met
 
@@ -179,6 +187,26 @@ Lifetime rather than per-run is a deliberate choice: a thousand kilometres in
 one sitting is nine hours of driving, and a reward nobody can reach is not a
 reward. Unlocks live in `localStorage` and survive everything except clearing
 your browser data.
+
+### Dirt tracks, and what is at the end of them
+
+Every ten kilometres or so a graded track leaves the highway and runs **400
+to 700 metres** out into the desert — call it a kilometre out and back — and
+stops at a briefcase. The track is real ground: it grades as gravel, so
+following it is far quicker than cutting across the sand beside it.
+
+| In the case | How often |
+| --- | --- |
+| **$300** in used notes | 50% |
+| **A seized engine**: 40 km/h until the next pump, and $100 to fix | 39% |
+| A set of keys — one of two cars not in the showroom | 10% and 1% |
+
+The seized engine is the reason a track is a bet rather than free money. You
+pay for it in the detour either way: a kilometre of fuel and a couple of
+minutes off the clock, on a road where both are finite.
+
+Keys you already have turn back into money. The two cars they unlock stay in
+the garage for good, like the distance ones — see the locked cards.
 
 ### The run keeps until you die
 
@@ -242,7 +270,8 @@ src/
   rng.js            deterministic hash noise
   cars/             the three player cars, built from extruded side profiles
   world/            sky and the day/night rig, road, terrain, scenery,
-                    stations, motels, signs, cameras, headlamps, crates
+                    stations, motels, signs, cameras, headlamps, crates,
+                    dirt spurs and the briefcases at the end of them
 vendor/three/       three.js r169 (MIT), vendored so the game runs offline
 ```
 
@@ -422,7 +451,7 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
 | | Vipera GT | Falcon R1 | Ridgeback 4x4 | Avispa 49 |
 | --- | --- | --- | --- | --- |
 | Tipo | Superdeportivo | Prototipo GT | Camioneta elevada | Ciclomotor 49cc |
-| Vel. máxima | 295 km/h | 342 km/h | 209 km/h | **45 km/h** (limitado) |
+| Vel. máxima | 200 km/h | 230 km/h | 150 km/h | **45 km/h** (limitado) |
 | Depósito | 55 L | 46 L | 95 L | 4,5 L |
 | Autonomía | ~5,5 km | ~5,2 km | ~6,8 km | **~12,5 km** |
 | Agarre fuera de asfalto | 34% | 20% | 78% | 18% |
@@ -445,6 +474,27 @@ Que sea acumulada y no de una sola partida es a propósito: mil kilómetros del
 tirón son nueve horas al volante, y un premio que nadie puede alcanzar no es un
 premio. Los desbloqueos viven en `localStorage` y sobreviven a todo menos a
 borrar los datos del navegador.
+
+### Caminos de tierra, y lo que hay al final
+
+Cada diez kilómetros más o menos sale de la carretera un camino de tierra
+que se adentra **400 a 700 metros** en el desierto —un kilómetro largo ida y
+vuelta— y termina en un maletín. El camino es firme de verdad: cuenta como
+grava, así que seguirlo es mucho más rápido que cortar por la arena de al
+lado.
+
+| En el maletín | Cada cuánto |
+| --- | --- |
+| **300 $** en billetes usados | 50% |
+| **Motor gripado**: 40 km/h hasta el próximo surtidor, y 100 $ arreglarlo | 39% |
+| Unas llaves — uno de dos coches que no están en el concesionario | 10% y 1% |
+
+El motor gripado es lo que convierte el camino en una apuesta y no en dinero
+gratis. El desvío lo pagas igual: un kilómetro de gasolina y un par de
+minutos de reloj, en una carretera donde las dos cosas se acaban.
+
+Unas llaves que ya tienes se convierten en dinero. Los dos coches que
+desbloquean se quedan en el garaje para siempre, como los de la distancia.
 
 ### La partida se guarda hasta que mueras
 

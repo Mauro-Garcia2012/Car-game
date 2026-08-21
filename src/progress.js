@@ -84,6 +84,19 @@ export function claimUnlocked(cars) {
   return won;
 }
 
+/**
+ * Hands over one specific vehicle, whatever the odometer says. This is the
+ * other way in: a set of keys in a briefcase at the end of a dirt track.
+ *
+ * @returns {boolean} true if this was the first time
+ */
+export function unlockById(id) {
+  if (isUnlocked(id)) return false;
+  state.unlocked.push(id);
+  save();
+  return true;
+}
+
 /* ------------------------------------------------------------------ */
 /* The run in progress                                                 */
 /* ------------------------------------------------------------------ */

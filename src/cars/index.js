@@ -7,6 +7,8 @@ import {
   buildLandYacht,
   buildTrophyTruck,
   buildSuperbike,
+  buildHotHatch,
+  buildHypercar,
 } from './models.js';
 
 /**
@@ -34,7 +36,7 @@ export const CARS = [
     taglineKey: 'car.sport.tagline',
     color: '#d81f2a',
     build: buildSportCar,
-    topSpeed: 82, // m/s
+    topSpeed: 55.6, // m/s — 200 km/h, and it reaches it
     power: 12.5, // m/s² at zero speed
     brakePower: 24,
     grip: 1.0, // tarmac cornering
@@ -54,7 +56,7 @@ export const CARS = [
     taglineKey: 'car.race.tagline',
     color: '#1c6fd8',
     build: buildRaceCar,
-    topSpeed: 95,
+    topSpeed: 63.9, // 230 km/h
     power: 16.0,
     brakePower: 28,
     grip: 1.22,
@@ -101,7 +103,7 @@ export const CARS = [
     taglineKey: 'car.4x4.tagline',
     color: '#c8791f',
     build: build4x4,
-    topSpeed: 58,
+    topSpeed: 41.7, // 150 km/h
     power: 9.0,
     brakePower: 19,
     grip: 0.84,
@@ -123,7 +125,7 @@ export const CARS = [
     color: '#5d2733',
     build: buildLandYacht,
     unlockAt: 100000,
-    topSpeed: 61,
+    topSpeed: 44.4, // 160 km/h
     power: 7.2,
     brakePower: 15, // two tonnes of it, and drum brakes at the back
     grip: 0.7,
@@ -147,7 +149,7 @@ export const CARS = [
     color: '#d9d2c4',
     build: buildTrophyTruck,
     unlockAt: 500000,
-    topSpeed: 67,
+    topSpeed: 48.6, // 175 km/h
     power: 11.0,
     brakePower: 21,
     grip: 0.8,
@@ -170,7 +172,7 @@ export const CARS = [
     color: '#101418',
     build: buildSuperbike,
     unlockAt: 1000000,
-    topSpeed: 84,
+    topSpeed: 59.7, // 215 km/h
     power: 19.5,
     brakePower: 30,
     grip: 1.1,
@@ -189,7 +191,54 @@ export const CARS = [
     collisionRadius: 0.85,
     stats: { speed: 0.88, accel: 0.95, grip: 0.92, range: 1 },
   },
+
+  {
+    id: 'hatch',
+    name: 'GALGO GTI',
+    taglineKey: 'car.hatch.tagline',
+    color: '#dcdfe4',
+    build: buildHotHatch,
+    unlockBy: 'case',
+    topSpeed: 51.4, // 185 km/h
+    power: 10.0,
+    brakePower: 22,
+    grip: 1.04,
+    offroadGrip: 0.3,
+    offroadDrag: 4.4,
+    tank: 50,
+    burn: 0.0068,
+    idleBurn: 0.024,
+    camera: { back: 6.4, height: 2.6, look: 11 },
+    hood: { forward: 1.3, height: 1.22 },
+    collisionRadius: 1.45,
+    stats: { speed: 0.46, accel: 0.51, grip: 0.94, range: 1 },
+  },
+  {
+    id: 'hypercar',
+    name: 'TORO SV',
+    taglineKey: 'car.hypercar.tagline',
+    color: '#c8a800',
+    build: buildHypercar,
+    unlockBy: 'case',
+    // Four hundred an hour, which is nearly double anything else here.
+    topSpeed: 111.1,
+    power: 24.0,
+    brakePower: 34,
+    grip: 1.3,
+    offroadGrip: 0.14,
+    offroadDrag: 8.0,
+    tank: 90,
+    burn: 0.0142,
+    idleBurn: 0.05,
+    camera: { back: 7.4, height: 2.6, look: 14 },
+    hood: { forward: 1.5, height: 1.0 },
+    collisionRadius: 1.6,
+    stats: { speed: 1, accel: 1, grip: 1, range: 1 },
+  },
 ];
+
+/** Vehicles you find rather than earn: they are out on the dirt tracks. */
+export const CASE_CARS = ['hatch', 'hypercar'];
 
 export function carById(id) {
   return CARS.find((c) => c.id === id) || CARS[0];

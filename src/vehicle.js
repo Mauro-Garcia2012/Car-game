@@ -12,9 +12,13 @@ import {
   EDGE,
 } from './track.js';
 import { terrainHeight } from './world/road.js';
+import { onTrack } from './world/sideroads.js';
 import { noise2 } from './rng.js';
 
 const WHEELBASE = 2.85;
+/** Rolling resistance on tarmac, m/s². Paired with dragK above. */
+const ROLLING = 0.55;
+
 const GEARS = [0.0, 0.16, 0.32, 0.5, 0.68, 0.85, 1.0];
 
 export const SURFACE = { ROAD: 'road', SHOULDER: 'shoulder', SAND: 'sand' };
@@ -23,6 +27,25 @@ export class Vehicle {
   constructor(spec, model) {
     this.spec = spec;
     this.model = model;
+
+    /**
+     * Aero drag, worked out per car so that `topSpeed` is the speed the car
+     * actually reaches rather than a number on a brochure.
+     *
+     * It used to be one constant for the whole garage, which meant drag —
+     * not the spec — decided the terminal velocity: the sports car advertised
+     * 295 km/h and ran out of breath at 138. At the top the power fade has
+     * taken thrust down to `power * 0.35`, so setting that equal to drag plus
+     * rolling resistance at v = topSpeed gives the coefficient that makes the
+     * two agree.
+     */
+    this.dragK = Math.max(
+      1e-5,
+      (spec.power * 0.35 - ROLLING) / (spec.topSpeed * spec.topSpeed)
+    );
+
+    /** A cap imposed from outside, in m/s. Null when the engine is healthy. */
+    this.limitOverride = null;
 
     this.s = 0;
     this.lateral = 0;
@@ -70,17 +93,22 @@ export class Vehicle {
     return new THREE.Vector3(p.x, terrainHeight(s, lateral), p.z);
   }
 
-  surfaceAt(lateral) {
+  /**
+   * What the wheels are on. Needs `s` as well as the lateral offset because
+   * the dirt spurs are graded ground out in the sand — they run as gravel,
+   * which is what makes following one cheaper than cutting across.
+   */
+  surfaceAt(s, lateral) {
     const d = Math.abs(lateral);
     if (d <= ROAD_HALF) return SURFACE.ROAD;
     if (d <= EDGE) return SURFACE.SHOULDER;
-    return SURFACE.SAND;
+    return onTrack(s, lateral) ? SURFACE.SHOULDER : SURFACE.SAND;
   }
 
   /** @param {{throttle:number, brake:number, steer:number, handbrake:boolean}} input */
   update(dt, input) {
     const spec = this.spec;
-    const surface = this.surfaceAt(this.lateral);
+    const surface = this.surfaceAt(this.s, this.lateral);
     this.surface = surface;
 
     const onTarmac = surface === SURFACE.ROAD;
@@ -108,8 +136,8 @@ export class Vehicle {
       const fade = Math.max(0, 1 - Math.abs(v) / topSpeed);
       a += spec.power * throttle * (0.35 + 0.65 * fade);
     }
-    a -= 0.0055 * v * Math.abs(v); // aero drag
-    a -= Math.sign(v) * (0.55 + surfaceDrag); // rolling resistance
+    a -= this.dragK * v * Math.abs(v); // aero drag
+    a -= Math.sign(v) * (ROLLING + surfaceDrag); // rolling resistance
     if (input.brake > 0) {
       if (v > 0.4) {
         a -= spec.brakePower * input.brake;
@@ -125,9 +153,13 @@ export class Vehicle {
     // that will not let it: the fade above uses what the motor can do, this
     // caps what comes out. Without the split it would sag short of the
     // number on the sticker, the way an unrestricted engine tails off.
-    const ceiling = spec.speedLimit
-      ? Math.min(spec.speedLimit, topSpeed * 1.02)
-      : topSpeed * 1.02;
+    //
+    // `limitOverride` is the same idea imposed from outside: a seized engine
+    // out of a briefcase will not pull past forty however healthy the spec
+    // sheet is, until somebody is paid to look at it.
+    let ceiling = topSpeed * 1.02;
+    if (spec.speedLimit) ceiling = Math.min(ceiling, spec.speedLimit);
+    if (this.limitOverride) ceiling = Math.min(ceiling, this.limitOverride);
     this.speed = THREE.MathUtils.clamp(this.speed, -9, ceiling);
 
     // Steering: bicycle model, with the turn rate capped by available grip.

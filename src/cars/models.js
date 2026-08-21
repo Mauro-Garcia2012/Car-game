@@ -725,6 +725,219 @@ export function buildSuperbike(color = '#101418') {
 }
 
 /* ------------------------------------------------------------------ */
+/* Hot hatch — found in a briefcase                                    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A boxy three-door hot hatch: upright glass, a tailgate you could post a
+ * letter through and a red stripe round the grille. The sensible car in a
+ * garage that does not otherwise contain one.
+ */
+export function buildHotHatch(color = '#dcdfe4') {
+  const car = new THREE.Group();
+  const body = paint(color, { metalness: 0.3, roughness: 0.36 });
+  const trim = MAT.matteBlack;
+  const sculpt = bodySculpt({
+    halfLength: 1.98,
+    ends: 0.2,
+    endStart: 0.62,
+    top: 0.11,
+    beltline: 1.02,
+    roofY: 1.52,
+    bottom: 0.1,
+    floorY: 0.32,
+  });
+  const opt = { sculpt };
+
+  // Short bonnet, long cabin, tail cut off vertical: the hatchback shape.
+  const lower = [
+    [-1.9, 0.42],
+    [-1.96, 0.86],
+    [-1.55, 1.0],
+    [-0.9, 1.02],
+    [1.2, 1.02],
+    [1.86, 0.98],
+    [1.9, 0.5],
+    [1.72, 0.28],
+    [1.0, 0.24],
+    [-1.0, 0.24],
+    [-1.72, 0.3],
+  ];
+  car.add(profilePiece(lower, 1.76, body, { ...opt, bevel: 0.07 }));
+
+  // Upright greenhouse with a near-vertical tailgate.
+  const cabin = [
+    [-1.12, 1.02],
+    [-0.62, 1.5],
+    [1.02, 1.5],
+    [1.3, 1.02],
+  ];
+  car.add(profilePiece(cabin, 1.6, MAT.glass, { ...opt, bevel: 0.02 }));
+  car.add(
+    profilePiece(
+      [
+        [-0.5, 1.44],
+        [-0.36, 1.54],
+        [0.9, 1.54],
+        [1.0, 1.44],
+      ],
+      1.64,
+      body,
+      { ...opt, bevel: 0.03 }
+    )
+  );
+  // Roof spoiler over the tailgate, and a wiper on it.
+  car.add(slab(1.42, 0.09, 0.36, body, 0, 1.56, 1.06, [0.22, 0, 0], 0.04));
+  car.add(part(0.05, 0.04, 0.5, trim, -0.25, 1.28, 1.22, [0.4, 0, 0.5]));
+
+  // Nose: black grille band with the stripe, and square lamps either side.
+  car.add(part(1.44, 0.22, 0.1, trim, 0, 0.78, -1.99));
+  car.add(part(1.44, 0.05, 0.05, MAT.tail, 0, 0.86, -2.03));
+  car.add(slab(1.62, 0.2, 0.36, trim, 0, 0.5, -1.94, [0, 0, 0], 0.05));
+  for (const side of [-1, 1]) {
+    car.add(part(0.42, 0.2, 0.1, trim, side * 0.52, 0.94, -1.95));
+    car.add(part(0.38, 0.16, 0.08, MAT.headlight, side * 0.52, 0.94, -1.99));
+    car.add(part(0.16, 0.08, 0.06, MAT.amber, side * 0.76, 0.94, -1.96));
+    // Tail lamps: tall hatchback clusters up the corners.
+    car.add(part(0.16, 0.42, 0.09, MAT.tail, side * 0.7, 0.95, 1.9));
+    car.add(
+      doorFurniture(side, 0.34, {
+        top: 1.0, bottom: 0.28, width: 1.76, sculpt,
+        handleY: 0.9, handleZ: -0.05,
+      })
+    );
+    car.add(
+      wingMirror(side, side * flankX(1.76, sculpt, 1.04, -0.86), 1.04, -0.86, body, {
+        scale: 1.0,
+      })
+    );
+    // Side rubbing strip.
+    car.add(part(0.03, 0.06, 2.6, trim, side * flankX(1.76, sculpt, 0.6, 0), 0.6, 0));
+  }
+  car.add(exhaustTip(-0.5, 0.34, 1.92, 0.05, 0.14));
+  car.add(part(0.44, 0.16, 0.02, MAT.plate, 0, 0.62, 1.94));
+
+  const wheels = [
+    { x: -0.82, z: -1.24, radius: 0.33, width: 0.22, spokes: 5, front: true, rimMaterial: MAT.chrome },
+    { x: 0.82, z: -1.24, radius: 0.33, width: 0.22, spokes: 5, front: true, rimMaterial: MAT.chrome },
+    { x: -0.82, z: 1.22, radius: 0.33, width: 0.22, spokes: 5, front: false, rimMaterial: MAT.chrome },
+    { x: 0.82, z: 1.22, radius: 0.33, width: 0.22, spokes: 5, front: false, rimMaterial: MAT.chrome },
+  ];
+  mountWheels(car, wheels);
+  dressArches(car, wheels, body, { grow: 0.05, thickness: 0.055 });
+  return car;
+}
+
+/* ------------------------------------------------------------------ */
+/* Hypercar — the one-in-a-hundred briefcase                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A mid-engine wedge with scissor doors and a very large wing. Four hundred
+ * an hour, and it will drink a tank getting there.
+ */
+export function buildHypercar(color = '#c8a800') {
+  const car = new THREE.Group();
+  const body = paint(color, { metalness: 0.55, roughness: 0.22 });
+  const carbon = MAT.carbon;
+  const sculpt = bodySculpt({
+    halfLength: 2.4,
+    ends: 0.36,
+    endStart: 0.4,
+    top: 0.2,
+    beltline: 0.82,
+    roofY: 1.16,
+    bottom: 0.16,
+    floorY: 0.26,
+  });
+  const opt = { sculpt };
+
+  // Knife-edge wedge, barely off the ground.
+  const lower = [
+    [-2.34, 0.26],
+    [-2.4, 0.56],
+    [-1.9, 0.7],
+    [-0.7, 0.8],
+    [0.9, 0.78],
+    [1.9, 0.62],
+    [2.3, 0.5],
+    [2.32, 0.26],
+    [2.1, 0.14],
+    [1.2, 0.12],
+    [-1.2, 0.12],
+    [-2.1, 0.16],
+  ];
+  car.add(profilePiece(lower, 2.08, body, { ...opt, bevel: 0.06 }));
+
+  // Low canopy set forward, engine deck behind it.
+  const cabin = [
+    [-1.35, 0.78],
+    [-0.85, 1.14],
+    [0.1, 1.14],
+    [0.6, 0.8],
+  ];
+  car.add(profilePiece(cabin, 1.68, MAT.glass, { ...opt, bevel: 0.02 }));
+  car.add(
+    profilePiece(
+      [
+        [-0.72, 1.08],
+        [-0.6, 1.18],
+        [0.16, 1.16],
+        [0.3, 1.04],
+      ],
+      1.72,
+      body,
+      { ...opt, bevel: 0.03 }
+    )
+  );
+  // Engine bay louvres and the intakes that feed them.
+  for (let i = 0; i < 6; i++) {
+    car.add(part(1.2, 0.03, 0.11, carbon, 0, 0.83 + i * 0.012, 0.72 + i * 0.14));
+  }
+  for (const side of [-1, 1]) {
+    car.add(part(0.34, 0.2, 0.7, carbon, side * 0.78, 0.62, 0.3));
+    car.add(
+      doorFurniture(side, 0.1, { top: 0.82, bottom: 0.22, width: 2.08, sculpt })
+    );
+    car.add(
+      wingMirror(side, side * flankX(2.08, sculpt, 0.86, -1.06), 0.86, -1.06, carbon, {
+        scale: 0.95,
+      })
+    );
+  }
+
+  // Nose: splitter, slim lamps, big ducts.
+  car.add(slab(1.94, 0.06, 0.6, carbon, 0, 0.11, -2.24, [0, 0, 0], 0.03));
+  for (const side of [-1, 1]) {
+    car.add(part(0.44, 0.06, 0.1, MAT.headlight, side * 0.62, 0.55, -2.3, [0.3, 0, 0]));
+    car.add(part(0.5, 0.18, 0.16, carbon, side * 0.66, 0.3, -2.2));
+    car.add(part(0.22, 0.05, 0.06, MAT.amber, side * 0.86, 0.44, -2.2));
+  }
+
+  // Rear wing on swan-neck mounts, diffuser and quad pipes.
+  for (const side of [-1, 1]) {
+    car.add(part(0.08, 0.42, 0.3, carbon, side * 0.62, 0.9, 2.0, [0.2, 0, 0]));
+  }
+  car.add(slab(1.9, 0.06, 0.44, carbon, 0, 1.14, 2.06, [0.12, 0, 0], 0.02));
+  car.add(part(1.5, 0.24, 0.34, carbon, 0, 0.2, 2.14));
+  for (let i = -2; i <= 2; i++) {
+    car.add(part(0.05, 0.22, 0.32, MAT.matteBlack, i * 0.3, 0.2, 2.16));
+  }
+  car.add(part(1.3, 0.09, 0.07, MAT.tail, 0, 0.62, 2.3));
+  for (const x of [-0.24, 0, 0.24]) car.add(exhaustTip(x, 0.44, 2.24, 0.058, 0.16));
+
+  const wheels = [
+    { x: -0.92, z: -1.42, radius: 0.37, width: 0.3, spokes: 5, front: true, rimMaterial: MAT.darkMetal },
+    { x: 0.92, z: -1.42, radius: 0.37, width: 0.3, spokes: 5, front: true, rimMaterial: MAT.darkMetal },
+    { x: -0.96, z: 1.46, radius: 0.4, width: 0.42, spokes: 5, front: false, rimMaterial: MAT.darkMetal },
+    { x: 0.96, z: 1.46, radius: 0.4, width: 0.42, spokes: 5, front: false, rimMaterial: MAT.darkMetal },
+  ];
+  mountWheels(car, wheels);
+  dressArches(car, wheels, body, { grow: 0.08, thickness: 0.08 });
+  return car;
+}
+
+/* ------------------------------------------------------------------ */
 /* Moped — the 49cc option                                             */
 /* ------------------------------------------------------------------ */
 

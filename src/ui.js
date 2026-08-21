@@ -123,7 +123,7 @@ export class UI {
   /** True while a vehicle is still behind its milestone. */
   locked(id) {
     const car = CARS.find((c) => c.id === id);
-    return !!(car && car.unlockAt && !isUnlocked(id));
+    return !!(car && (car.unlockAt || car.unlockBy) && !isUnlocked(id));
   }
 
   /**
@@ -141,14 +141,20 @@ export class UI {
         <p>${t(car.taglineKey)}</p>`;
       return;
     }
-    const left = Math.max(0, car.unlockAt - totalMetres());
+    // Two ways to be locked: a milestone you can count down to, or something
+    // sitting in a briefcase that no amount of driving in a straight line
+    // will ever hand you.
+    const left = car.unlockAt ? Math.max(0, car.unlockAt - totalMetres()) : 0;
+    const hint = car.unlockAt
+      ? t('car.lockedHint', {
+          km: (car.unlockAt / 1000).toFixed(0),
+          left: (left / 1000).toFixed(left < 10000 ? 1 : 0),
+        })
+      : t('car.lockedCase');
     card.innerHTML = `
       <div class="swatch locked-swatch">?</div>
       <h3>${t('car.locked')}</h3>
-      <p>${t('car.lockedHint', {
-        km: (car.unlockAt / 1000).toFixed(0),
-        left: (left / 1000).toFixed(left < 10000 ? 1 : 0),
-      })}</p>`;
+      <p>${hint}</p>`;
   }
 
   /** Opens a card the moment its milestone is claimed at a pump. */

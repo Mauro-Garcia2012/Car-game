@@ -11,6 +11,7 @@ import { roadPoint, EDGE } from '../track.js';
 import { hashRand } from '../rng.js';
 import { rockTexture } from '../textures.js';
 import { groundHeight, CHUNK_LEN } from './road.js';
+import { trackNear } from './sideroads.js';
 
 const M = new THREE.Matrix4();
 const Q = new THREE.Quaternion();
@@ -487,6 +488,16 @@ export class PropField {
       const lat =
         side * (reach + MESA_CLEARANCE + hashRand(chunkIndex, 1500 + i) * 620);
       const s = s0 + r * CHUNK_LEN;
+
+      // The dirt spurs run out through exactly this band of desert. A butte
+      // dropped on one swallows the track and the briefcase at the end of
+      // it, so anything sharing that corridor stands down.
+      const spur = trackNear(s, reach * stretch + 260);
+      if (spur && spur.side === side) {
+        this.mesa.set(slot, i, 0, 0, 0, 0, 0);
+        continue;
+      }
+
       roadPoint(s, lat, p);
       this.mesa.setNonUniform(
         slot,

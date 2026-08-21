@@ -17,6 +17,17 @@ import {
 } from './world/gasStation.js';
 import { Motels, motelDistance, nextMotelIndex } from './world/motel.js';
 import { Crates, BIG_PRIZE } from './world/crates.js';
+import {
+  SideRoads,
+  trackNear,
+  CASE_CASH,
+  REPAIR_COST,
+  WORN_LIMIT,
+  PRIZE_CASH,
+  PRIZE_WORN,
+  PRIZE_HATCH,
+  PRIZE_SUPER,
+} from './world/sideroads.js';
 import { Fatigue, AWAKE_TIME } from './fatigue.js';
 import {
   Fares,
@@ -35,6 +46,7 @@ import { setWorldSeed, worldSeed } from './rng.js';
 import {
   addMetres,
   claimUnlocked,
+  unlockById,
   flush as flushProgress,
   saveRun,
   loadRun,
@@ -124,6 +136,7 @@ export class Game {
     this.signs = new RoadSigns(this.scene);
     this.cameras = new SpeedCameras(this.scene);
     this.motels = new Motels(this.scene);
+    this.sideRoads = new SideRoads(this.scene);
     this.traffic = new Traffic(this.scene);
     this.dust = new DustSystem(this.scene);
 
@@ -219,6 +232,8 @@ export class Game {
     this.vehicle.yaw = roadYaw(0);
     this.traffic.reset();
     this.crates.reset();
+    this.sideRoads.reset();
+    this.setWornEngine(false);
     this.dust.clear();
     this.stops.clear();
     this.skipped.clear();
@@ -292,6 +307,8 @@ export class Game {
         : null,
       cameraMode: this.cameraMode,
       seed: worldSeed(),
+      cases: [...this.sideRoads.taken],
+      worn: this.wornEngine,
     });
     this.saveTick = RUN_SAVE_EVERY;
   }
@@ -347,6 +364,9 @@ export class Game {
     this.signs.update(v.s);
     this.cameras.reset(v.s);
     this.motels.update(v.s);
+    this.sideRoads.taken = new Set(run.cases || []);
+    this.sideRoads.update(v.s);
+    this.setWornEngine(!!run.worn);
     this.traffic.update(0, v.s);
     v.syncModel(0);
     this.advanceClock(0);
@@ -470,12 +490,14 @@ export class Game {
     this.signs.update(v.s);
     this.cameras.update(dt, v.s);
     this.motels.update(v.s);
+    this.sideRoads.update(v.s);
     this.traffic.update(dt, v.s);
 
     if (!frozen) {
       this.handleCollisions();
       this.handleSpeedCamera();
       this.handleCrates();
+      this.handleBriefcase();
       this.handleRefuelling(dt);
       this.handleMotel(dt);
       this.handleFares();
@@ -498,6 +520,64 @@ export class Game {
     });
     this.pushHud(dt);
     if (this.shake > 0) this.shake = Math.max(0, this.shake - dt * 1.6);
+  }
+
+  /**
+   * A seized engine will not pull past forty until it is looked at, and
+   * looking at it costs a hundred dollars at the next pump.
+   */
+  setWornEngine(worn) {
+    this.wornEngine = worn;
+    this.vehicle.limitOverride = worn ? WORN_LIMIT : null;
+  }
+
+  /**
+   * Whatever was in the case at the end of the dirt track.
+   *
+   * Keys you already have turn back into money — a one-in-a-hundred find is
+   * worth something the second time too, just not another set of keys.
+   */
+  handleBriefcase() {
+    const v = this.vehicle;
+    const found = this.sideRoads.collect(v.s, v.lateral);
+    if (!found) return;
+
+    for (let i = 0; i < 18; i++) {
+      this.dust.emit(found.x, found.y + 0.5, found.z, {
+        spread: 1.4,
+        size: 2.4,
+        life: 1.1,
+        rise: 1.8,
+        color: [0.7, 0.6, 0.42],
+      });
+    }
+
+    let prize = found.prize;
+    if (prize === PRIZE_HATCH || prize === PRIZE_SUPER) {
+      const id = prize === PRIZE_SUPER ? 'hypercar' : 'hatch';
+      const car = carById(id);
+      if (unlockById(id)) {
+        this.ui.unlockCar(car);
+        this.audio.fanfare();
+        this.flash('msg.caseKeys', 'good', 6, { name: car.name });
+        return;
+      }
+      prize = PRIZE_CASH; // already in the garage
+    }
+
+    if (prize === PRIZE_WORN) {
+      this.setWornEngine(true);
+      this.audio.warn();
+      this.flash('msg.caseWorn', 'danger', 6, {
+        cost: `$${REPAIR_COST}`,
+      });
+      return;
+    }
+
+    this.cash += CASE_CASH;
+    this.earned += CASE_CASH;
+    this.audio.fanfare();
+    this.flash('msg.caseCash', 'good', 3.4, { cash: `$${CASE_CASH}` });
   }
 
   handleCollisions() {
@@ -525,6 +605,15 @@ export class Game {
         this.flash(severity > 0.55 ? 'msg.bigCrash' : 'msg.crash', 'danger', 1.4);
       }
     }
+  }
+
+  /**
+   * A dirt spur coming up whose case is still out there. Only counts on the
+   * approach — once you are past the junction it is behind you.
+   */
+  trackAhead(s) {
+    const t = trackNear(s, 320);
+    return !!t && t.s > s - 40 && !this.sideRoads.taken.has(t.index);
   }
 
   /** Photo enforcement: rare, signposted, and $50 a shot. */
@@ -619,7 +708,25 @@ export class Game {
     this.stops.add(index);
     this.audio.fanfare();
     this.flash('msg.tankFull', 'good', 2.2);
+    this.repairEngine();
     this.handOverKeys();
+  }
+
+  /**
+   * The pump is also the workshop. A seized engine gets looked at while the
+   * tank fills, and it is not free — if the wallet cannot cover it you leave
+   * still doing forty and try again at the next one.
+   */
+  repairEngine() {
+    if (!this.wornEngine) return;
+    if (this.cash < REPAIR_COST) {
+      this.flash('msg.repairBroke', 'danger', 4, { cost: `$${REPAIR_COST}` });
+      return;
+    }
+    this.cash -= REPAIR_COST;
+    this.spent += REPAIR_COST;
+    this.setWornEngine(false);
+    this.flash('msg.repaired', 'good', 3.6, { cost: `$${REPAIR_COST}` });
   }
 
   /**
@@ -887,6 +994,10 @@ export class Game {
       this.ui.message('msg.dropOffAhead', 'warn');
     } else if (toMotel < 400 && this.fatigue.level < 0.55) {
       this.ui.message('msg.motelAhead', 'warn');
+    } else if (this.wornEngine) {
+      this.ui.message('msg.wornRunning', 'danger');
+    } else if (this.trackAhead(v.s)) {
+      this.ui.message('msg.trackAhead', 'warn');
     } else if (this.fatigue.level < 0.2) {
       this.ui.message('msg.drowsy', 'warn');
     } else if (v.fuel / spec.tank < 0.25) {
