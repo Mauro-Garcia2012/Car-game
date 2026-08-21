@@ -74,6 +74,13 @@ automatically.
   **12% more fuel**, and while one is aboard the HUD counts the metres down to
   their stop. Stop where they asked and you get paid; drive **500 m past it**
   and they get out for nothing.
+- **And they pay properly.** Rides run **$82–136 a kilometre**, which works out
+  at **$215 for the shortest and up to about $1,100 for the longest**, against
+  $62 to fill the supercar. Nobody out here is catching a lift to the shops:
+  they are stranded on a road with no signal and no other traffic, and they
+  pay what that is worth. Taking one good fare pays for the rest of the day,
+  so the money is a reward for accepting the obligation rather than a wage for
+  the mileage — the 12% extra fuel it costs you is loose change beside it.
 - **Crates in the sand.** Every 300 m or so a crate sits about **10 m off the
   tarmac**, fallen off somebody's truck. Three out of four hold nothing at all,
   roughly one in five is worth **$10**, and about **3%** are worth **$100**.
@@ -341,6 +348,13 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   mientras va contigo el HUD va **descontando los metros** que quedan hasta su
   parada. Si paras donde te pidió, cobras; si te pasas **500 m**, se baja sin
   pagarte.
+- **Y pagan de verdad.** El viaje sale a **$82–136 el kilómetro**, o sea
+  **$215 el más corto y hasta unos $1.100 el más largo**, cuando llenar el
+  superdeportivo cuesta $62. Aquí nadie coge un taxi para ir a comprar: están
+  tirados en una carretera sin cobertura y sin más tráfico, y pagan lo que eso
+  vale. Con una buena carrera tienes el día resuelto, así que el dinero premia
+  aceptar el compromiso, no los kilómetros — el 12% de gasolina de más que te
+  cuesta llevarlos es calderilla al lado.
 - **Cajas en la arena.** Cada 300 m más o menos hay una caja a unos **10 m de
   la carretera**, caída del camión de alguien. Tres de cada cuatro no llevan
   nada, alrededor de una de cada cinco lleva **$10** y un **3%** lleva **$100**.

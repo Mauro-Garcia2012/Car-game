@@ -19,9 +19,17 @@ const OFFER_CHANCE = 0.55;
 /** Shortest and longest ride, in metres. */
 const MIN_TRIP = 2200;
 const TRIP_SPREAD = 3800;
-/** What a ride pays, per kilometre. */
-const PAY_PER_KM_MIN = 16;
-const PAY_PER_KM_SPREAD = 10;
+/**
+ * What a ride pays, per kilometre.
+ *
+ * These are not taxi rates and are not meant to be. Nobody out here is being
+ * driven to the shops: they are stranded on a road with no phone signal and
+ * no other traffic, and they pay what that is worth. One decent fare is
+ * several tanks of petrol, which is the point — the money is the reward for
+ * taking the obligation, not a wage for the mileage.
+ */
+const PAY_PER_KM_MIN = 82;
+const PAY_PER_KM_SPREAD = 54;
 /** Fuel burn multiplier while somebody is in the car. */
 export const PASSENGER_BURN = 1.12;
 /** Drive this far past the drop-off and they get out without paying. */
