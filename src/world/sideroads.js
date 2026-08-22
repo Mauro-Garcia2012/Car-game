@@ -40,7 +40,7 @@ const REACH = 7;
  * the terrain height, not on this, so anything taller than a couple of
  * centimetres and you are driving underneath your own road.
  */
-const LIFT = 0.02;
+const LIFT = 0.05;
 
 /** What is in the briefcase. */
 export const PRIZE_CASH = 'cash';
@@ -201,8 +201,21 @@ function junctionSign(side) {
 
 /** How many spurs can be built at once; they are 10 km apart. */
 const SLOTS = 2;
-/** Segments along the strip. */
-const SEGMENTS = 44;
+/**
+ * How finely the strip is cut up.
+ *
+ * Both numbers are set by the terrain it has to lie on rather than by how it
+ * looks on its own. The desert mesh has rows every 3.3 m along the road, so a
+ * strip 7.5 m wide with only its two edges for vertices spans two and a half
+ * rows with nothing in between and saws straight through the dunes: RIBS
+ * gives it a vertex every 1.25 m across. Along its length the mesh columns
+ * start a quarter of a metre apart at the shoulder and are ninety metres
+ * apart by the far end, so the segments are bunched towards the road by
+ * SPREAD_BIAS rather than spaced evenly down a track half a kilometre long.
+ */
+const SEGMENTS = 192;
+const RIBS = 10;
+const SPREAD_BIAS = 1.8;
 
 export class SideRoads {
   constructor(scene) {
@@ -210,28 +223,51 @@ export class SideRoads {
     // the sand's own colour it is technically drawn and practically
     // invisible, which is no use as a thing you are meant to follow.
     const dirt = sandTexture();
+    // The strip and the sand under it are all but coplanar, and the strip has
+    // to win. A depth bias settles it without lifting the geometry, which is
+    // the other way to do it and the way that leaves the car driving through
+    // its own road.
     this.material = new THREE.MeshStandardMaterial({
       map: dirt,
       color: '#6f5233',
       roughness: 1,
       metalness: 0,
+      // Both sides, because the winding flips with the spur.
+      //
+      // One index buffer serves every strip, but a spur leaving to the left
+      // is the mirror image of one leaving to the right, so the same order of
+      // vertices winds one way on one side and the other way on the other.
+      // Front faces only meant every spur on one side of the highway was
+      // invisible — which is exactly half of them, and exactly what it looked
+      // like. Three flips the normal for back-facing fragments, so the
+      // lighting comes out right either way.
+      side: THREE.DoubleSide,
+      // The strip and the sand under it are all but coplanar, and the strip
+      // has to win. A depth bias settles it without lifting the geometry,
+      // which is the other way to do it and the way that leaves the car
+      // driving through its own road.
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -4,
     });
 
     this.slots = [];
     for (let i = 0; i < SLOTS; i++) {
-      const positions = new Float32Array((SEGMENTS + 1) * 2 * 3);
-      const uvs = new Float32Array((SEGMENTS + 1) * 2 * 2);
-      const index = new Uint16Array(SEGMENTS * 6);
-      // Counter-clockwise seen from above, so the strip faces the sky. The
-      // other winding compiles, runs, and draws absolutely nothing.
+      const across = RIBS + 1;
+      const positions = new Float32Array((SEGMENTS + 1) * across * 3);
+      const uvs = new Float32Array((SEGMENTS + 1) * across * 2);
+      const index = new Uint16Array(SEGMENTS * RIBS * 6);
       for (let k = 0, n = 0; k < SEGMENTS; k++) {
-        const a = k * 2;
-        index[n++] = a;
-        index[n++] = a + 1;
-        index[n++] = a + 2;
-        index[n++] = a + 1;
-        index[n++] = a + 3;
-        index[n++] = a + 2;
+        for (let r = 0; r < RIBS; r++) {
+          const a = k * across + r;
+          const c = a + across;
+          index[n++] = a;
+          index[n++] = a + 1;
+          index[n++] = c;
+          index[n++] = a + 1;
+          index[n++] = c + 1;
+          index[n++] = c;
+        }
       }
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -274,29 +310,35 @@ export class SideRoads {
     for (const slot of this.slots) slot.index = null;
   }
 
-  /** Lays the strip out along the ground it actually crosses. */
+  /**
+   * Lays the strip out along the ground it actually crosses.
+   *
+   * Every vertex takes its height from the drawn surface at its own position.
+   * Taking one height off the centre line and giving it to both edges — which
+   * is what this used to do — puts the two edges 3.75 m apart in s at the same
+   * altitude, and on the side of a dune that is a metre out: half the strip
+   * ended up under the sand, which is exactly what it looked like.
+   */
   build(slot, track) {
     const { positions, uvs } = slot;
     const half = TRACK_WIDTH / 2;
     let p = 0;
     let u = 0;
     for (let k = 0; k <= SEGMENTS; k++) {
-      const t = k / SEGMENTS;
+      const t = Math.pow(k / SEGMENTS, SPREAD_BIAS);
       // A little wider where it meets the highway, like a real graded apron.
       const flare = 1 + 2.2 * Math.pow(1 - t, 3);
-      const lat = track.side * (EDGE - 1 + t * (track.length + 2));
-      // Height comes off the centre line, not each edge. Sampling per edge
-      // averages the two across the quad and drops the middle of the strip
-      // below the ground it is supposed to be lying on.
-      const y = groundHeight(track.s, lat) + LIFT;
-      for (const edge of [-1, 1]) {
+      const out = t * (track.length + 2);
+      const lat = track.side * (EDGE - 1 + out);
+      for (let r = 0; r <= RIBS; r++) {
+        const edge = (r / RIBS) * 2 - 1;
         const s = track.s + edge * half * flare;
         roadPoint(s, lat, this.tmp);
         positions[p] = this.tmp.x;
-        positions[p + 1] = y;
+        positions[p + 1] = groundHeight(s, lat) + LIFT;
         positions[p + 2] = this.tmp.z;
         uvs[u] = edge * 0.5 + 0.5;
-        uvs[u + 1] = (t * track.length) / 9;
+        uvs[u + 1] = out / 9;
         p += 3;
         u += 2;
       }

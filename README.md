@@ -312,6 +312,13 @@ A few things worth knowing if you want to poke at it:
   analytic value hovered over dunes the mesh had flattened. Everything that
   stands in the sand uses `groundHeight`; only the car's own physics uses the
   smooth analytic one.
+- **A mirrored ribbon winds the other way.** The dirt spurs share one index
+  buffer, and a spur leaving to the left is the mirror image of one leaving to
+  the right: the same vertex order winds clockwise on one side and
+  anticlockwise on the other. With front faces only, every spur on one side of
+  the highway was culled — half of them, invisible, for as long as they had
+  existed. Anything mirrored across the centre line wants `DoubleSide` or an
+  index buffer per side.
 - **Chunk recycling.** The road and desert are ribbons of quads split into
   100 m chunks. When a chunk falls behind the camera, its vertex buffers are
   rewritten for a slot further up the road; scenery is one `InstancedMesh` per
