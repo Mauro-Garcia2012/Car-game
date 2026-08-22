@@ -1072,9 +1072,20 @@ body.touch .touch-controls {
   .fuel-block {
     width: 54vw;
   }
-  /* Day, distance and cash survive on a phone; the rest can go. */
+  /* Day, time, distance and cash survive on a phone; the rest can go, and
+     the row stops short of the corner so no chip ends up under the mute
+     button — clipped rather than merely overlapped, in case one still does. */
+  .hud-top {
+    margin-right: 46px;
+    overflow: hidden;
+  }
+  .hud-top .stat {
+    min-width: 0;
+    padding: 7px 10px;
+  }
   .hud-top .stat:nth-child(3),
-  .hud-top .stat:nth-child(5) {
+  .hud-top .stat:nth-child(5),
+  .hud-top .stat:nth-child(7) {
     display: none;
   }
   .result-grid {
@@ -1085,5 +1096,94 @@ body.touch .touch-controls {
   }
   .touch-controls {
     padding-bottom: 96px;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Sound                                                               */
+/* ------------------------------------------------------------------ */
+
+/*
+ * The mute button sits outside every screen, top right, so it works in the
+ * garage, mid-drive and on the game-over card without three copies of it.
+ * The keyboard shortcut stays; this is for the people playing on a phone,
+ * and for the ones who did not read the key list.
+ */
+#mute-btn {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 60;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(14, 16, 22, 0.62);
+  color: var(--sand);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+#mute-btn:hover {
+  background: rgba(24, 28, 38, 0.86);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+#mute-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#mute-btn .cone {
+  fill: currentColor;
+  stroke-width: 1.2;
+}
+
+/* Silenced: the waves go, the cross arrives, and the whole thing reddens
+   so a muted game never looks like a broken one. */
+#mute-btn .cross {
+  opacity: 0;
+}
+
+#mute-btn[aria-pressed='true'] {
+  color: #f0907e;
+  border-color: rgba(214, 62, 40, 0.55);
+  background: rgba(58, 18, 14, 0.66);
+}
+
+#mute-btn[aria-pressed='true'] .waves {
+  opacity: 0;
+}
+
+#mute-btn[aria-pressed='true'] .cross {
+  opacity: 1;
+}
+
+/* Text that is only there for screen readers. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  #mute-btn {
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
   }
 }

@@ -21,6 +21,7 @@ const ui = new UI({
   onRetry: () => game.start(game.spec.id),
   onResumeRun: () => game.resumeRun(),
   onAcceptFare: () => game && game.acceptFare(),
+  onToggleMute: () => (game ? game.toggleMute() : audio.setMuted(!audio.muted)),
 });
 
 input.bindTouch(document.getElementById('touch-controls'));
@@ -30,6 +31,7 @@ requestAnimationFrame(() => {
   game = new Game(canvas, ui, input, audio);
   window.__game = game; // handy for debugging from the console
   game.toMenu();
+  ui.setMuted(audio.muted); // whatever was chosen last time this was open
   ui.showParkedRun(game.parkedRun());
   ui.hideLoading();
 

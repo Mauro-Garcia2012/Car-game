@@ -189,10 +189,16 @@ export class Game {
     } else if (action === 'accept') {
       this.acceptFare();
     } else if (action === 'mute') {
-      this.audio.setMuted(!this.audio.muted);
+      this.toggleMute();
     } else if (action === 'enter' && this.state === 'menu') {
       this.start(this.ui.selected);
     }
+  }
+
+  /** Silences everything, or brings it back. Button and `M` share this. */
+  toggleMute() {
+    this.audio.setMuted(!this.audio.muted);
+    this.ui.setMuted(this.audio.muted);
   }
 
   setCar(id) {

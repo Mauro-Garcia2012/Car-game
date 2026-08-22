@@ -119,6 +119,7 @@ export class UI {
       farePay: $('fare-pay'),
       fareFuel: $('fare-fuel'),
       fareAccept: $('fare-accept'),
+      mute: $('mute-btn'),
       overTitle: $('over-title'),
       overText: $('over-text'),
       overDistance: $('over-distance'),
@@ -304,6 +305,7 @@ export class UI {
     this.message_ = { key: null, level: null, params: null }; // force a repaint
     this.message(key, level, params);
     if (this.lastResult) this.showGameOver(this.lastResult);
+    this.setMuted(this.el.mute.getAttribute('aria-pressed') === 'true');
   }
 
   bindButtons() {
@@ -315,6 +317,13 @@ export class UI {
     $('garage-btn').addEventListener('click', () => this.h.onQuit());
     // Tapping the offer is the touch equivalent of pressing E.
     this.el.fareAccept.addEventListener('click', () => this.h.onAcceptFare());
+    this.el.mute.addEventListener('click', () => this.h.onToggleMute());
+  }
+
+  /** Paints the mute button. The keyboard shortcut comes through here too. */
+  setMuted(muted) {
+    this.el.mute.setAttribute('aria-pressed', muted ? 'true' : 'false');
+    this.el.mute.title = t(muted ? 'controls.unmute' : 'controls.mute');
   }
 
   hideLoading() {

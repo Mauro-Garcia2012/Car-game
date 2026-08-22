@@ -4,11 +4,23 @@
  * frequency tracks the rev counter; tyre noise is filtered white noise.
  */
 
+/** Remembered across sessions: silence is a preference, not a mode. */
+const MUTE_KEY = 'desert-run.muted';
+const VOLUME = 0.65;
+
 export class Audio {
   constructor() {
     this.ctx = null;
-    this.muted = false;
     this.started = false;
+    // A game that comes back loud after you silenced it is a game people
+    // stop opening at their desk.
+    let muted = false;
+    try {
+      muted = localStorage.getItem(MUTE_KEY) === '1';
+    } catch {
+      // Private browsing with storage blocked: start audible.
+    }
+    this.muted = muted;
   }
 
   /** Must be called from a user gesture. */
@@ -20,7 +32,7 @@ export class Audio {
     const ctx = this.ctx;
 
     this.master = ctx.createGain();
-    this.master.gain.value = 0.65;
+    this.master.gain.value = this.muted ? 0 : VOLUME;
     this.master.connect(ctx.destination);
 
     // --- engine -----------------------------------------------------
@@ -76,7 +88,12 @@ export class Audio {
 
   setMuted(muted) {
     this.muted = muted;
-    if (this.master) this.master.gain.value = muted ? 0 : 0.65;
+    if (this.master) this.master.gain.value = muted ? 0 : VOLUME;
+    try {
+      localStorage.setItem(MUTE_KEY, muted ? '1' : '0');
+    } catch {
+      // Nothing to do: it just will not be remembered next time.
+    }
   }
 
   /** @param {{rpm:number, throttle:number, speed:number, slip:number, engineOn:boolean, surface:string}} s */

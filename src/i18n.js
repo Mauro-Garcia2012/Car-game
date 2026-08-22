@@ -34,6 +34,7 @@ const STRINGS = {
     'controls.camera': 'camera',
     'controls.pause': 'pause',
     'controls.mute': 'mute',
+    'controls.unmute': 'sound on',
     'controls.fare': 'take a fare',
 
     'spec.topSpeed': 'Top speed',
@@ -167,6 +168,7 @@ const STRINGS = {
     'controls.camera': 'cámara',
     'controls.pause': 'pausa',
     'controls.mute': 'silencio',
+    'controls.unmute': 'activar sonido',
     'controls.fare': 'aceptar viaje',
 
     'spec.topSpeed': 'Vel. máxima',

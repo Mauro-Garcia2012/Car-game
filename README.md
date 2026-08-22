@@ -41,7 +41,12 @@ static host.
 | Camera (chase / bonnet / orbit) | `C` | |
 | Pause | `P` or `Esc` | |
 | Restart | `R` | |
-| Mute | `M` | |
+| Mute | `M`, or the speaker button top right | |
+
+The speaker button is always there — in the garage, mid-drive and on the
+game-over card — and it silences everything: engine, tyres, crashes, beeps.
+The choice is remembered, so a game you muted at your desk stays muted the
+next time you open it.
 
 On phones and tablets, on-screen pedals and steering buttons appear
 automatically.
@@ -374,7 +379,12 @@ pausa.
 | Cámara (persecución / capó / órbita) | `C` | |
 | Pausa | `P` o `Esc` | |
 | Reiniciar | `R` | |
-| Silencio | `M` | |
+| Silencio | `M`, o el botón del altavoz arriba a la derecha | |
+
+El botón del altavoz está siempre ahí —en el garaje, conduciendo y en la
+pantalla de fin de partida— y calla todo: motor, ruedas, choques y pitidos. La
+elección se recuerda, así que una partida que silenciaste en la oficina sigue
+callada la próxima vez que la abras.
 
 En móviles y tablets aparecen pedales y botones de dirección en pantalla.
 
