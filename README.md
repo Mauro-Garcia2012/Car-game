@@ -69,9 +69,9 @@ automatically.
 - **Passengers wait at the bus stops.** A transit authority once ran a service
   up this highway; the buses stopped years ago and the shelters did not. One
   stands roughly every **10 km** — a concrete slab, three walls, a bench, a
-  timetable nobody has reprinted — and about **six in ten** have somebody
-  standing at them, visible from a long way out. Pull off onto the shoulder
-  beside one and stop.
+  timetable nobody has reprinted and the route sign still on its post — and
+  about **six in ten** have somebody standing at them, visible from a long way
+  out. Pull off onto the shoulder beside one and stop.
 - **Passengers pay.** The offer tells you everything **before** you take it:
   how far the ride is, what it pays, and how much extra fuel the extra weight
   will drink, in litres and dollars. Press `E` (or tap it) to take it. Most
@@ -151,10 +151,11 @@ Every string lives in `src/i18n.js`, keyed by id. The language is detected from
 the browser, remembered in `localStorage`, and can be changed at any time from
 the switcher in the garage or the pause screen — the menu, the HUD, the endings
 and even the painted roadside signage (`1 MI` → `1,6 KM`) are repainted on
-the spot. The service boards before the stations and the motels are the
-Spanish S-series signs — white panel, black pictogram, distance underneath —
-so the only thing on them that needs translating is the distance. A pump and
-a bed resolve at four hundred metres, where a word does not. Adding another language means adding one more block of
+the spot. The service signs are the Spanish S-series boards — white panel,
+black pictogram, one line underneath — and there are three of them: a pump
+before each station, a bed before each motel, a bus on the post at each stop.
+The only thing on any of them that needs translating is the line underneath.
+A pictogram resolves at four hundred metres, where a word does not. Adding another language means adding one more block of
 strings to `STRINGS` and one more entry to `LANGUAGES`.
 
 ## The cars
@@ -444,9 +445,9 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
 - **La gente espera en las paradas de autobús.** Alguna vez hubo una línea por
   esta carretera; los autobuses dejaron de pasar hace años y las marquesinas
   no. Hay una cada **10 km** más o menos — losa de hormigón, tres paredes, un
-  banco y un horario que nadie ha vuelto a imprimir — y en unas **seis de cada
-  diez** hay alguien de pie, que se ve desde lejos. Sal al arcén y párate a su
-  lado.
+  banco, un horario que nadie ha vuelto a imprimir y el cartel de la línea
+  todavía en su poste — y en unas **seis de cada diez** hay alguien de pie, que
+  se ve desde lejos. Sal al arcén y párate a su lado.
 - **Los pasajeros pagan.** La oferta te dice todo **antes** de aceptar: cuánto
   es el viaje, cuánto te paga y cuánta gasolina de más va a gastar, en litros y
   en dólares. Pulsa `E` (o tócalo) para aceptar. Casi todos van a la parada

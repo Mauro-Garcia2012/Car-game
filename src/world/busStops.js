@@ -16,7 +16,13 @@ import { hashRand, onReseed } from '../rng.js';
 import { groundHeight } from './road.js';
 import { glowAtNight } from './nightlights.js';
 import { mergeGeometries } from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
-import { busSignTexture, timetableTexture, concreteTexture } from '../textures.js';
+import {
+  serviceSignTexture,
+  SERVICE_SIGN_ASPECT,
+  timetableTexture,
+  concreteTexture,
+} from '../textures.js';
+import { signBoard } from './boards.js';
 import { stationDistance, nextStationIndex } from './gasStation.js';
 import { motelDistance, nextMotelIndex } from './motel.js';
 
@@ -263,7 +269,7 @@ function buildStopModel() {
   );
 
   // The post the flag sits on, out by the kerb.
-  b.cylinder(0.065, 0.08, 3.1, 10, mat.steel, X - 2.5, 1.55, 1.4);
+  b.cylinder(0.065, 0.08, 3.32, 10, mat.steel, X - 2.5, 1.66, 1.4);
   b.bake(root);
 
   // The flag itself hangs off the group, because its number changes per stop.
@@ -273,17 +279,20 @@ function buildStopModel() {
   return { root, flag };
 }
 
+/** The sign on the post: the same S-series board as the highway services. */
+const FLAG_H = 1.75;
+const FLAG_W = FLAG_H * SERVICE_SIGN_ASPECT;
+
 /**
- * The route flag itself: rebuilt per stop, because the number changes.
+ * The route sign itself, rebuilt per stop because the number changes.
  *
  * Bolted to the front of the post the way a real one is, rather than run
- * through by it. It has to read from both directions — you cannot tell which
- * way a stranded passenger is facing — so both faces carry the roundel, and
- * the post shows behind the far one exactly as it does on the highway.
+ * through by it, and lit by the same retroreflection that makes a road sign
+ * findable in headlights.
  */
 function buildFlag(route) {
-  const tex = busSignTexture(route);
-  const mat = glowAtNight(
+  const tex = serviceSignTexture('bus', String(route));
+  const face = glowAtNight(
     new THREE.MeshStandardMaterial({
       map: tex,
       emissiveMap: tex,
@@ -294,17 +303,18 @@ function buildFlag(route) {
     0.55
   );
   const g = new THREE.Group();
-  g.position.set(0, 2.85, 0.13); // clear of the post, which is 0.16 across
-  g.add(box(0.86, 0.86, 0.07, materials().steel, 0, 0, 0));
-  for (const side of [1, -1]) {
-    const face = new THREE.Mesh(new THREE.PlaneGeometry(0.82, 0.82), mat);
-    face.position.z = side * 0.041;
-    if (side < 0) face.rotation.y = Math.PI;
-    g.add(face);
-  }
-  // Two bolts back to the post, so it is not floating in front of it.
-  for (const y of [-0.28, 0.28]) {
-    g.add(box(0.1, 0.09, 0.16, materials().steel, 0, y, -0.11));
+  g.position.set(0, 2.42, 0.12); // clear of the post, which is 0.16 across
+  const board = signBoard(
+    FLAG_W,
+    FLAG_H,
+    0.07,
+    face,
+    new THREE.MeshStandardMaterial({ color: '#6d7278', roughness: 0.7 })
+  );
+  g.add(board);
+  // Two brackets back to the post, so it is not floating in front of it.
+  for (const y of [-0.55, 0.55]) {
+    g.add(box(0.1, 0.09, 0.15, materials().steel, 0, y, -0.1));
   }
   return g;
 }

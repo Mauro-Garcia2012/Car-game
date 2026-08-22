@@ -300,13 +300,18 @@ export const SERVICE_BLUE = '#003c8c';
  * The two service pictograms, as outlines traced off the real signs.
  *
  * Closed polygons in a 100-wide box with the origin at the top-left of the
- * ink, filled with the even-odd rule so the pump's display window and the
- * hollow of its nozzle, and the gap under the bed, come out as holes without
- * anyone having to care which way each loop winds. Paths rather than images
- * on purpose: the repository stays asset free, and a sign stays crisp whether
- * it is four pixels across on the horizon or filling the screen at the pumps.
+ * ink, filled with the even-odd rule so the pump's display window, the hollow
+ * of its nozzle, the gap under the bed and the bus's windows come out as holes
+ * without anyone having to care which way each loop winds. Paths rather than
+ * images on purpose: the repository stays asset free, and a sign stays crisp
+ * whether it is four pixels across on the horizon or filling the screen.
+ *
+ * `fit` is how much of the sign's white panel the pictogram spans across,
+ * measured off the real sign — the bus runs nearly wall to wall, the pump
+ * sits well inside.
  */
 const PUMP = {
+  fit: 0.697,
   w: 100,
   h: 86.7,
   loops: [
@@ -334,6 +339,7 @@ const PUMP = {
 };
 
 const BED = {
+  fit: 0.734,
   w: 100,
   h: 49.9,
   loops: [
@@ -354,6 +360,72 @@ const BED = {
   ],
 };
 
+const BUS = {
+  fit: 0.89,
+  w: 100,
+  h: 34.3,
+  loops: [
+    [
+      2.3, 0, 98.4, 0, 99, 0.5, 99, 3, 98.3, 4.3, 98.1, 20.7, 100, 22.8,
+      99.7, 27.3, 97.6, 27.7, 95.8, 29.5, 84.9, 29.3, 83.8, 25.2, 82.2,
+      23, 79.4, 21.4, 76.1, 21.1, 73.3, 22.1, 71.3, 23.9, 70.2, 25.7,
+      69.3, 29.6, 51.7, 29.6, 49.7, 31, 40.6, 30.9, 36.4, 29.1, 35.8,
+      25.4, 33.5, 22.5, 31.6, 21.4, 28.4, 21, 25.1, 22, 23.1, 23.7, 22,
+      25.4, 21.1, 29.8, 4.5, 29.7, 0.5, 28, 0.1, 27.3, 0, 2.6, 0.5, 1,
+      2.3, 0.1
+    ],
+    [
+      72.3, 4.3, 71.4, 5, 71.4, 16.2, 72.1, 16.9, 82.5, 16.9, 83.1, 16.4,
+      83, 4.6, 72.4, 4.3
+    ],
+    [
+      60.1, 4.4, 59.4, 5.2, 59.4, 16.2, 59.9, 17, 69.3, 17, 69.9, 16.3,
+      69.7, 4.7, 60.2, 4.4
+    ],
+    [
+      9, 4.5, 7.8, 5.2, 7.8, 16.4, 8.4, 17, 18.4, 17, 19, 16.4, 18.8, 4.8,
+      9.1, 4.5
+    ],
+    [
+      22.7, 4.5, 20.9, 4.6, 20.3, 5.5, 20.3, 16.2, 21.3, 17.1, 30.2, 17.1,
+      31.1, 16.9, 31.4, 16, 31.2, 4.9, 22.8, 4.5
+    ],
+    [
+      33.6, 4.5, 33, 5.2, 33, 16.3, 33.8, 17.1, 37.9, 16.7, 38, 5.2, 37.3,
+      4.5, 33.7, 4.5
+    ],
+    [
+      52.6, 4.5, 51.9, 5.5, 51.9, 16, 52.6, 17, 57.1, 17, 57.6, 16.4,
+      57.6, 5.1, 57.1, 4.5, 52.7, 4.5
+    ],
+    [
+      85.9, 5.8, 85, 6.5, 85, 27, 85.7, 27.6, 88.6, 27.6, 89.2, 26.9,
+      89.2, 6.5, 88.5, 5.8, 86, 5.8
+    ],
+    [
+      91.5, 5.8, 90.9, 6.3, 90.9, 26.9, 91.4, 27.5, 94.7, 27.5, 95.2,
+      26.6, 95.2, 6.5, 94.8, 5.8, 91.6, 5.8
+    ],
+    [
+      40.5, 5.9, 39.7, 6.6, 39.7, 26.7, 40.3, 27.5, 43.5, 27.5, 44.1,
+      26.6, 44.1, 6.7, 43.5, 5.9, 40.6, 5.9
+    ],
+    [
+      46.6, 5.9, 45.8, 6.7, 45.8, 25.6, 45.9, 27, 46.7, 27.6, 50, 27.4,
+      50.3, 24.9, 50.3, 6.9, 49.5, 5.9, 46.7, 5.9
+    ],
+    [
+      27.8, 23.1, 31.8, 23.9, 33.2, 25.2, 34.3, 27.6, 34.1, 30.6, 31.9,
+      33.3, 29.3, 34.3, 27.4, 34.2, 25.6, 33.3, 23.5, 30.6, 23.4, 27.3,
+      25.1, 24.4, 27.8, 23.3
+    ],
+    [
+      76.1, 23.1, 78.7, 23.3, 80.2, 24, 81.7, 25.3, 82.6, 27.6, 82.3,
+      30.9, 80.1, 33.4, 77.7, 34.3, 74.2, 33.4, 72, 31, 71.6, 27.8, 72.6,
+      25.2, 74, 24, 76.1, 23.3
+    ],
+  ],
+};
 /** Draws a pictogram `width` wide with its top-left corner at (x, y). */
 function drawGlyph(ctx, glyph, x, y, width, fg) {
   ctx.save();
@@ -373,7 +445,7 @@ function drawGlyph(ctx, glyph, x, y, width, fg) {
 }
 
 /** Pictograms a service sign can carry, by name. */
-const GLYPHS = { pump: PUMP, bed: BED };
+const GLYPHS = { pump: PUMP, bed: BED, bus: BUS };
 
 /**
  * A Spanish S-series service sign: white surround, blue field, a white
@@ -381,7 +453,8 @@ const GLYPHS = { pump: PUMP, bed: BED };
  * underneath it on the blue.
  *
  * The proportions are measured off the real signs — panel 70% of the width,
- * starting 9.5% down, board 0.656 as wide as it is tall. The texture is
+ * starting 9.5% down, board 0.656 as wide as it is tall; all three references
+ * agree with each other to within a pixel. The texture is
  * portrait in exactly that ratio, so nothing has to be squashed in advance to
  * survive being mapped onto the board.
  */
@@ -408,11 +481,11 @@ export function serviceSignTexture(glyph, sub, bg = SERVICE_BLUE) {
         ctx.fillStyle = '#f4f3ef';
         ctx.fillRect(px, py, panel, panel);
 
-        // Fitted on its longest side, so the flat bed and the tall pump both
-        // sit in the same amount of white.
+        // Each pictogram fills the panel to the width its own reference sign
+        // fills it — the bus runs nearly wall to wall, the pump sits well
+        // inside — and all three are centred on the panel.
         const art = GLYPHS[glyph];
-        const fit = panel * 0.66;
-        const gw = art.w >= art.h ? fit : (fit * art.w) / art.h;
+        const gw = panel * art.fit;
         const gh = (gw * art.h) / art.w;
         drawGlyph(ctx, art, px + (panel - gw) / 2, py + (panel - gh) / 2, gw, '#15171a');
 
@@ -658,52 +731,6 @@ export function vacancyTexture() {
       },
       { height: 200 }
     )
-  );
-}
-
-/**
- * The flag on a bus-stop post: a white roundel with the blue bus pictogram
- * and the route number under it. Nothing else out here is a white circle, so
- * it reads as a stop from a long way off even when the shelter does not.
- */
-export function busSignTexture(route) {
-  return memo(`bus:${route}`, () =>
-    canvas(256, (ctx, size) => {
-      ctx.fillStyle = '#1d4f8f';
-      ctx.fillRect(0, 0, size, size);
-      ctx.fillStyle = '#f4f3ef';
-      ctx.beginPath();
-      ctx.arc(size / 2, size / 2, size * 0.44, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Bus, seen side on: body, a band of windows, a door, two wheels.
-      const cx = size / 2;
-      const cy = size * 0.40;
-      ctx.fillStyle = '#1d4f8f';
-      for (const dx of [-34, 34]) {
-        ctx.beginPath();
-        ctx.arc(cx + dx, cy + 30, 12, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.beginPath();
-      ctx.roundRect(cx - 58, cy - 34, 116, 66, 9);
-      ctx.fill();
-      ctx.fillStyle = '#f4f3ef';
-      for (const [dx, w] of [[-48, 30], [-14, 30], [20, 22]]) {
-        ctx.fillRect(cx + dx, cy - 24, w, 24);
-      }
-      ctx.fillRect(cx + 46, cy - 24, 8, 46); // door, floor to roof
-      ctx.fillStyle = '#1d4f8f';
-      ctx.fillRect(cx + 49, cy - 24, 2, 46);
-
-      ctx.fillStyle = '#f4f3ef';
-      ctx.fillRect(cx - 46, size * 0.70, 92, 34);
-      ctx.fillStyle = '#1d4f8f';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font = 'bold 30px Arial, sans-serif';
-      ctx.fillText(String(route), cx, size * 0.716, 84);
-    })
   );
 }
 
