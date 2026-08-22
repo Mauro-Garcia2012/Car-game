@@ -293,6 +293,90 @@ export function signTexture(lines, { bg = '#c8382f', fg = '#fdf6e3' } = {}) {
   );
 }
 
+/**
+ * The fuel pump pictogram, drawn into a 100x100 box with its top-left corner
+ * at the origin: dispenser on the left, hose arcing over to a nozzle on the
+ * right, the way every service sign on every highway draws it.
+ *
+ * A picture beats the word here in both directions — nobody has to read
+ * Spanish or English to know what the station sells, and at four hundred
+ * metres a shape resolves long before eight letters do.
+ *
+ * @param {string} fg  the pictogram colour
+ * @param {string} bg  what shows through the window and the reel band
+ */
+function drawPump(ctx, x, y, size, fg, bg) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(size / 100, size / 100);
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+
+  // Hose, arcing out of the dispenser's shoulder, and the nozzle on the end.
+  ctx.strokeStyle = fg;
+  ctx.lineWidth = 9;
+  ctx.beginPath();
+  ctx.moveTo(58, 22);
+  ctx.quadraticCurveTo(90, 14, 90, 44);
+  ctx.lineTo(90, 58);
+  ctx.stroke();
+  ctx.fillStyle = fg;
+  ctx.beginPath();
+  ctx.roundRect(78, 54, 24, 18, 5);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(70, 60, 12, 8, 3); // the spout, pointing back at the car
+  ctx.fill();
+
+  // Dispenser, its display window and the band where the reel sits.
+  ctx.beginPath();
+  ctx.roundRect(8, 6, 52, 86, 7);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(4, 90, 60, 10, 4);
+  ctx.fill();
+  ctx.fillStyle = bg;
+  ctx.beginPath();
+  ctx.roundRect(17, 15, 34, 25, 4);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(17, 50, 34, 9, 4);
+  ctx.fill();
+  ctx.restore();
+}
+
+/**
+ * A service board carrying the pump pictogram over one line of text.
+ *
+ * `aspect` is the board's width over its height. The texture is square and
+ * gets stretched onto whatever it is mapped to, so the glyph is drawn narrow
+ * by the same factor and comes out round on the sign.
+ */
+export function pumpBoardTexture(sub, { bg = '#1c3d6b', fg = '#f2f0e6', aspect = 1 } = {}) {
+  return memo(`pump:${sub}:${bg}:${aspect.toFixed(3)}`, () =>
+    canvas(256, (ctx, size) => {
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, size, size);
+      ctx.strokeStyle = fg;
+      ctx.lineWidth = 8;
+      ctx.strokeRect(14, 14, size - 28, size - 28);
+
+      const glyph = 132;
+      ctx.save();
+      ctx.translate(size / 2, 0);
+      ctx.scale(1 / aspect, 1);
+      drawPump(ctx, -glyph / 2, 40, glyph, fg, bg);
+      ctx.restore();
+
+      ctx.fillStyle = fg;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold 48px Arial, sans-serif';
+      ctx.fillText(sub, size / 2, 208, size - 58);
+    })
+  );
+}
+
 /** Highway guide board: green for distances, blue for motorist services. */
 /**
  * The warning board at a dirt spur: a skull over an arrow, on the yellow

@@ -11,8 +11,7 @@ import { roadPoint, roadYaw, EDGE } from '../track.js';
 import { hashRand, onReseed } from '../rng.js';
 import {
   concreteTexture,
-  signTexture,
-  boardTexture,
+  pumpBoardTexture,
   priceBoardTexture,
 } from '../textures.js';
 import { t } from '../i18n.js';
@@ -226,9 +225,17 @@ function buildPump(mat) {
   return g;
 }
 
-/** The texts painted on a station's signage, in the current language. */
+/**
+ * The pylon's brand panel: the pump pictogram over the one word that is not
+ * the word "fuel". The cabinet is 4.46 x 4.06, and the glyph is drawn to
+ * match so it does not come out squashed.
+ */
+const TOTEM_ASPECT = 4.46 / 4.06;
 function totemTexture() {
-  return signTexture([t('sign.totem1'), t('sign.totem2')], { bg: '#c8382f' });
+  return pumpBoardTexture(t('sign.totemStop'), {
+    bg: '#c8382f',
+    aspect: TOTEM_ASPECT,
+  });
 }
 
 /** Repaints a totem's price board, disposing the texture it replaces. */
@@ -479,7 +486,16 @@ function buildStationModel(index) {
   return root;
 }
 
-/** "FUEL 500 M" board planted a few hundred metres before each station. */
+/** The pump pictogram over "500 M", on the blue every service sign uses. */
+const ADVANCE_ASPECT = 3.2 / 2.2;
+function advanceTexture() {
+  return pumpBoardTexture(t('sign.advanceSub'), {
+    bg: SERVICE_BLUE,
+    aspect: ADVANCE_ASPECT,
+  });
+}
+
+/** The board planted a few hundred metres before each station. */
 function buildAdvanceSign() {
   const mat = materials();
   const g = new THREE.Group();
@@ -493,7 +509,7 @@ function buildAdvanceSign() {
     2.2,
     DEPTH,
     new THREE.MeshStandardMaterial({
-      map: boardTexture(t('sign.advance'), t('sign.advanceSub'), SERVICE_BLUE),
+      map: advanceTexture(),
       roughness: 0.65,
     }),
     new THREE.MeshStandardMaterial({ color: '#6d7278', roughness: 0.7 })
@@ -538,10 +554,7 @@ export class GasStations {
         m.emissiveMap = art;
         m.needsUpdate = true;
       }
-      setBoardFace(
-        slot.advance.userData.board,
-        boardTexture(t('sign.advance'), t('sign.advanceSub'), SERVICE_BLUE)
-      );
+      setBoardFace(slot.advance.userData.board, advanceTexture());
     }
   }
 

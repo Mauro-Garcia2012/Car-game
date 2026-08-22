@@ -150,8 +150,10 @@ next station. **When the tick turns red, you are already out of road.**
 Every string lives in `src/i18n.js`, keyed by id. The language is detected from
 the browser, remembered in `localStorage`, and can be changed at any time from
 the switcher in the garage or the pause screen — the menu, the HUD, the endings
-and even the painted roadside signage (`FUEL STOP` → `PARADA GASOLINA`) are
-repainted on the spot. Adding another language means adding one more block of
+and even the painted roadside signage (`MOTEL 1 MI` → `MOTEL 1,6 KM`) are
+repainted on the spot. The two signs that would have said `FUEL` say it with
+the pump pictogram instead, so they need no translating at all — and a shape
+resolves at four hundred metres, where eight letters do not. Adding another language means adding one more block of
 strings to `STRINGS` and one more entry to `LANGUAGES`.
 
 ## The cars
