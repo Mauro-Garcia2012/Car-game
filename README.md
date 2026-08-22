@@ -201,6 +201,10 @@ following it is far quicker than cutting across the sand beside it.
 | **A seized engine**: 40 km/h until the next pump, and $100 to fix | 39% |
 | A set of keys — one of two cars not in the showroom | 10% and 1% |
 
+Each junction is signposted: a yellow diamond with a skull and an arrow
+pointing the way the track goes, so you get the chance to decide before you
+are past it.
+
 The seized engine is the reason a track is a bet rather than free money. You
 pay for it in the detour either way: a kilometre of fuel and a couple of
 minutes off the clock, on a road where both are finite.
@@ -369,15 +373,15 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   suele serlo.** El ciclomotor se pasa cinco y lo paga en tiempo.
 - Para repostar hay que **salir del asfalto, entrar en la explanada de los
   surtidores y detenerse** (por debajo de ~12 km/h). **La gasolina se paga.**
-  Toda la carretera comparte un mismo precio de mercado, que abre a **4,29 $ el
-  galón**; cada gasolinera se desvía solo unos centavos de sus vecinas y llevar
-  el combustible más lejos encarece un poco más. Empiezas con **500 $ en la
-  guantera y todavía no hay forma de ganar más**, así que la cartera es una
-  segunda cuenta atrás por debajo de la aguja.
+  Toda la carretera comparte un mismo precio de mercado, cotizado y cobrado
+  **por litro**, que abre a **1,13 $**; cada gasolinera se desvía un par de
+  céntimos de sus vecinas y llevar el combustible más lejos encarece un poco
+  más. Llenar cuesta 62 $ el deportivo y 107 $ la camioneta. Empiezas con
+  **500 $ en la guantera**, y llevar gente es la forma de reponerlos.
 - **El precio solo se mueve de noche.** Cada noche que pasas en un motel el
-  mercado sube entre **8 y 30 centavos**, a veces más, y al despertar te dicen
-  cuánto cuesta ahora. Todos los surtidores suben a la vez. El tope, pase lo
-  que pase, son **8,99 $**.
+  mercado sube entre **2 y 8 céntimos el litro**, a veces más, y al despertar
+  te dicen cuánto cuesta ahora. Todos los surtidores suben a la vez. El tope,
+  pase lo que pase, son **2,37 $**.
 - **La barra de sueño es el reloj.** No es solo una barra de aguante: es la
   hora que es. Sales del garaje a las **07:00** con el sol bajo de la mañana y,
   según baja la barra, el sol cruza el cielo: mediodía a la mitad, hora dorada
@@ -395,7 +399,8 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   mejor se ve el juego.
 - **El sueño va por tiempo, no por kilómetros.** Seis minutos al volante te
   llevan de estar fresco a caerte de sueño, y lo único que lo arregla es un
-  **motel** — la cama es gratis, pero la noche te la cobran en el surtidor, y
+  **motel** — la habitación son **20 $** y la noche te la cobran también en el
+  surtidor, y
   están a unos 7,5 km unos de otros, varias gasolineras de por medio. Uno de cada cuatro comparte parcela con una
   gasolinera; el resto están solos en mitad de la nada con su neón. Aparca en
   el parking, párate del todo y te registras.
@@ -426,13 +431,12 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   mientras va contigo el HUD va **descontando los metros** que quedan hasta su
   parada. Si paras donde te pidió, cobras; si te pasas **500 m**, se baja sin
   pagarte.
-- **Y pagan de verdad.** El viaje sale a **$82–136 el kilómetro**, o sea
-  **$215 el más corto y hasta unos $1.100 el más largo**, cuando llenar el
-  superdeportivo cuesta $62. Aquí nadie coge un taxi para ir a comprar: están
-  tirados en una carretera sin cobertura y sin más tráfico, y pagan lo que eso
-  vale. Con una buena carrera tienes el día resuelto, así que el dinero premia
-  aceptar el compromiso, no los kilómetros — el 12% de gasolina de más que te
-  cuesta llevarlos es calderilla al lado.
+- **Y pagan de verdad.** El viaje sale a **44–72 $ el kilómetro** con la
+  gasolina recién abierta, así que uno largo son unos cientos de dólares
+  frente a los 62 $ de llenar el deportivo. **La tarifa sigue al surtidor**:
+  aquí todo el mundo sabe lo que cuesta la gasolina, así que cuando el mercado
+  sube de noche sube con él — en el tope, el mismo viaje paga casi el doble.
+  Lo que te enseñan es el precio de hoy, y aceptar lo congela.
 - **Cajas en la arena.** Cada 300 m más o menos hay una caja a unos **10 m de
   la carretera**, caída del camión de alguien. Tres de cada cuatro no llevan
   nada, alrededor de una de cada cinco lleva **$10** y un **3%** lleva **$100**.
@@ -488,6 +492,9 @@ lado.
 | **300 $** en billetes usados | 50% |
 | **Motor gripado**: 40 km/h hasta el próximo surtidor, y 100 $ arreglarlo | 39% |
 | Unas llaves — uno de dos coches que no están en el concesionario | 10% y 1% |
+
+Cada cruce lleva su cartel: un rombo amarillo con una calavera y una flecha
+hacia donde va el camino, para que puedas decidir antes de pasártelo.
 
 El motor gripado es lo que convierte el camino en una apuesta y no en dinero
 gratis. El desvío lo pagas igual: un kilómetro de gasolina y un par de

@@ -11,7 +11,11 @@
  * always shows the same fare.
  */
 import { hashRand } from './rng.js';
-import { stationDistance, nextStationIndex } from './world/gasStation.js';
+import {
+  stationDistance,
+  nextStationIndex,
+  marketPrice,
+} from './world/gasStation.js';
 import { motelDistance, nextMotelIndex } from './world/motel.js';
 
 /** Share of stops with somebody waiting. */
@@ -28,8 +32,14 @@ const TRIP_SPREAD = 3800;
  * several tanks of petrol, which is the point — the money is the reward for
  * taking the obligation, not a wage for the mileage.
  */
-const PAY_PER_KM_MIN = 82;
-const PAY_PER_KM_SPREAD = 54;
+const PAY_PER_KM_MIN = 44;
+const PAY_PER_KM_SPREAD = 28;
+/**
+ * Fares track the pump. Everyone out here knows what fuel costs, so when the
+ * market doubles overnight so does what a lift is worth — otherwise a fixed
+ * fare quietly becomes worthless over a long run.
+ */
+const FUEL_BASE = 1.13;
 /** Fuel burn multiplier while somebody is in the car. */
 export const PASSENGER_BURN = 1.12;
 /** Drive this far past the drop-off and they get out without paying. */
@@ -74,13 +84,15 @@ export function offerAt(kind, index) {
   if (distance < MIN_TRIP * 0.5) return null; // too short to be worth anyone's time
 
   const perKm = PAY_PER_KM_MIN + hashRand(seed, 29) * PAY_PER_KM_SPREAD;
+  // Indexed to the pump. The quote you see is today's; boarding locks it in.
+  const fuelFactor = marketPrice() / FUEL_BASE;
   return {
     kind,
     index,
     from,
     dest,
     distance,
-    pay: Math.round((distance / 1000) * perKm),
+    pay: Math.round((distance / 1000) * perKm * fuelFactor),
   };
 }
 

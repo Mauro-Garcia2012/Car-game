@@ -7,7 +7,6 @@ import {
   GasStations,
   stationDistance,
   nextStationIndex,
-  fuelPricePerGallon,
   fuelPricePerLitre,
   overnightHike,
   resetMarket,
@@ -19,7 +18,6 @@ import { Motels, motelDistance, nextMotelIndex } from './world/motel.js';
 import { Crates, BIG_PRIZE } from './world/crates.js';
 import {
   SideRoads,
-  trackNear,
   CASE_CASH,
   REPAIR_COST,
   WORN_LIMIT,
@@ -62,6 +60,8 @@ import { terrainHeight } from './world/road.js';
 const REFUEL_RATE = 14; // litres per second
 const REFUEL_SPEED_LIMIT = 3.2; // m/s — you have to actually stop
 const CHECKIN_TIME = 2.5; // seconds parked before the room key appears
+/** What a night costs. The bed used to be free; the road no longer is. */
+const BED_COST = 20;
 /** Seconds the sky takes to run from midnight back round to dawn. */
 const DAWN_SWEEP = 2.6;
 /** Seconds of driving between writes of the run in progress. */
@@ -233,6 +233,7 @@ export class Game {
     this.traffic.reset();
     this.crates.reset();
     this.sideRoads.reset();
+    this.sleptAt = -1;
     this.setWornEngine(false);
     this.dust.clear();
     this.stops.clear();
@@ -607,15 +608,6 @@ export class Game {
     }
   }
 
-  /**
-   * A dirt spur coming up whose case is still out there. Only counts on the
-   * approach — once you are past the junction it is behind you.
-   */
-  trackAhead(s) {
-    const t = trackNear(s, 320);
-    return !!t && t.s > s - 40 && !this.sideRoads.taken.has(t.index);
-  }
-
   /** Photo enforcement: rare, signposted, and $50 a shot. */
   handleSpeedCamera() {
     const v = this.vehicle;
@@ -751,14 +743,27 @@ export class Game {
     this.motelZone = index;
     const stopped = Math.abs(v.speed) < REFUEL_SPEED_LIMIT;
 
-    if (index < 0 || !stopped || this.fatigue.level > 0.995) {
+    // One night per visit. Sleep resets the meter, but it starts draining
+    // again immediately, so without this you check in every few seconds for
+    // as long as you sit in the car park and burn a week doing it.
+    if (index < 0) this.sleptAt = -1;
+    if (index < 0 || !stopped || index === this.sleptAt || this.fatigue.level > 0.995) {
       this.checkingIn = 0;
       return;
     }
     this.checkingIn += dt;
     if (this.checkingIn >= CHECKIN_TIME) {
       this.checkingIn = 0;
+      if (this.cash < BED_COST) {
+        this.sleptAt = index; // no bed tonight; do not ask again here
+        this.audio.warn();
+        this.flash('msg.noBed', 'danger', 4, { cost: `$${BED_COST}` });
+        return;
+      }
+      this.cash -= BED_COST;
+      this.spent += BED_COST;
       this.fatigue.sleep();
+      this.sleptAt = index;
       this.beds.add(index);
       this.day += 1; // a night in a bed is what turns the calendar over
       this.audio.fanfare();
@@ -766,9 +771,10 @@ export class Game {
       // The figure quoted is what the next station down the road now charges.
       const hike = overnightHike();
       this.stations.refreshPrices();
-      const nextPump = fuelPricePerGallon(nextStationIndex(v.s));
+      const nextPump = fuelPricePerLitre(nextStationIndex(v.s));
       this.flash('msg.sleptPrice', 'good', 4.5, {
         day: this.day,
+        cost: `$${BED_COST}`,
         delta: `$${hike.delta.toFixed(2)}`,
         price: `$${nextPump.toFixed(2)}`,
       });
@@ -988,16 +994,10 @@ export class Game {
       this.ui.message('msg.outOfFuel', 'danger');
     } else if (toStation > rangeLeft) {
       this.ui.message('msg.wontMakeIt', 'danger');
-    } else if (toStation < 260 && !this.stops.has(idx)) {
-      this.ui.message('msg.stationAhead', 'warn');
     } else if (this.fares.active && this.fares.remaining(v.s) < 350) {
       this.ui.message('msg.dropOffAhead', 'warn');
-    } else if (toMotel < 400 && this.fatigue.level < 0.55) {
-      this.ui.message('msg.motelAhead', 'warn');
     } else if (this.wornEngine) {
       this.ui.message('msg.wornRunning', 'danger');
-    } else if (this.trackAhead(v.s)) {
-      this.ui.message('msg.trackAhead', 'warn');
     } else if (this.fatigue.level < 0.2) {
       this.ui.message('msg.drowsy', 'warn');
     } else if (v.fuel / spec.tank < 0.25) {

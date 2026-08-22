@@ -382,7 +382,9 @@ export class UI {
     if (s.fare) e.fareRemaining.textContent = metres(s.fare.metres);
 
     // Standing offer: distance, fare and what the extra weight will drink.
-    e.farePanel.classList.toggle('hidden', !s.offer);
+    // Both panels live in the same corner. Checking in wins — you are
+    // already stopped, and the offer is still there when you wake up.
+    e.farePanel.classList.toggle('hidden', !s.offer || s.checkingIn > 0);
     if (s.offer) {
       e.fareDest.textContent = t(
         s.offer.destKind === 'motel' ? 'hud.destMotel' : 'hud.destStation'

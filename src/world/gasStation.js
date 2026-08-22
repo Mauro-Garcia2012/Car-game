@@ -23,24 +23,28 @@ const MIN_GAP = 1950;
 const GAP_SPREAD = 520;
 
 /** Litres in a US gallon, for the pump price. */
-export const LITRES_PER_GALLON = 3.785;
 
 /* ------------------------------------------------------------------ */
 /* The price of gas                                                    */
 /* ------------------------------------------------------------------ */
 
-/** Where the market opens, in dollars per gallon. */
-const BASE_PRICE = 4.29;
+/**
+ * Everything here is per litre, which is what the pump charges and what the
+ * boards show. It used to be quoted per gallon internally and converted on
+ * the way out, which meant two units in play and only one of them visible.
+ */
+/** Where the market opens. */
+const BASE_PRICE = 1.13;
 /** Nothing on this road will ever ask more than this. */
-export const PRICE_CAP = 8.99;
+export const PRICE_CAP = 2.37;
 /** The market itself stops here, leaving room for the local variation. */
-const MARKET_CAP = 8.0;
-/** Overnight moves: a dime to thirty cents, occasionally a nastier jump. */
-const HIKE_MIN = 0.08;
-const HIKE_SPREAD = 0.22;
+const MARKET_CAP = 2.11;
+/** Overnight moves: two to eight cents, occasionally a nastier jump. */
+const HIKE_MIN = 0.021;
+const HIKE_SPREAD = 0.058;
 const SPIKE_CHANCE = 0.18;
-const SPIKE_MIN = 0.12;
-const SPIKE_SPREAD = 0.25;
+const SPIKE_MIN = 0.032;
+const SPIKE_SPREAD = 0.066;
 
 /**
  * One market price for the whole highway, so every pump moves together and
@@ -77,22 +81,17 @@ export function overnightHike() {
 
 /** A few cents either way, fixed per station so the same pump keeps its rank. */
 function localVariation(index) {
-  return hashRand(index, 401) * 0.18 - 0.09;
+  return hashRand(index, 401) * 0.048 - 0.024;
 }
 
 /** Hauling fuel further out costs a little more, capped so it stays subtle. */
 function remoteness(index) {
-  return Math.min(0.9, (stationDistance(index) / 1000) * 0.02);
+  return Math.min(0.238, (stationDistance(index) / 1000) * 0.0053);
 }
 
-/** What this station charges per gallon right now. */
-export function fuelPricePerGallon(index) {
-  return Math.min(PRICE_CAP, market + remoteness(index) + localVariation(index));
-}
-
-/** Price per litre, which is what the pump actually charges. */
+/** What this station charges per litre right now. */
 export function fuelPricePerLitre(index) {
-  return fuelPricePerGallon(index) / LITRES_PER_GALLON;
+  return Math.min(PRICE_CAP, market + remoteness(index) + localVariation(index));
 }
 
 /** Half length of the refuelling zone, measured along the road. */
@@ -234,7 +233,7 @@ function totemTexture() {
 /** Repaints a totem's price board, disposing the texture it replaces. */
 function setPriceBoard(board, index) {
   const previous = board.material.map;
-  const art = priceBoardTexture(fuelPricePerGallon(index));
+  const art = priceBoardTexture(fuelPricePerLitre(index));
   board.material.map = art;
   board.material.emissiveMap = art;
   board.material.needsUpdate = true;
@@ -332,7 +331,7 @@ function buildTotem(mat, index) {
 
   // One material shared by both price panels: they always agree, and the
   // price repaint only has to touch a single texture.
-  const priceArt = priceBoardTexture(fuelPricePerGallon(index));
+  const priceArt = priceBoardTexture(fuelPricePerLitre(index));
   const priceMaterial = glowAtNight(
     new THREE.MeshStandardMaterial({
       map: priceArt,
@@ -356,8 +355,12 @@ function buildStationModel(index) {
 
   // Concrete apron. Local -Z is "up the road", +X is away from the tarmac.
   // A slab rather than a plane, so its edge reads as a kerb on the sand.
-  const apron = new THREE.Mesh(new THREE.BoxGeometry(34, 0.34, 74), mat.concrete);
-  apron.position.set(14, -0.15, 0);
+  // The apron starts past the shoulder. At 34 m wide centred on x = 14 its
+  // inner edge landed at x = -3, which is inside the tarmac — and since the
+  // station's height comes off ground seventeen metres away, that lip could
+  // sit above the road as easily as below it.
+  const apron = new THREE.Mesh(new THREE.BoxGeometry(26, 0.34, 74), mat.concrete);
+  apron.position.set(20.5, -0.15, 0);
   apron.receiveShadow = true;
   root.add(apron);
 

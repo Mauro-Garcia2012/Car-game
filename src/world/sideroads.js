@@ -16,7 +16,9 @@ import * as THREE from 'three';
 import { roadPoint, roadYaw, EDGE } from '../track.js';
 import { hashRand, onReseed } from '../rng.js';
 import { groundHeight } from './road.js';
-import { sandTexture } from '../textures.js';
+import { sandTexture, dangerBoardTexture } from '../textures.js';
+import { t, onLanguageChange } from '../i18n.js';
+import { glowAtNight } from './nightlights.js';
 
 /** Spacing along the highway, and how much it wanders. */
 const FIRST_TRACK = 9000;
@@ -158,26 +160,43 @@ function briefcaseModel() {
   return g;
 }
 
-/** The little hand-painted board at the junction. */
-function junctionSign() {
+/**
+ * The warning at the junction: a yellow diamond with a skull and an arrow
+ * pointing the way the track goes. Two posts, board on the front face only,
+ * posts behind it — the same arrangement every other sign here ended up
+ * needing.
+ */
+function junctionSign(side) {
   const g = new THREE.Group();
-  const wood = new THREE.MeshStandardMaterial({ color: '#8a6a44', roughness: 0.95 });
-  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 2.2, 10), wood);
-  post.position.y = 1.1;
-  post.castShadow = true;
-  g.add(post);
-  const board = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.42, 0.07), wood);
-  board.position.set(0, 1.95, -0.06);
+  const steel = new THREE.MeshStandardMaterial({
+    color: '#8f949a',
+    roughness: 0.55,
+    metalness: 0.5,
+  });
+  for (const x of [-0.5, 0.5]) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.09, 2.6, 0.09), steel);
+    post.position.set(x, 1.3, 0.09);
+    post.castShadow = true;
+    g.add(post);
+  }
+  const art = dangerBoardTexture(t('sign.danger'), side);
+  const face = new THREE.MeshStandardMaterial({
+    map: art,
+    emissiveMap: art,
+    emissive: '#7a6a3a',
+    emissiveIntensity: 0.3,
+    roughness: 0.55,
+  });
+  glowAtNight(face, 1.1);
+  const back = new THREE.MeshStandardMaterial({ color: '#6d7278', roughness: 0.7 });
+  const board = new THREE.Mesh(
+    new THREE.BoxGeometry(1.5, 1.5, 0.06),
+    [back, back, back, back, face, back]
+  );
+  board.position.set(0, 2.5, 0);
   board.castShadow = true;
   g.add(board);
-  for (const x of [-0.5, 0, 0.5]) {
-    const slat = new THREE.Mesh(
-      new THREE.BoxGeometry(0.26, 0.1, 0.03),
-      new THREE.MeshStandardMaterial({ color: '#2c2419', roughness: 0.9 })
-    );
-    slat.position.set(x, 1.95, -0.11);
-    g.add(slat);
-  }
+  g.userData.face = face;
   return g;
 }
 
@@ -225,7 +244,7 @@ export class SideRoads {
       strip.visible = false;
       scene.add(strip);
 
-      const sign = junctionSign();
+      const sign = junctionSign(1);
       sign.visible = false;
       scene.add(sign);
 
@@ -241,6 +260,13 @@ export class SideRoads {
     this.tmp = { x: 0, y: 0, z: 0 };
     onReseed(() => {
       for (const slot of this.slots) slot.index = null;
+    });
+    onLanguageChange(() => {
+      for (const slot of this.slots) {
+        const side = slot.arrowSide;
+        slot.arrowSide = null;
+        if (side) this.aimSign(slot, side);
+      }
     });
   }
 
@@ -303,6 +329,7 @@ export class SideRoads {
         junction.z
       );
       slot.sign.rotation.y = roadYaw(track.s) + track.side * 0.5;
+      this.aimSign(slot, track.side);
       slot.sign.visible = true;
 
       const end = track.side * (EDGE + track.length);
@@ -311,6 +338,16 @@ export class SideRoads {
       slot.box.rotation.y = roadYaw(track.s) + 0.7;
       this.refreshCase(slot, index);
     }
+  }
+
+  /** Points the arrow the way this spur actually leaves the road. */
+  aimSign(slot, side) {
+    if (slot.arrowSide === side) return;
+    slot.arrowSide = side;
+    const art = dangerBoardTexture(t('sign.danger'), side);
+    slot.sign.userData.face.map = art;
+    slot.sign.userData.face.emissiveMap = art;
+    slot.sign.userData.face.needsUpdate = true;
   }
 
   refreshCase(slot, index) {

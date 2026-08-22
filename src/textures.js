@@ -294,6 +294,84 @@ export function signTexture(lines, { bg = '#c8382f', fg = '#fdf6e3' } = {}) {
 }
 
 /** Highway guide board: green for distances, blue for motorist services. */
+/**
+ * The warning board at a dirt spur: a skull over an arrow, on the yellow
+ * diamond every driver reads as "this is your problem now".
+ *
+ * @param {number} side -1 for a track heading left, +1 for one heading right
+ */
+export function dangerBoardTexture(text, side) {
+  return memo(`danger:${text}:${side}`, () =>
+    canvas(256, (ctx, size) => {
+      ctx.fillStyle = '#e8b21c';
+      ctx.fillRect(0, 0, size, size);
+      ctx.strokeStyle = '#1b1712';
+      ctx.lineWidth = size * 0.045;
+      ctx.strokeRect(size * 0.05, size * 0.05, size * 0.9, size * 0.9);
+
+      const cx = size * 0.5;
+      const skullY = size * 0.34;
+      const r = size * 0.15;
+      ctx.fillStyle = '#1b1712';
+
+      // Cranium and jaw.
+      ctx.beginPath();
+      ctx.arc(cx, skullY, r, Math.PI, 0);
+      ctx.rect(cx - r, skullY, r * 2, r * 0.72);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.rect(cx - r * 0.55, skullY + r * 0.72, r * 1.1, r * 0.42);
+      ctx.fill();
+
+      // Eyes and nose, punched back out in the sign's own yellow.
+      ctx.fillStyle = '#e8b21c';
+      for (const dx of [-0.46, 0.46]) {
+        ctx.beginPath();
+        ctx.ellipse(cx + r * dx, skullY + r * 0.05, r * 0.3, r * 0.34, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.beginPath();
+      ctx.moveTo(cx, skullY + r * 0.34);
+      ctx.lineTo(cx - r * 0.16, skullY + r * 0.66);
+      ctx.lineTo(cx + r * 0.16, skullY + r * 0.66);
+      ctx.closePath();
+      ctx.fill();
+      // Teeth.
+      ctx.fillStyle = '#1b1712';
+      ctx.fillRect(cx - r * 0.5, skullY + r * 0.86, r, size * 0.012);
+      for (const dx of [-0.26, 0, 0.26]) {
+        ctx.fillRect(cx + r * dx, skullY + r * 0.74, size * 0.012, r * 0.4);
+      }
+
+      // The arrow, pointing the way the track leaves the road.
+      const ay = size * 0.6;
+      const tip = side > 0 ? size * 0.86 : size * 0.14;
+      const tail = side > 0 ? size * 0.2 : size * 0.8;
+      ctx.strokeStyle = '#1b1712';
+      ctx.lineWidth = size * 0.055;
+      ctx.beginPath();
+      ctx.moveTo(tail, ay);
+      ctx.lineTo(tip - side * size * 0.09, ay);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(tip, ay);
+      ctx.lineTo(tip - side * size * 0.13, ay - size * 0.085);
+      ctx.lineTo(tip - side * size * 0.13, ay + size * 0.085);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#1b1712';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `bold ${Math.round(size * 0.085)}px Arial, sans-serif`;
+      for (const [i, line] of text.split('\n').entries()) {
+        // Kept clear of the border: the second line used to run off the sign.
+        ctx.fillText(line, cx, size * 0.755 + i * size * 0.095, size * 0.8);
+      }
+    })
+  );
+}
+
 export function boardTexture(text, sub = '', bg = '#1c6b3a') {
   return memo(`board:${text}:${sub}:${bg}`, () =>
     canvas(256, (ctx, size) => {
@@ -360,8 +438,8 @@ export function speedLimitTexture(mph) {
  * Gas price totem: dark board with the pump price in illuminated digits.
  * Not cached — prices move, and the caller disposes the texture it replaces.
  */
-export function priceBoardTexture(dollars) {
-  const price = dollars.toFixed(2);
+export function priceBoardTexture(perLitre) {
+  const price = perLitre.toFixed(2);
   return (() =>
     canvas(
       512,
@@ -377,14 +455,13 @@ export function priceBoardTexture(dollars) {
         ctx.textBaseline = 'middle';
         ctx.font = 'bold 34px Arial, sans-serif';
         ctx.fillText('REGULAR', 34, 48);
+        ctx.textAlign = 'right';
+        ctx.fillText('/ L', w - 34, 48);
 
-        // Big amber digits, with the traditional 9/10 of a cent.
         ctx.fillStyle = '#ffc23a';
         ctx.textAlign = 'center';
         ctx.font = 'bold 150px "Arial Narrow", Arial, sans-serif';
-        ctx.fillText(price, w / 2 - 18, h * 0.66, w - 110);
-        ctx.font = 'bold 62px "Arial Narrow", Arial, sans-serif';
-        ctx.fillText('9', w - 52, h * 0.5);
+        ctx.fillText(price, w / 2, h * 0.66, w - 90);
       },
       { height: 284 }
     ))();
