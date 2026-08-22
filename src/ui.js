@@ -21,6 +21,42 @@ function metres(value) {
   return `${n.toLocaleString('en-US').replace(/,/g, ' ')} m`;
 }
 
+/* ------------------------------------------------------------------ */
+/* The speedometer                                                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Dials come off a shelf, not a spreadsheet. Every real instrument reads a
+ * round number a little past what the vehicle will do, which is why a moped
+ * has a 60 on the clock and a hypercar has 440 — and why one dial for the
+ * whole garage would be wrong for all of them.
+ */
+const DIAL_FACES = [60, 80, 100, 120, 160, 200, 240, 280, 320, 360, 400, 440];
+/** Where the needle rests and where it pegs, in degrees from twelve o'clock. */
+const DIAL_START = -125;
+const DIAL_END = 125;
+
+function dialMax(car) {
+  const top = carTopSpeed(car) * 3.6;
+  return DIAL_FACES.find((v) => v >= top * 1.06) ?? DIAL_FACES[DIAL_FACES.length - 1];
+}
+
+/**
+ * Spacing of the numbered marks. Between five and eleven numbers fit round
+ * the face; any more and three digits start running into each other.
+ */
+function dialStep(max) {
+  if (max <= 80) return 10;
+  if (max <= 200) return 20;
+  return 40;
+}
+
+const svgEl = (name, attrs) => {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', name);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  return el;
+};
+
 /** Full-scale marks for the two fuel bars: the best in the garage. */
 const TANK_FULL_BAR = Math.max(...CARS.map((c) => c.tank));
 const RANGE_FULL_BAR = Math.max(...CARS.map((c) => carRange(c)));
@@ -37,9 +73,8 @@ export class UI {
       picker: $('car-picker'),
       specs: $('spec-sheet'),
       message: $('hud-message'),
-      speed: $('hud-speed'),
       gear: $('hud-gear'),
-      speedArc: $('speed-arc'),
+      scale: $('speedo-scale'),
       needle: $('speed-needle'),
       litres: $('hud-litres'),
       fuelFill: $('fuel-fill'),
@@ -173,6 +208,7 @@ export class UI {
       card.classList.toggle('active', card.dataset.id === id);
     }
     const car = CARS.find((c) => c.id === id);
+    if (car) this.buildSpeedo(car);
     if (this.locked(id)) return; // no peeking at a locked car's numbers
     const row = (label, value, text, cls = '') => `
       <div class="spec-row ${cls}">
@@ -194,6 +230,66 @@ export class UI {
       ),
     ].join('');
     if (!silent) this.h.onSelectCar(id);
+  }
+
+  /**
+   * Draws the face for one vehicle: ticks, numbers, and a red band over the
+   * stretch of dial its engine cannot reach.
+   */
+  buildSpeedo(car) {
+    const max = dialMax(car);
+    if (this.dialMax === max) return;
+    this.dialMax = max;
+    this.dialTop = carTopSpeed(car) * 3.6;
+
+    const step = dialStep(max);
+    const majors = Math.round(max / step);
+    const minors = majors <= 8 ? 4 : 2;
+    const angle = (v) => DIAL_START + (v / max) * (DIAL_END - DIAL_START);
+    const point = (deg, r) => {
+      const a = ((deg - 90) * Math.PI) / 180;
+      return [100 + Math.cos(a) * r, 100 + Math.sin(a) * r];
+    };
+
+    const g = this.el.scale;
+    g.innerHTML = '';
+
+    // The part of the dial this vehicle will never see.
+    if (this.dialTop < max * 0.995) {
+      const [x1, y1] = point(angle(this.dialTop), 90);
+      const [x2, y2] = point(angle(max), 90);
+      const big = angle(max) - angle(this.dialTop) > 180 ? 1 : 0;
+      g.appendChild(
+        svgEl('path', {
+          class: 'beyond',
+          d: `M${x1.toFixed(1)} ${y1.toFixed(1)} A 90 90 0 ${big} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`,
+        })
+      );
+    }
+
+    for (let i = 0; i <= majors * minors; i++) {
+      const v = (i / minors) * step;
+      if (v > max + 0.001) break;
+      const major = i % minors === 0;
+      const a = angle(v);
+      const [x1, y1] = point(a, major ? 76 : 81);
+      const [x2, y2] = point(a, 88);
+      g.appendChild(
+        svgEl('line', {
+          class: major ? 'tick major' : 'tick',
+          x1: x1.toFixed(1), y1: y1.toFixed(1), x2: x2.toFixed(1), y2: y2.toFixed(1),
+        })
+      );
+      if (!major) continue;
+      const [tx, ty] = point(a, 63);
+      const label = svgEl('text', {
+        class: 'dial-num',
+        x: tx.toFixed(1),
+        y: (ty + 5).toFixed(1),
+      });
+      label.textContent = String(Math.round(v));
+      g.appendChild(label);
+    }
   }
 
   /** Re-renders every string the UI generated itself. */
@@ -313,7 +409,6 @@ export class UI {
    */
   update(s) {
     const e = this.el;
-    e.speed.textContent = String(Math.round(s.speedKmh));
     e.gear.textContent = s.engineOn
       ? s.speedKmh < 1
         ? t('hud.neutral')
@@ -323,12 +418,16 @@ export class UI {
     // Posted limit is in mph, the speedo in km/h — as it would be in a
     // European car driven across Nevada.
     e.limitValue.textContent = String(s.speedLimit);
-    e.limitSign.classList.toggle('over', s.speedKmh > s.speedLimit * 1.609 + 5);
+    const over = s.speedKmh > s.speedLimit * 1.609 + 5;
+    e.limitSign.classList.toggle('over', over);
 
-    const ratio = Math.min(1, s.speedKmh / s.topKmh);
-    e.speedArc.style.strokeDashoffset = String(251 - 251 * ratio);
-    e.speedArc.style.stroke = ratio > 0.85 ? '#ff6a4d' : 'var(--amber)';
-    e.needle.style.transform = `rotate(${-90 + ratio * 180}deg)`;
+    // The needle answers to the dial's own scale, not to the car's top
+    // speed, so a moped's needle is where a moped's needle should be.
+    const max = this.dialMax || 220;
+    const swept = Math.min(1, Math.max(0, s.speedKmh / max));
+    const deg = DIAL_START + swept * (DIAL_END - DIAL_START);
+    e.needle.style.transform = `rotate(${deg.toFixed(1)}deg)`;
+    e.needle.classList.toggle('over', over);
 
     const fuelRatio = Math.max(0, s.fuel / s.tank);
     e.fuelFill.style.width = `${fuelRatio * 100}%`;

@@ -262,6 +262,9 @@ export class Game {
     this.drowsyWarned = false;
     this.cameraMode = 0;
     this.state = 'playing';
+    // The dial belongs to the car, and a resumed run can arrive in one the
+    // menu never selected.
+    this.ui.buildSpeedo(this.spec);
     this.ui.showHud();
     this.audio.start();
     this.audio.resume();

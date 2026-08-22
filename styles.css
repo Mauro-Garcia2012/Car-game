@@ -697,12 +697,12 @@ kbd {
 }
 
 .gauge {
-  width: 190px;
+  width: 176px;
   position: relative;
   background: var(--panel);
   border: 1px solid var(--panel-line);
-  border-radius: 14px;
-  padding: 8px 8px 4px;
+  border-radius: 50%;
+  padding: 6px;
 }
 
 .gauge svg {
@@ -710,64 +710,76 @@ kbd {
   display: block;
 }
 
-.gauge .track {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.14);
-  stroke-width: 10;
+/* The dial face: a real instrument is a dark dish, not a flat panel. */
+.gauge .face {
+  fill: radial-gradient(#000, #000);
+  fill: #14151a;
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 2;
+}
+
+.gauge .tick {
+  stroke: rgba(255, 242, 216, 0.55);
+  stroke-width: 2;
   stroke-linecap: round;
 }
 
-.gauge .value {
-  fill: none;
-  stroke: var(--amber);
-  stroke-width: 10;
-  stroke-linecap: round;
-  stroke-dasharray: 251;
-  stroke-dashoffset: 251;
-  transition: stroke-dashoffset 0.1s linear, stroke 0.3s linear;
-}
-
-.gauge line {
+.gauge .tick.major {
   stroke: #fff2d8;
-  stroke-width: 3;
+  stroke-width: 3.4;
+}
+
+/* The stretch of scale this vehicle cannot reach. */
+.gauge .beyond {
+  fill: none;
+  stroke: rgba(214, 62, 40, 0.8);
+  stroke-width: 4;
+  stroke-linecap: butt;
+}
+
+.gauge .dial-num {
+  fill: #e9e2d2;
+  font-family: var(--display);
+  font-size: 12px;
+  text-anchor: middle;
+  opacity: 0.9;
+}
+
+.gauge .unit,
+.gauge .gear {
+  fill: #cbb894;
+  text-anchor: middle;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+}
+
+.gauge .gear {
+  font-family: var(--display);
+  font-size: 17px;
+  fill: var(--amber);
+  letter-spacing: 0;
+}
+
+.gauge #speed-needle {
+  stroke: #fff2d8;
+  stroke-width: 3.4;
   stroke-linecap: round;
-  transform-origin: 100px 110px;
-  transform: rotate(-90deg);
+  transform-origin: 100px 100px;
+  transform: rotate(-125deg);
+  transition: stroke 0.25s linear;
+}
+
+/* Over the posted limit, the needle says so. */
+.gauge #speed-needle.over {
+  stroke: #ff6a4d;
 }
 
 .gauge .hub {
   fill: #fff2d8;
 }
 
-.gauge .readout {
-  position: absolute;
-  bottom: 4px;
-  left: 0;
-  right: 0;
-  text-align: center;
-}
-
-.gauge .readout strong {
-  font-family: var(--display);
-  font-size: 26px;
-  color: #fff2d8;
-}
-
-.gauge .readout span {
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  opacity: 0.7;
-  margin-left: 3px;
-}
-
-.gauge .readout em {
-  position: absolute;
-  right: 12px;
-  bottom: 4px;
-  font-style: normal;
-  font-family: var(--display);
-  font-size: 14px;
-  color: var(--amber);
+.gauge .hub-pin {
+  fill: #14151a;
 }
 
 .fuel-block {
@@ -1049,7 +1061,7 @@ body.touch .touch-controls {
     align-items: flex-end;
   }
   .gauge {
-    width: 140px;
+    width: 132px;
   }
   .limit-sign {
     width: 52px;

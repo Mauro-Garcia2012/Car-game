@@ -128,6 +128,10 @@ automatically.
   replica sign next to the speedo always agree; go over and the replica lights
   up red. Nobody stops you for it — the only thing watching is the occasional
   camera.
+- The speedometer is a dial, and only a dial — no digits. Its face is cut to
+  fit whatever you are driving, so the needle always uses most of the sweep:
+  0–60 in tens on the moped, 0–440 in forties in the hypercar, and the stretch
+  of the scale the car cannot reach is marked in red.
 - The run ends when the tank hits zero and the car rolls to a stop, or when the
   car is wrecked. Dying with an empty wallet gets its own ending. Your best
   distance is stored in the browser.
@@ -421,6 +425,11 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   réplica que verás junto al velocímetro siempre coinciden; si te pasas, la
   réplica se pone roja. Nadie te para por ello: lo único que vigila es algún
   radar suelto.
+- El velocímetro es una esfera analógica, sin cifras digitales. La escala se
+  corta a la medida del coche que lleves, para que la aguja aproveche casi todo
+  el recorrido: de 0 a 60 de diez en diez en la Vespino, de 0 a 440 de cuarenta
+  en cuarenta en el hiperdeportivo, y el tramo que el coche no alcanza va
+  marcado en rojo.
 - **Cada noche pasa un día**, y el contador de días de la esquina es el reloj
   contra el que se mide toda la partida.
 - **Los pasajeros pagan.** En la mitad de las paradas hay alguien esperando
