@@ -293,48 +293,75 @@ export function signTexture(lines, { bg = '#c8382f', fg = '#fdf6e3' } = {}) {
   );
 }
 
-/**
- * The fuel pump pictogram, as an outline traced off the reference artwork.
- *
- * Closed polygons in a 100 x 86.7 box with the origin at the top-left of the
- * ink, filled with the even-odd rule so the display window and the hollow of
- * the nozzle come out as holes without caring which way each loop winds. It
- * is a path rather than an image on purpose: the repository stays asset free,
- * and the sign stays crisp whether it is four pixels across on the horizon or
- * filling the screen at the pumps.
- */
-const PUMP_PATH = [
-  [
-    34.4, 0, 70.4, 0, 71.2, 0.9, 71.6, 7.7, 78.7, 7.9, 79.5, 8.4, 79.6,
-    49.7, 78.7, 50.7, 75.2, 50.8, 74.6, 51.7, 72.5, 79.9, 73.2, 80.6, 76.8,
-    80.7, 99, 80.6, 100, 81.8, 100, 85.9, 99.1, 86.7, 8, 86.3, 7.8, 81.7,
-    8.5, 80.8, 32.9, 80.7, 33.8, 80, 30.2, 51.8, 29, 51, 26.1, 50.9, 25,
-    48.6, 24, 49.8, 17, 68.6, 13.6, 72.6, 9.9, 73.8, 6.8, 73.6, 4.5, 72.7,
-    1, 69, 0, 64.7, 0.6, 61.5, 10.1, 35.3, 10.1, 29.7, 15.1, 16.5, 17.5,
-    15.3, 18.4, 11.4, 20, 8.8, 22.3, 6.8, 24.9, 6.5, 25.1, 8, 23, 9.3, 20.8,
-    12.2, 20.5, 15.6, 24, 22.1, 25.7, 22.4, 26.4, 8.9, 33.4, 8, 33.6, 0.6,
-    34.4, 0.1
-  ],
-  [
-    35.6, 16.1, 34.4, 17, 34.4, 37.5, 35.6, 38.7, 70.3, 38.7, 71.3, 37.7,
-    71.3, 16.8, 70.8, 16.2, 35.7, 16.1
-  ],
-  [
-    21.9, 31.2, 20.6, 32, 19.6, 33.9, 19, 40.8, 17.2, 40.3, 16.7, 35.1,
-    15.8, 35.3, 14.8, 37.3, 5.3, 64.1, 5.9, 67.3, 8.5, 68.7, 10.1, 68.6,
-    11.7, 67.4, 13.6, 63.3, 23.5, 35.9, 23, 31.7, 22.1, 31.2
-  ],
-];const PUMP_W = 100;
-const PUMP_H = 86.7;
+/** The blue of the Spanish S-series service signs, sampled off a real one. */
+export const SERVICE_BLUE = '#003c8c';
 
-/** Draws the pictogram `width` wide with its top-left corner at (x, y). */
-function drawPump(ctx, x, y, width, fg) {
+/**
+ * The two service pictograms, as outlines traced off the real signs.
+ *
+ * Closed polygons in a 100-wide box with the origin at the top-left of the
+ * ink, filled with the even-odd rule so the pump's display window and the
+ * hollow of its nozzle, and the gap under the bed, come out as holes without
+ * anyone having to care which way each loop winds. Paths rather than images
+ * on purpose: the repository stays asset free, and a sign stays crisp whether
+ * it is four pixels across on the horizon or filling the screen at the pumps.
+ */
+const PUMP = {
+  w: 100,
+  h: 86.7,
+  loops: [
+    [
+      34.4, 0, 70.4, 0, 71.2, 0.9, 71.6, 7.7, 78.7, 7.9, 79.5, 8.4, 79.6,
+      49.7, 78.7, 50.7, 75.2, 50.8, 74.6, 51.7, 72.5, 79.9, 73.2, 80.6,
+      76.8, 80.7, 99, 80.6, 100, 81.8, 100, 85.9, 99.1, 86.7, 8, 86.3,
+      7.8, 81.7, 8.5, 80.8, 32.9, 80.7, 33.8, 80, 30.2, 51.8, 29, 51,
+      26.1, 50.9, 25, 48.6, 24, 49.8, 17, 68.6, 13.6, 72.6, 9.9, 73.8,
+      6.8, 73.6, 4.5, 72.7, 1, 69, 0, 64.7, 0.6, 61.5, 10.1, 35.3, 10.1,
+      29.7, 15.1, 16.5, 17.5, 15.3, 18.4, 11.4, 20, 8.8, 22.3, 6.8, 24.9,
+      6.5, 25.1, 8, 23, 9.3, 20.8, 12.2, 20.5, 15.6, 24, 22.1, 25.7, 22.4,
+      26.4, 8.9, 33.4, 8, 33.6, 0.6, 34.4, 0.1
+    ],
+    [
+      35.6, 16.1, 34.4, 17, 34.4, 37.5, 35.6, 38.7, 70.3, 38.7, 71.3,
+      37.7, 71.3, 16.8, 70.8, 16.2, 35.7, 16.1
+    ],
+    [
+      21.9, 31.2, 20.6, 32, 19.6, 33.9, 19, 40.8, 17.2, 40.3, 16.7, 35.1,
+      15.8, 35.3, 14.8, 37.3, 5.3, 64.1, 5.9, 67.3, 8.5, 68.7, 10.1, 68.6,
+      11.7, 67.4, 13.6, 63.3, 23.5, 35.9, 23, 31.7, 22.1, 31.2
+    ],
+  ],
+};
+
+const BED = {
+  w: 100,
+  h: 49.9,
+  loops: [
+    [
+      3.7, 0, 6.8, 0.6, 8.8, 3.5, 8.8, 25.7, 9.3, 26.2, 90.4, 26.2, 91.2,
+      25.6, 91.1, 13.4, 91.9, 10.8, 93.9, 9.3, 97.1, 9.3, 99.4, 11.1, 100,
+      13.1, 99.8, 49.9, 91.2, 49.7, 90.7, 36.2, 9.2, 36.2, 8.8, 49.7, 0.2,
+      49.9, 0, 3.7, 1.7, 0.8, 3.7, 0.1
+    ],
+    [
+      33.5, 9, 84.7, 9.1, 87.3, 10.3, 88.6, 13.4, 88.3, 23.7, 33.7, 23.8,
+      33, 23.2, 33, 9.4, 33.5, 9.1
+    ],
+    [
+      19.7, 9.1, 25.2, 9.6, 29.4, 12.2, 30.5, 14.3, 30.6, 22.5, 30.1,
+      23.7, 11.5, 23.5, 11.8, 13.2, 15.2, 10.1, 19.7, 9.2
+    ],
+  ],
+};
+
+/** Draws a pictogram `width` wide with its top-left corner at (x, y). */
+function drawGlyph(ctx, glyph, x, y, width, fg) {
   ctx.save();
   ctx.translate(x, y);
-  ctx.scale(width / PUMP_W, width / PUMP_W);
+  ctx.scale(width / glyph.w, width / glyph.w);
   ctx.fillStyle = fg;
   ctx.beginPath();
-  for (const loop of PUMP_PATH) {
+  for (const loop of glyph.loops) {
     for (let i = 0; i < loop.length; i += 2) {
       if (i) ctx.lineTo(loop[i], loop[i + 1]);
       else ctx.moveTo(loop[i], loop[i + 1]);
@@ -343,6 +370,61 @@ function drawPump(ctx, x, y, width, fg) {
   }
   ctx.fill('evenodd');
   ctx.restore();
+}
+
+/** Pictograms a service sign can carry, by name. */
+const GLYPHS = { pump: PUMP, bed: BED };
+
+/**
+ * A Spanish S-series service sign: white surround, blue field, a white
+ * square panel near the top holding the black pictogram, and the distance
+ * underneath it on the blue.
+ *
+ * The proportions are measured off the real signs — panel 70% of the width,
+ * starting 9.5% down, board 0.656 as wide as it is tall. The texture is
+ * portrait in exactly that ratio, so nothing has to be squashed in advance to
+ * survive being mapped onto the board.
+ */
+const SIGN_W = 256;
+const SIGN_H = 390;
+/** Board proportion the sign texture expects: width over height. */
+export const SERVICE_SIGN_ASPECT = SIGN_W / SIGN_H;
+
+export function serviceSignTexture(glyph, sub, bg = SERVICE_BLUE) {
+  return memo(`service:${glyph}:${sub}:${bg}`, () =>
+    canvas(
+      SIGN_W,
+      (ctx, w, h) => {
+        ctx.fillStyle = '#f4f3ef';
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = bg;
+        ctx.beginPath();
+        ctx.roundRect(11, 11, w - 22, h - 22, 26);
+        ctx.fill();
+
+        const panel = Math.round(w * 0.7);
+        const px = Math.round((w - panel) / 2);
+        const py = Math.round(h * 0.095);
+        ctx.fillStyle = '#f4f3ef';
+        ctx.fillRect(px, py, panel, panel);
+
+        // Fitted on its longest side, so the flat bed and the tall pump both
+        // sit in the same amount of white.
+        const art = GLYPHS[glyph];
+        const fit = panel * 0.66;
+        const gw = art.w >= art.h ? fit : (fit * art.w) / art.h;
+        const gh = (gw * art.h) / art.w;
+        drawGlyph(ctx, art, px + (panel - gw) / 2, py + (panel - gh) / 2, gw, '#15171a');
+
+        ctx.fillStyle = '#f4f3ef';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold 56px Arial, sans-serif';
+        ctx.fillText(sub, w / 2, py + panel + 66, w - 46);
+      },
+      { height: SIGN_H }
+    )
+  );
 }
 
 /**
@@ -361,13 +443,13 @@ export function pumpBoardTexture(sub, { bg = '#1c3d6b', fg = '#f2f0e6', aspect =
       ctx.lineWidth = 8;
       ctx.strokeRect(14, 14, size - 28, size - 28);
 
-      // The texture is square and gets stretched onto a board that is not,
-      // so the glyph is squeezed by the same factor and comes out round.
+      // The texture is square and gets stretched onto a cabinet that is
+      // not, so the glyph is squeezed by the same factor and comes out round.
       const glyph = 138;
       ctx.save();
       ctx.translate(size / 2, 0);
       ctx.scale(1 / aspect, 1);
-      drawPump(ctx, -glyph / 2, 42, glyph, fg);
+      drawGlyph(ctx, PUMP, -glyph / 2, 42, glyph, fg);
       ctx.restore();
 
       ctx.fillStyle = fg;
@@ -379,7 +461,6 @@ export function pumpBoardTexture(sub, { bg = '#1c3d6b', fg = '#f2f0e6', aspect =
   );
 }
 
-/** Highway guide board: green for distances, blue for motorist services. */
 /**
  * The warning board at a dirt spur: a skull over an arrow, on the yellow
  * diamond every driver reads as "this is your problem now".
@@ -453,27 +534,6 @@ export function dangerBoardTexture(text, side) {
       for (const [i, line] of text.split('\n').entries()) {
         // Kept clear of the border: the second line used to run off the sign.
         ctx.fillText(line, cx, size * 0.755 + i * size * 0.095, size * 0.8);
-      }
-    })
-  );
-}
-
-export function boardTexture(text, sub = '', bg = '#1c6b3a') {
-  return memo(`board:${text}:${sub}:${bg}`, () =>
-    canvas(256, (ctx, size) => {
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, size, size);
-      ctx.strokeStyle = '#f2f0e6';
-      ctx.lineWidth = 8;
-      ctx.strokeRect(14, 14, size - 28, size - 28);
-      ctx.fillStyle = '#f2f0e6';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font = 'bold 70px Arial, sans-serif';
-      ctx.fillText(text, size / 2, sub ? size / 2 - 26 : size / 2, size - 58);
-      if (sub) {
-        ctx.font = 'bold 42px Arial, sans-serif';
-        ctx.fillText(sub, size / 2, size / 2 + 44, size - 58);
       }
     })
   );

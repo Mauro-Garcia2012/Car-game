@@ -13,6 +13,9 @@ import {
   concreteTexture,
   pumpBoardTexture,
   priceBoardTexture,
+  serviceSignTexture,
+  SERVICE_SIGN_ASPECT,
+  SERVICE_BLUE,
 } from '../textures.js';
 import { t } from '../i18n.js';
 import { groundHeight } from './road.js';
@@ -100,7 +103,7 @@ const ZONE_INNER = EDGE - 1.5;
 const ZONE_OUTER = EDGE + 26;
 
 /** US motorist-service signs (gas, food, lodging) are blue, not green. */
-export const SERVICE_BLUE = '#0b4a8f';
+export { SERVICE_BLUE };
 
 // The spacing is memoised as it is walked, so a new seed has to throw the
 // list away or every run keeps the first run's pumps. The opening station
@@ -486,35 +489,42 @@ function buildStationModel(index) {
   return root;
 }
 
-/** The pump pictogram over "500 M", on the blue every service sign uses. */
-const ADVANCE_ASPECT = 3.2 / 2.2;
 function advanceTexture() {
-  return pumpBoardTexture(t('sign.advanceSub'), {
-    bg: SERVICE_BLUE,
-    aspect: ADVANCE_ASPECT,
-  });
+  return serviceSignTexture('pump', t('sign.advanceSub'));
 }
 
-/** The board planted a few hundred metres before each station. */
+/**
+ * The board planted a few hundred metres before each station: the Spanish
+ * S-series service sign, upright, with the pump in its white panel and the
+ * distance under it.
+ */
+export const SIGN_H = 2.9;
+export const SIGN_W = SIGN_H * SERVICE_SIGN_ASPECT;
+/** Height of the board's centre: the bottom lands about head height. */
+export const SIGN_Y = 3.05;
+
+/** Two posts behind a service sign, sized to whatever it carries. */
+export function signPosts(mat, height) {
+  const posts = [];
+  const postZ = behindBoard(0.16, 0.16);
+  for (const x of [-0.55, 0.55]) {
+    posts.push(box(0.16, height, 0.16, mat, x, height / 2, postZ));
+  }
+  return posts;
+}
+
 function buildAdvanceSign() {
   const mat = materials();
   const g = new THREE.Group();
-  const DEPTH = 0.16;
-  // Posts stand behind the board, on the side the traffic never sees.
-  const postZ = behindBoard(DEPTH, 0.16);
-  g.add(box(0.16, 3.2, 0.16, mat.steel, -0.9, 1.6, postZ));
-  g.add(box(0.16, 3.2, 0.16, mat.steel, 0.9, 1.6, postZ));
+  g.add(...signPosts(mat.steel, SIGN_Y - 0.3));
   const board = signBoard(
-    3.2,
-    2.2,
-    DEPTH,
-    new THREE.MeshStandardMaterial({
-      map: advanceTexture(),
-      roughness: 0.65,
-    }),
+    SIGN_W,
+    SIGN_H,
+    0.16,
+    new THREE.MeshStandardMaterial({ map: advanceTexture(), roughness: 0.65 }),
     new THREE.MeshStandardMaterial({ color: '#6d7278', roughness: 0.7 })
   );
-  board.position.set(0, 4.0, 0);
+  board.position.set(0, SIGN_Y, 0);
   g.add(board);
   g.userData.board = board;
   return g;

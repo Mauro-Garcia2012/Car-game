@@ -144,7 +144,6 @@ const STRINGS = {
     'sign.totemStop': 'STOP',
     'sign.advanceSub': '500 M',
     'sign.danger': 'DANGEROUS\nROAD',
-    'sign.motel': 'MOTEL',
     'sign.motelSub': '1 MI',
   },
 
@@ -279,7 +278,6 @@ const STRINGS = {
     'sign.totemStop': 'PARADA',
     'sign.advanceSub': '500 M',
     'sign.danger': 'CARRETERA\nPELIGROSA',
-    'sign.motel': 'MOTEL',
     'sign.motelSub': '1,6 KM',
   },
 };

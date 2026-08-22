@@ -15,13 +15,20 @@ import { hashRand, onReseed } from '../rng.js';
 import { t } from '../i18n.js';
 import {
   concreteTexture,
-  boardTexture,
+  serviceSignTexture,
   motelSignTexture,
   vacancyTexture,
 } from '../textures.js';
 import { groundHeight } from './road.js';
-import { signBoard, setBoardFace, behindBoard } from './boards.js';
-import { stationDistance, nextStationIndex, SERVICE_BLUE } from './gasStation.js';
+import { signBoard, setBoardFace } from './boards.js';
+import {
+  stationDistance,
+  nextStationIndex,
+  signPosts,
+  SIGN_W,
+  SIGN_H,
+  SIGN_Y,
+} from './gasStation.js';
 
 const FIRST_MOTEL = 7200;
 const MOTEL_GAP = 7400;
@@ -316,26 +323,26 @@ function buildMotelModel() {
   return root;
 }
 
-/** "MOTEL 1 MI" board planted before each one, in service blue. */
+function advanceTexture() {
+  return serviceSignTexture('bed', t('sign.motelSub'));
+}
+
+/**
+ * The board planted before each motel: the same S-series service sign as the
+ * station's, with a bed in the panel instead of a pump.
+ */
 function buildAdvanceSign() {
   const mat = materials();
   const g = new THREE.Group();
-  const DEPTH = 0.16;
-  // Posts stand behind the board, on the side the traffic never sees.
-  const postZ = behindBoard(DEPTH, 0.16);
-  g.add(box(0.16, 3.2, 0.16, mat.steel, -0.9, 1.6, postZ));
-  g.add(box(0.16, 3.2, 0.16, mat.steel, 0.9, 1.6, postZ));
+  g.add(...signPosts(mat.steel, SIGN_Y - 0.3));
   const board = signBoard(
-    3.2,
-    2.2,
-    DEPTH,
-    new THREE.MeshStandardMaterial({
-      map: boardTexture(t('sign.motel'), t('sign.motelSub'), SERVICE_BLUE),
-      roughness: 0.65,
-    }),
+    SIGN_W,
+    SIGN_H,
+    0.16,
+    new THREE.MeshStandardMaterial({ map: advanceTexture(), roughness: 0.65 }),
     new THREE.MeshStandardMaterial({ color: '#6d7278', roughness: 0.7 })
   );
-  board.position.set(0, 4.0, 0);
+  board.position.set(0, SIGN_Y, 0);
   g.add(board);
   g.userData.board = board;
   return g;
@@ -389,10 +396,7 @@ export class Motels {
   /** Repaints the advance boards after a language change. */
   retranslate() {
     for (const slot of this.slots) {
-      setBoardFace(
-        slot.advance.userData.board,
-        boardTexture(t('sign.motel'), t('sign.motelSub'), SERVICE_BLUE)
-      );
+      setBoardFace(slot.advance.userData.board, advanceTexture());
     }
   }
 
