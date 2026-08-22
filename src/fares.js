@@ -1,28 +1,24 @@
 /**
  * Passengers.
  *
- * People are stranded at about half the stops out here, and they will pay to
- * be taken up the road to the next gas station or motel. The ride is on your
- * way — the road only goes one direction — so what it really costs you is the
- * extra fuel of carrying somebody, and the obligation to actually stop where
- * they are going instead of blowing past it.
+ * People wait at the bus stops for a bus that stopped running years ago, and
+ * they will pay to be driven up the line instead. The ride is on your way —
+ * the road only goes one direction — so what it really costs you is the extra
+ * fuel of carrying somebody, and the obligation to actually pull in at the
+ * shelter they asked for instead of blowing past it.
  *
- * Every offer is deterministic from the stop it belongs to, so the same pickup
- * always shows the same fare.
+ * Stops are ten kilometres apart, so a fare is a commitment: one hop is most
+ * of a tank and usually a night's sleep, and some of them ride two.
+ *
+ * Every offer is deterministic from the stop it belongs to, so the same person
+ * always wants the same ride for the same money.
  */
 import { hashRand } from './rng.js';
-import {
-  stationDistance,
-  nextStationIndex,
-  marketPrice,
-} from './world/gasStation.js';
-import { motelDistance, nextMotelIndex } from './world/motel.js';
+import { marketPrice } from './world/gasStation.js';
+import { stopDistance, someoneWaitingAt } from './world/busStops.js';
 
-/** Share of stops with somebody waiting. */
-const OFFER_CHANCE = 0.55;
-/** Shortest and longest ride, in metres. */
-const MIN_TRIP = 2200;
-const TRIP_SPREAD = 3800;
+/** How often somebody is riding two stops instead of one. */
+const TWO_HOP_CHANCE = 0.22;
 /**
  * What a ride pays, per kilometre.
  *
@@ -45,52 +41,30 @@ export const PASSENGER_BURN = 1.12;
 /** Drive this far past the drop-off and they get out without paying. */
 export const MISS_AFTER = 500;
 
-export const STATION = 'station';
-export const MOTEL = 'motel';
-
-function stopDistance(kind, index) {
-  return kind === STATION ? stationDistance(index) : motelDistance(index);
-}
-
-/** The stop closest to `target`, whichever kind that turns out to be. */
-function stopNear(target) {
-  const si = nextStationIndex(target);
-  const mi = nextMotelIndex(target);
-  const sS = stationDistance(si);
-  const mS = motelDistance(mi);
-  return Math.abs(mS - target) < Math.abs(sS - target)
-    ? { kind: MOTEL, index: mi, s: mS }
-    : { kind: STATION, index: si, s: sS };
-}
-
-function seedFor(kind, index) {
-  return (kind === STATION ? 1000003 : 2000029) + index;
-}
-
 /**
- * Who, if anyone, is waiting at this stop.
- * @returns {{kind:string, index:number, from:number, dest:object,
- *            distance:number, pay:number}|null}
+ * Who, if anyone, is waiting at bus stop `index`.
+ * @returns {{index:number, hops:number, from:number, destIndex:number,
+ *            destS:number, distance:number, pay:number}|null}
  */
-export function offerAt(kind, index) {
-  if (index < 0) return null;
-  const seed = seedFor(kind, index);
-  if (hashRand(seed, 17) > OFFER_CHANCE) return null;
+export function offerAt(index) {
+  if (index < 0 || !someoneWaitingAt(index)) return null;
 
-  const from = stopDistance(kind, index);
-  const target = from + MIN_TRIP + hashRand(seed, 51) * TRIP_SPREAD;
-  const dest = stopNear(target);
-  const distance = dest.s - from;
-  if (distance < MIN_TRIP * 0.5) return null; // too short to be worth anyone's time
+  const seed = 3000 + index;
+  const hops = hashRand(seed, 51) < TWO_HOP_CHANCE ? 2 : 1;
+  const from = stopDistance(index);
+  const destIndex = index + hops;
+  const destS = stopDistance(destIndex);
+  const distance = destS - from;
 
   const perKm = PAY_PER_KM_MIN + hashRand(seed, 29) * PAY_PER_KM_SPREAD;
   // Indexed to the pump. The quote you see is today's; boarding locks it in.
   const fuelFactor = marketPrice() / FUEL_BASE;
   return {
-    kind,
     index,
+    hops,
     from,
-    dest,
+    destIndex,
+    destS,
     distance,
     pay: Math.round((distance / 1000) * perKm * fuelFactor),
   };
@@ -114,35 +88,38 @@ export class Fares {
   }
 
   /** The offer standing at this stop, or null if none or already taken. */
-  offerFor(kind, index) {
-    if (this.active || index < 0) return null;
-    const key = `${kind}:${index}`;
-    if (this.used.has(key)) return null;
-    return offerAt(kind, index);
+  offerFor(index) {
+    if (this.active || index < 0 || this.used.has(index)) return null;
+    return offerAt(index);
+  }
+
+  /**
+   * Is there still somebody standing on that slab? Drives the figure in the
+   * shelter, so it has to go the moment they climb in.
+   */
+  hasWaiter(index) {
+    if (index < 0 || this.used.has(index)) return false;
+    return someoneWaitingAt(index);
   }
 
   board(offer) {
-    this.used.add(`${offer.kind}:${offer.index}`);
+    this.used.add(offer.index);
     this.active = offer;
   }
 
   /** Metres still to go, or 0 when there is nobody aboard. */
   remaining(playerS) {
-    return this.active ? Math.max(0, this.active.dest.s - playerS) : 0;
+    return this.active ? Math.max(0, this.active.destS - playerS) : 0;
   }
 
   /** True once the player has driven well past the drop-off. */
   missed(playerS) {
-    return !!this.active && playerS > this.active.dest.s + MISS_AFTER;
+    return !!this.active && playerS > this.active.destS + MISS_AFTER;
   }
 
   /** Is this the stop the passenger asked for? */
-  isDestination(kind, index) {
-    return (
-      !!this.active &&
-      this.active.dest.kind === kind &&
-      this.active.dest.index === index
-    );
+  isDestination(index) {
+    return !!this.active && this.active.destIndex === index;
   }
 
   clear() {

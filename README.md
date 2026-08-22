@@ -66,21 +66,27 @@ automatically.
   will ever ask more than **$8.99**. Each night also turns the calendar over,
   and the **day counter** in the corner is the clock the whole run is measured
   against.
-- **Passengers pay.** Somebody is waiting at about half the stops, wanting a
-  lift to a gas station or motel further up the road. Roll in, stop, and the
-  offer tells you everything **before** you take it: how many metres the ride
-  is, what it pays, and how much extra fuel the extra weight will drink, in
-  litres and dollars. Press `E` (or tap it) to take it. A passenger burns
-  **12% more fuel**, and while one is aboard the HUD counts the metres down to
-  their stop. Stop where they asked and you get paid; drive **500 m past it**
-  and they get out for nothing.
-- **And they pay properly.** Rides run **$82–136 a kilometre**, which works out
-  at **$215 for the shortest and up to about $1,100 for the longest**, against
-  $62 to fill the supercar. Nobody out here is catching a lift to the shops:
-  they are stranded on a road with no signal and no other traffic, and they
-  pay what that is worth. Taking one good fare pays for the rest of the day,
-  so the money is a reward for accepting the obligation rather than a wage for
-  the mileage — the 12% extra fuel it costs you is loose change beside it.
+- **Passengers wait at the bus stops.** A transit authority once ran a service
+  up this highway; the buses stopped years ago and the shelters did not. One
+  stands roughly every **10 km** — a concrete slab, three walls, a bench, a
+  timetable nobody has reprinted — and about **six in ten** have somebody
+  standing at them, visible from a long way out. Pull off onto the shoulder
+  beside one and stop.
+- **Passengers pay.** The offer tells you everything **before** you take it:
+  how far the ride is, what it pays, and how much extra fuel the extra weight
+  will drink, in litres and dollars. Press `E` (or tap it) to take it. Most
+  are riding one stop; about one in five is riding two, so a fare runs
+  **10 to 23 km** — more than a tank in some cars and usually a night's sleep.
+  A passenger burns **12% more fuel**, and while one is aboard the HUD counts
+  down to their shelter. Pull in where they asked and you get paid; drive
+  **500 m past it** and they get out for nothing.
+- **And they pay properly.** Rides run **$44–72 a kilometre** with the market
+  freshly opened, which is **$450 for a short hop and better than $1,600 for a
+  long one**, against $62 to fill the supercar. Nobody out here is catching a
+  lift to the shops: they are stranded on a road with no signal and no other
+  traffic, and they pay what that is worth. **The fare tracks the pump** — when
+  the market climbs overnight so does what a lift is worth — and the quote you
+  see is today's; accepting freezes it.
 - **Crates in the sand.** Every 300 m or so a crate sits about **10 m off the
   tarmac**, fallen off somebody's truck. Three out of four hold nothing at all,
   roughly one in five is worth **$10**, and about **3%** are worth **$100**.
@@ -278,8 +284,8 @@ src/
   rng.js            deterministic hash noise
   cars/             the three player cars, built from extruded side profiles
   world/            sky and the day/night rig, road, terrain, scenery,
-                    stations, motels, signs, cameras, headlamps, crates,
-                    dirt spurs and the briefcases at the end of them
+                    stations, motels, bus stops, signs, cameras, headlamps,
+                    crates, dirt spurs and the briefcases at the end of them
 vendor/three/       three.js r169 (MIT), vendored so the game runs offline
 ```
 
@@ -432,20 +438,26 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   marcado en rojo.
 - **Cada noche pasa un día**, y el contador de días de la esquina es el reloj
   contra el que se mide toda la partida.
-- **Los pasajeros pagan.** En la mitad de las paradas hay alguien esperando
-  que quiere llegar a una gasolinera o a un motel más adelante. Párate y la
-  oferta te dice todo **antes** de aceptar: cuántos metros es el viaje, cuánto
-  te paga y cuánta gasolina de más va a gastar, en litros y en dólares. Pulsa
-  `E` (o tócalo) para aceptar. Llevar a alguien gasta un **12% más**, y
-  mientras va contigo el HUD va **descontando los metros** que quedan hasta su
-  parada. Si paras donde te pidió, cobras; si te pasas **500 m**, se baja sin
-  pagarte.
+- **La gente espera en las paradas de autobús.** Alguna vez hubo una línea por
+  esta carretera; los autobuses dejaron de pasar hace años y las marquesinas
+  no. Hay una cada **10 km** más o menos — losa de hormigón, tres paredes, un
+  banco y un horario que nadie ha vuelto a imprimir — y en unas **seis de cada
+  diez** hay alguien de pie, que se ve desde lejos. Sal al arcén y párate a su
+  lado.
+- **Los pasajeros pagan.** La oferta te dice todo **antes** de aceptar: cuánto
+  es el viaje, cuánto te paga y cuánta gasolina de más va a gastar, en litros y
+  en dólares. Pulsa `E` (o tócalo) para aceptar. Casi todos van a la parada
+  siguiente y uno de cada cinco va dos más allá, así que un viaje son **de 10 a
+  23 km** — más de un depósito en algunos coches, y normalmente una noche de
+  sueño por el camino. Llevar a alguien gasta un **12% más**, y mientras va
+  contigo el HUD va **descontando** lo que queda hasta su marquesina. Si paras
+  donde te pidió, cobras; si te pasas **500 m**, se baja sin pagarte.
 - **Y pagan de verdad.** El viaje sale a **44–72 $ el kilómetro** con la
-  gasolina recién abierta, así que uno largo son unos cientos de dólares
-  frente a los 62 $ de llenar el deportivo. **La tarifa sigue al surtidor**:
-  aquí todo el mundo sabe lo que cuesta la gasolina, así que cuando el mercado
-  sube de noche sube con él — en el tope, el mismo viaje paga casi el doble.
-  Lo que te enseñan es el precio de hoy, y aceptar lo congela.
+  gasolina recién abierta: **450 $ el corto y más de 1.600 $ el largo**, frente
+  a los 62 $ de llenar el deportivo. **La tarifa sigue al surtidor**: aquí todo
+  el mundo sabe lo que cuesta la gasolina, así que cuando el mercado sube de
+  noche sube con él. Lo que te enseñan es el precio de hoy, y aceptar lo
+  congela.
 - **Cajas en la arena.** Cada 300 m más o menos hay una caja a unos **10 m de
   la carretera**, caída del camión de alguien. Tres de cada cuatro no llevan
   nada, alrededor de una de cada cinco lleva **$10** y un **3%** lleva **$100**.

@@ -103,7 +103,7 @@ export function unlockById(id) {
 
 const RUN_KEY = 'desert-run.run';
 /** Bump when the shape of a saved run changes; older saves are dropped. */
-const RUN_FORMAT = 1;
+const RUN_FORMAT = 2;
 
 /**
  * Parks a run so it can be picked up later.

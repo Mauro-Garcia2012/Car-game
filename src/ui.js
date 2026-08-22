@@ -15,9 +15,13 @@ function km(value) {
   return `${(value / 1000).toFixed(2)} km`;
 }
 
-/** Fares are quoted in plain metres, counting down as you close on the stop. */
+/**
+ * A distance, in whichever unit reads faster. Rides run to tens of
+ * kilometres, so metres only earn their place near the drop-off.
+ */
 function metres(value) {
   const n = Math.max(0, Math.round(value));
+  if (n >= 2000) return `${(n / 1000).toFixed(1)} km`;
   return `${n.toLocaleString('en-US').replace(/,/g, ' ')} m`;
 }
 
@@ -486,7 +490,7 @@ export class UI {
     e.farePanel.classList.toggle('hidden', !s.offer || s.checkingIn > 0);
     if (s.offer) {
       e.fareDest.textContent = t(
-        s.offer.destKind === 'motel' ? 'hud.destMotel' : 'hud.destStation'
+        s.offer.hops > 1 ? 'hud.destTwoStops' : 'hud.destOneStop'
       );
       e.fareDistance.textContent = metres(s.offer.metres);
       e.farePay.textContent = `+$${s.offer.pay}`;

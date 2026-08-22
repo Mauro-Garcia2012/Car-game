@@ -514,3 +514,72 @@ export function vacancyTexture() {
     )
   );
 }
+
+/**
+ * The flag on a bus-stop post: a white roundel with the blue bus pictogram
+ * and the route number under it. Nothing else out here is a white circle, so
+ * it reads as a stop from a long way off even when the shelter does not.
+ */
+export function busSignTexture(route) {
+  return memo(`bus:${route}`, () =>
+    canvas(256, (ctx, size) => {
+      ctx.fillStyle = '#1d4f8f';
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#f4f3ef';
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size * 0.44, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Bus, seen side on: body, a band of windows, a door, two wheels.
+      const cx = size / 2;
+      const cy = size * 0.40;
+      ctx.fillStyle = '#1d4f8f';
+      for (const dx of [-34, 34]) {
+        ctx.beginPath();
+        ctx.arc(cx + dx, cy + 30, 12, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.beginPath();
+      ctx.roundRect(cx - 58, cy - 34, 116, 66, 9);
+      ctx.fill();
+      ctx.fillStyle = '#f4f3ef';
+      for (const [dx, w] of [[-48, 30], [-14, 30], [20, 22]]) {
+        ctx.fillRect(cx + dx, cy - 24, w, 24);
+      }
+      ctx.fillRect(cx + 46, cy - 24, 8, 46); // door, floor to roof
+      ctx.fillStyle = '#1d4f8f';
+      ctx.fillRect(cx + 49, cy - 24, 2, 46);
+
+      ctx.fillStyle = '#f4f3ef';
+      ctx.fillRect(cx - 46, size * 0.70, 92, 34);
+      ctx.fillStyle = '#1d4f8f';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold 30px Arial, sans-serif';
+      ctx.fillText(String(route), cx, size * 0.716, 84);
+    })
+  );
+}
+
+/**
+ * The timetable behind glass in the shelter: a column of departure times
+ * nobody has updated in years. Read at speed it is just a grey grid, which
+ * is exactly what it should be.
+ */
+export function timetableTexture() {
+  return memo('timetable', () =>
+    canvas(128, (ctx, size) => {
+      ctx.fillStyle = '#e8e4d8';
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#1d4f8f';
+      ctx.fillRect(0, 0, size, 22);
+      ctx.fillStyle = '#4a4640';
+      for (let row = 0; row < 11; row++) {
+        const y = 32 + row * 8.4;
+        for (let col = 0; col < 3; col++) {
+          ctx.fillRect(12 + col * 38, y, 26 + (row % 3) * 2, 3);
+        }
+      }
+    })
+  );
+}

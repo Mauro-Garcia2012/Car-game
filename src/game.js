@@ -32,9 +32,8 @@ import {
   offerAt,
   extraLitresFor,
   PASSENGER_BURN,
-  STATION,
-  MOTEL,
 } from './fares.js';
+import { BusStops } from './world/busStops.js';
 import { RoadSigns, SpeedCameras, speedLimitAt, FINE } from './world/signs.js';
 import { createSky } from './world/sky.js';
 import { Headlights } from './world/headlights.js';
@@ -85,6 +84,7 @@ export class Game {
     this.tempMessage = null;
     this.inZone = -1;
     this.motelZone = -1;
+    this.busZone = -1;
     this.refuelling = false;
     this.checkingIn = 0;
     this.cash = START_CASH;
@@ -96,6 +96,8 @@ export class Game {
     this.fatigue = new Fatigue();
     this.fares = new Fares();
     this.offer = null;
+    /** Bound once: the shelters ask this every frame who is still waiting. */
+    this.busWaiter = (index) => this.fares.hasWaiter(index);
 
     this.renderer = new THREE.WebGLRenderer({
       canvas,
@@ -136,6 +138,7 @@ export class Game {
     this.signs = new RoadSigns(this.scene);
     this.cameras = new SpeedCameras(this.scene);
     this.motels = new Motels(this.scene);
+    this.buses = new BusStops(this.scene);
     this.sideRoads = new SideRoads(this.scene);
     this.traffic = new Traffic(this.scene);
     this.dust = new DustSystem(this.scene);
@@ -256,6 +259,7 @@ export class Game {
     this.fatigue.reset();
     this.fares.reset();
     this.offer = null;
+    this.busZone = -1;
     this.vehicle.load = 1;
     this.earned = 0;
     this.lowFuelWarned = false;
@@ -306,9 +310,7 @@ export class Game {
       beds: [...this.beds],
       crates: [...this.crates.opened],
       faresUsed: [...this.fares.used],
-      fare: this.fares.active
-        ? { kind: this.fares.active.kind, index: this.fares.active.index }
-        : null,
+      fare: this.fares.active ? this.fares.active.index : null,
       cameraMode: this.cameraMode,
       seed: worldSeed(),
       cases: [...this.sideRoads.taken],
@@ -358,7 +360,7 @@ export class Game {
     this.beds = new Set(run.beds);
     this.crates.opened = new Set(run.crates);
     this.fares.used = new Set(run.faresUsed);
-    this.fares.active = run.fare ? offerAt(run.fare.kind, run.fare.index) : null;
+    this.fares.active = run.fare == null ? null : offerAt(run.fare);
     v.load = this.fares.active ? PASSENGER_BURN : 1;
 
     // Rebuild the world around wherever we came back to.
@@ -368,6 +370,7 @@ export class Game {
     this.signs.update(v.s);
     this.cameras.reset(v.s);
     this.motels.update(v.s);
+    this.buses.update(v.s, this.busWaiter);
     this.sideRoads.taken = new Set(run.cases || []);
     this.sideRoads.update(v.s);
     this.setWornEngine(!!run.worn);
@@ -494,6 +497,7 @@ export class Game {
     this.signs.update(v.s);
     this.cameras.update(dt, v.s);
     this.motels.update(v.s);
+    this.buses.update(v.s, this.busWaiter);
     this.sideRoads.update(v.s);
     this.traffic.update(dt, v.s);
 
@@ -785,18 +789,19 @@ export class Game {
   }
 
   /**
-   * Passengers: who is waiting where you are stopped, and whether the person
-   * in the car has arrived. The ride is only ever forward, so the cost of
-   * taking it is the extra fuel and the promise to stop at the far end.
+   * Passengers: who is waiting at the shelter you are pulled up at, and
+   * whether the person in the car has arrived. The ride is only ever forward,
+   * so the cost of taking it is the extra fuel and the promise to pull in at
+   * the far end.
    */
   handleFares() {
     const v = this.vehicle;
-    const kind = this.inZone >= 0 ? STATION : this.motelZone >= 0 ? MOTEL : null;
-    const index = kind === STATION ? this.inZone : this.motelZone;
+    const index = this.buses.zoneAt(v.s, v.lateral);
+    this.busZone = index;
     const stopped = Math.abs(v.speed) < REFUEL_SPEED_LIMIT;
 
-    // Dropping off: pay out the moment the car stops at the right place.
-    if (kind && stopped && this.fares.isDestination(kind, index)) {
+    // Dropping off: pay out the moment the car stops at the right shelter.
+    if (index >= 0 && stopped && this.fares.isDestination(index)) {
       const { pay } = this.fares.active;
       this.cash += pay;
       this.earned += pay;
@@ -816,9 +821,9 @@ export class Game {
       this.flash('msg.fareLost', 'danger', 3.2);
     }
 
-    // Standing offer at the stop the car is rolling through.
+    // Standing offer at the shelter the car is rolling through.
     this.offer =
-      kind && Math.abs(v.speed) < 15 ? this.fares.offerFor(kind, index) : null;
+      index >= 0 && Math.abs(v.speed) < 15 ? this.fares.offerFor(index) : null;
     this.canAccept = !!this.offer && stopped;
     v.load = this.fares.active ? PASSENGER_BURN : 1;
   }
@@ -830,7 +835,7 @@ export class Game {
     this.vehicle.load = PASSENGER_BURN;
     this.audio.blip(880, 0.1, 'triangle', 0.16);
     this.flash('msg.fareTaken', 'good', 3.4, {
-      metres: Math.round(this.offer.distance),
+      distance: `${(this.offer.distance / 1000).toFixed(1)} km`,
       pay: `$${this.offer.pay}`,
     });
     this.offer = null;
@@ -951,14 +956,14 @@ export class Game {
             metres: Math.round(this.fares.remaining(v.s)),
             total: Math.round(this.fares.active.distance),
             pay: this.fares.active.pay,
-            destKind: this.fares.active.dest.kind,
+            hops: this.fares.active.hops,
           }
         : null,
       offer: this.offer
         ? {
             metres: Math.round(this.offer.distance),
             pay: this.offer.pay,
-            destKind: this.offer.dest.kind,
+            hops: this.offer.hops,
             litres: extraLitresFor(spec, this.offer.distance),
             cost:
               extraLitresFor(spec, this.offer.distance) *
