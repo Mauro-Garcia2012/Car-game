@@ -134,12 +134,17 @@ export class Game {
     this.crates = new Crates(this.scene, this.road.slotCount);
     this.road.addListener(this.crates);
     this.stations = new GasStations(this.scene);
-    onLanguageChange(() => this.stations.retranslate());
     this.signs = new RoadSigns(this.scene);
     this.cameras = new SpeedCameras(this.scene);
     this.motels = new Motels(this.scene);
     this.buses = new BusStops(this.scene);
     this.sideRoads = new SideRoads(this.scene);
+    // Everything with words painted on it has to be repainted when the
+    // language changes, roadside signage included.
+    onLanguageChange(() => {
+      this.stations.retranslate();
+      this.motels.retranslate();
+    });
     this.traffic = new Traffic(this.scene);
     this.dust = new DustSystem(this.scene);
 

@@ -148,6 +148,8 @@ const STRINGS = {
     'sign.advance': 'FUEL',
     'sign.advanceSub': '500 M',
     'sign.danger': 'DANGEROUS\nROAD',
+    'sign.motel': 'MOTEL',
+    'sign.motelSub': '1 MI',
   },
 
   es: {
@@ -285,6 +287,8 @@ const STRINGS = {
     'sign.advance': 'GASOLINA',
     'sign.advanceSub': '500 M',
     'sign.danger': 'CARRETERA\nPELIGROSA',
+    'sign.motel': 'MOTEL',
+    'sign.motelSub': '1,6 KM',
   },
 };
 

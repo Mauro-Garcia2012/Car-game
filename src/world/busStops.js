@@ -273,7 +273,14 @@ function buildStopModel() {
   return { root, flag };
 }
 
-/** The route flag itself: rebuilt per stop, because the number changes. */
+/**
+ * The route flag itself: rebuilt per stop, because the number changes.
+ *
+ * Bolted to the front of the post the way a real one is, rather than run
+ * through by it. It has to read from both directions — you cannot tell which
+ * way a stranded passenger is facing — so both faces carry the roundel, and
+ * the post shows behind the far one exactly as it does on the highway.
+ */
 function buildFlag(route) {
   const tex = busSignTexture(route);
   const mat = glowAtNight(
@@ -287,13 +294,17 @@ function buildFlag(route) {
     0.55
   );
   const g = new THREE.Group();
-  g.position.y = 2.85;
+  g.position.set(0, 2.85, 0.13); // clear of the post, which is 0.16 across
   g.add(box(0.86, 0.86, 0.07, materials().steel, 0, 0, 0));
   for (const side of [1, -1]) {
     const face = new THREE.Mesh(new THREE.PlaneGeometry(0.82, 0.82), mat);
     face.position.z = side * 0.041;
     if (side < 0) face.rotation.y = Math.PI;
     g.add(face);
+  }
+  // Two bolts back to the post, so it is not floating in front of it.
+  for (const y of [-0.28, 0.28]) {
+    g.add(box(0.1, 0.09, 0.16, materials().steel, 0, y, -0.11));
   }
   return g;
 }

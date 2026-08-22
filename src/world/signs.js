@@ -16,6 +16,7 @@ import { glowAtNight } from './nightlights.js';
 import { roadPoint, roadYaw, EDGE } from '../track.js';
 import { hashRand, onReseed } from '../rng.js';
 import { speedLimitTexture, signTexture } from '../textures.js';
+import { signBoard, behindBoard } from './boards.js';
 import { groundHeight } from './road.js';
 import { stationDistance, nextStationIndex } from './gasStation.js';
 
@@ -151,7 +152,7 @@ export class RoadSigns {
         new THREE.BoxGeometry(0.075, 3.1, 0.075),
         post
       );
-      pole.position.set(0, 1.55, -0.062);
+      pole.position.set(0, 1.55, behindBoard(0.045, 0.075));
       pole.castShadow = true;
       group.add(pole);
 
@@ -298,19 +299,22 @@ function buildCamera() {
   g.add(lamp);
   g.userData.lamp = lamp;
 
-  // The regulatory plate every photo-enforced stretch has to carry.
-  const board = new THREE.Mesh(
-    new THREE.BoxGeometry(0.8, 0.8, 0.05),
+  // The regulatory plate every photo-enforced stretch has to carry. It hangs
+  // off the front of the mast, so the mast reads as what holds it up.
+  const board = signBoard(
+    0.8,
+    0.8,
+    0.05,
     new THREE.MeshStandardMaterial({
       map: signTexture(['SPEED', 'PHOTO', 'ENFORCED'], {
         bg: '#f4f3ef',
         fg: '#15171a',
       }),
       roughness: 0.6,
-    })
+    }),
+    new THREE.MeshStandardMaterial({ color: '#8f9499', roughness: 0.7 })
   );
-  board.position.set(0, 2.4, 0.12);
-  board.castShadow = true;
+  board.position.set(0, 2.4, 0.11);
   g.add(board);
   return g;
 }
@@ -322,21 +326,27 @@ function buildCameraWarning() {
     roughness: 0.5,
     metalness: 0.7,
   });
-  const pole = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.0, 0.1), post);
-  pole.position.y = 1.5;
+  // The post ran up the middle of the board and out through the legend; it
+  // belongs behind, and tall enough to actually reach what it is holding.
+  const DEPTH = 0.06;
+  const pole = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.6, 0.1), post);
+  pole.position.set(0, 1.8, behindBoard(DEPTH, 0.1));
+  pole.castShadow = true;
   g.add(pole);
-  const board = new THREE.Mesh(
-    new THREE.BoxGeometry(1.5, 1.5, 0.06),
+  const board = signBoard(
+    1.5,
+    1.5,
+    DEPTH,
     new THREE.MeshStandardMaterial({
       map: signTexture(['SPEED', 'PHOTO', 'ENFORCED', 'AHEAD'], {
         bg: '#f4f3ef',
         fg: '#15171a',
       }),
       roughness: 0.6,
-    })
+    }),
+    new THREE.MeshStandardMaterial({ color: '#8f9499', roughness: 0.7 })
   );
   board.position.set(0, 3.4, 0);
-  board.castShadow = true;
   g.add(board);
   return g;
 }

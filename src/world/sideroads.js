@@ -17,6 +17,7 @@ import { roadPoint, roadYaw, EDGE } from '../track.js';
 import { hashRand, onReseed } from '../rng.js';
 import { groundHeight } from './road.js';
 import { sandTexture, dangerBoardTexture } from '../textures.js';
+import { signBoard, behindBoard } from './boards.js';
 import { t, onLanguageChange } from '../i18n.js';
 import { glowAtNight } from './nightlights.js';
 
@@ -173,9 +174,11 @@ function junctionSign(side) {
     roughness: 0.55,
     metalness: 0.5,
   });
+  // Posts behind the board, never across the skull.
+  const postZ = behindBoard(0.06, 0.09);
   for (const x of [-0.5, 0.5]) {
     const post = new THREE.Mesh(new THREE.BoxGeometry(0.09, 2.6, 0.09), steel);
-    post.position.set(x, 1.3, 0.09);
+    post.position.set(x, 1.3, postZ);
     post.castShadow = true;
     g.add(post);
   }
@@ -189,12 +192,8 @@ function junctionSign(side) {
   });
   glowAtNight(face, 1.1);
   const back = new THREE.MeshStandardMaterial({ color: '#6d7278', roughness: 0.7 });
-  const board = new THREE.Mesh(
-    new THREE.BoxGeometry(1.5, 1.5, 0.06),
-    [back, back, back, back, face, back]
-  );
+  const board = signBoard(1.5, 1.5, 0.06, face, back);
   board.position.set(0, 2.5, 0);
-  board.castShadow = true;
   g.add(board);
   g.userData.face = face;
   return g;
