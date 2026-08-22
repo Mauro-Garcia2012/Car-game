@@ -294,54 +294,54 @@ export function signTexture(lines, { bg = '#c8382f', fg = '#fdf6e3' } = {}) {
 }
 
 /**
- * The fuel pump pictogram, drawn into a 100x100 box with its top-left corner
- * at the origin: dispenser on the left, hose arcing over to a nozzle on the
- * right, the way every service sign on every highway draws it.
+ * The fuel pump pictogram, as an outline traced off the reference artwork.
  *
- * A picture beats the word here in both directions — nobody has to read
- * Spanish or English to know what the station sells, and at four hundred
- * metres a shape resolves long before eight letters do.
- *
- * @param {string} fg  the pictogram colour
- * @param {string} bg  what shows through the window and the reel band
+ * Closed polygons in a 100 x 86.7 box with the origin at the top-left of the
+ * ink, filled with the even-odd rule so the display window and the hollow of
+ * the nozzle come out as holes without caring which way each loop winds. It
+ * is a path rather than an image on purpose: the repository stays asset free,
+ * and the sign stays crisp whether it is four pixels across on the horizon or
+ * filling the screen at the pumps.
  */
-function drawPump(ctx, x, y, size, fg, bg) {
+const PUMP_PATH = [
+  [
+    34.4, 0, 70.4, 0, 71.2, 0.9, 71.6, 7.7, 78.7, 7.9, 79.5, 8.4, 79.6,
+    49.7, 78.7, 50.7, 75.2, 50.8, 74.6, 51.7, 72.5, 79.9, 73.2, 80.6, 76.8,
+    80.7, 99, 80.6, 100, 81.8, 100, 85.9, 99.1, 86.7, 8, 86.3, 7.8, 81.7,
+    8.5, 80.8, 32.9, 80.7, 33.8, 80, 30.2, 51.8, 29, 51, 26.1, 50.9, 25,
+    48.6, 24, 49.8, 17, 68.6, 13.6, 72.6, 9.9, 73.8, 6.8, 73.6, 4.5, 72.7,
+    1, 69, 0, 64.7, 0.6, 61.5, 10.1, 35.3, 10.1, 29.7, 15.1, 16.5, 17.5,
+    15.3, 18.4, 11.4, 20, 8.8, 22.3, 6.8, 24.9, 6.5, 25.1, 8, 23, 9.3, 20.8,
+    12.2, 20.5, 15.6, 24, 22.1, 25.7, 22.4, 26.4, 8.9, 33.4, 8, 33.6, 0.6,
+    34.4, 0.1
+  ],
+  [
+    35.6, 16.1, 34.4, 17, 34.4, 37.5, 35.6, 38.7, 70.3, 38.7, 71.3, 37.7,
+    71.3, 16.8, 70.8, 16.2, 35.7, 16.1
+  ],
+  [
+    21.9, 31.2, 20.6, 32, 19.6, 33.9, 19, 40.8, 17.2, 40.3, 16.7, 35.1,
+    15.8, 35.3, 14.8, 37.3, 5.3, 64.1, 5.9, 67.3, 8.5, 68.7, 10.1, 68.6,
+    11.7, 67.4, 13.6, 63.3, 23.5, 35.9, 23, 31.7, 22.1, 31.2
+  ],
+];const PUMP_W = 100;
+const PUMP_H = 86.7;
+
+/** Draws the pictogram `width` wide with its top-left corner at (x, y). */
+function drawPump(ctx, x, y, width, fg) {
   ctx.save();
   ctx.translate(x, y);
-  ctx.scale(size / 100, size / 100);
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
-
-  // Hose, arcing out of the dispenser's shoulder, and the nozzle on the end.
-  ctx.strokeStyle = fg;
-  ctx.lineWidth = 9;
-  ctx.beginPath();
-  ctx.moveTo(58, 22);
-  ctx.quadraticCurveTo(90, 14, 90, 44);
-  ctx.lineTo(90, 58);
-  ctx.stroke();
+  ctx.scale(width / PUMP_W, width / PUMP_W);
   ctx.fillStyle = fg;
   ctx.beginPath();
-  ctx.roundRect(78, 54, 24, 18, 5);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.roundRect(70, 60, 12, 8, 3); // the spout, pointing back at the car
-  ctx.fill();
-
-  // Dispenser, its display window and the band where the reel sits.
-  ctx.beginPath();
-  ctx.roundRect(8, 6, 52, 86, 7);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.roundRect(4, 90, 60, 10, 4);
-  ctx.fill();
-  ctx.fillStyle = bg;
-  ctx.beginPath();
-  ctx.roundRect(17, 15, 34, 25, 4);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.roundRect(17, 50, 34, 9, 4);
-  ctx.fill();
+  for (const loop of PUMP_PATH) {
+    for (let i = 0; i < loop.length; i += 2) {
+      if (i) ctx.lineTo(loop[i], loop[i + 1]);
+      else ctx.moveTo(loop[i], loop[i + 1]);
+    }
+    ctx.closePath();
+  }
+  ctx.fill('evenodd');
   ctx.restore();
 }
 
@@ -361,11 +361,13 @@ export function pumpBoardTexture(sub, { bg = '#1c3d6b', fg = '#f2f0e6', aspect =
       ctx.lineWidth = 8;
       ctx.strokeRect(14, 14, size - 28, size - 28);
 
-      const glyph = 132;
+      // The texture is square and gets stretched onto a board that is not,
+      // so the glyph is squeezed by the same factor and comes out round.
+      const glyph = 138;
       ctx.save();
       ctx.translate(size / 2, 0);
       ctx.scale(1 / aspect, 1);
-      drawPump(ctx, -glyph / 2, 40, glyph, fg, bg);
+      drawPump(ctx, -glyph / 2, 42, glyph, fg);
       ctx.restore();
 
       ctx.fillStyle = fg;
