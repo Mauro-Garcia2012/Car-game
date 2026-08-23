@@ -1187,3 +1187,186 @@ body.touch .touch-controls {
     height: 36px;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Debug menu                                                          */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Deliberately plain, and deliberately not styled like the rest of the game:
+ * it is a tool, and it should look like one, so nobody mistakes it for
+ * something the run is supposed to contain.
+ */
+#cheat-btn {
+  position: fixed;
+  top: 14px;
+  right: 62px;
+  z-index: 60;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(14, 16, 22, 0.62);
+  color: var(--sand);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+#cheat-btn:hover {
+  background: rgba(24, 28, 38, 0.86);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+#cheat-btn svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+#cheat-panel {
+  z-index: 70;
+  background: rgba(8, 9, 13, 0.86);
+  backdrop-filter: blur(3px);
+}
+
+.cheat-inner {
+  width: min(620px, 92vw);
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #14161d;
+  font-family: var(--font);
+}
+
+.cheat-inner h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 20px;
+  letter-spacing: 0.22em;
+  color: var(--sand);
+}
+
+.cheat-inner p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  opacity: 0.75;
+}
+
+#cheat-form {
+  display: flex;
+  gap: 8px;
+}
+
+#cheat-input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #0b0d12;
+  color: var(--sand);
+  font-family: var(--display);
+  font-size: 22px;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+#cheat-input:focus {
+  outline: none;
+  border-color: var(--amber);
+}
+
+#cheat-go {
+  padding: 0 18px;
+  border-radius: 8px;
+  border: none;
+  background: var(--amber);
+  color: #1a1206;
+  font-family: var(--display);
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+}
+
+.cheat-echo {
+  min-height: 18px;
+  font-family: var(--display);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  opacity: 1;
+}
+
+.cheat-echo.bad {
+  color: #ff8a72;
+}
+
+.cheat-echo.good {
+  color: #8ce39a;
+}
+
+/* The code list is the documentation: there is nothing else to read. */
+.cheat-codes {
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 2px 14px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cheat-codes button {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 4px 6px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.cheat-codes button:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.cheat-codes b {
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--amber);
+}
+
+.cheat-codes span {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.cheat-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 720px) {
+  #cheat-btn {
+    top: 10px;
+    right: 54px;
+    width: 36px;
+    height: 36px;
+  }
+}

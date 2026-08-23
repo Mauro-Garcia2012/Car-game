@@ -51,6 +51,22 @@ next time you open it.
 On phones and tablets, on-screen pedals and steering buttons appear
 automatically.
 
+### Debug menu
+
+The button next to the speaker opens a debug panel. It asks for a
+**four-digit PIN — `5214`** — and then takes **four-character codes**: `FUEL`
+fills the tank, `OPEN` hands over the whole garage, `MEGA` does fuel, cash,
+sleep, bodywork and the garage at once, `PUMP` `BEDS` `HALT` `DIRT` `SAND`
+teleport you to the next station, motel, bus stop, dirt spur or sandstorm,
+`CAR1`–`CAR9` swap the vehicle without losing the run, and there are forty in
+all — the panel lists every one of them, and clicking a line runs it.
+
+It is built so it cannot leak into a real run. **Nothing it does is written
+down**: vehicles it hands over go into a session-only set that never reaches
+localStorage, so closing the page leaves the garage exactly as you found it.
+And **the PIN is held in a plain variable** — reload the page and you type it
+again. Getting it wrong says `PIN INCORRECTO` and nothing else happens.
+
 ## The rules
 
 - Gas stations sit **1.95–2.47 km apart** along the highway. A full tank is
@@ -437,6 +453,23 @@ elección se recuerda, así que una partida que silenciaste en la oficina sigue
 callada la próxima vez que la abras.
 
 En móviles y tablets aparecen pedales y botones de dirección en pantalla.
+
+### Menú de depuración
+
+El botón que hay al lado del altavoz abre un panel de depuración. Pide un
+**PIN de cuatro dígitos — `5214`** — y a partir de ahí acepta **códigos de
+cuatro caracteres**: `FUEL` llena el depósito, `OPEN` te da todo el garaje,
+`MEGA` hace gasolina, dinero, sueño, chapa y garaje de golpe, `PUMP` `BEDS`
+`HALT` `DIRT` `SAND` te teletransportan a la siguiente gasolinera, motel,
+parada, camino de tierra o tormenta, `CAR1`–`CAR9` te cambian de vehículo sin
+perder la partida, y hay cuarenta en total — el panel los lista todos y
+pinchando en una línea se ejecuta.
+
+Está hecho para que no se cuele en una partida de verdad. **No guarda nada**:
+los vehículos que da van a un conjunto que sólo existe en memoria y nunca
+llega a localStorage, así que al cerrar la página el garaje está como lo
+dejaste. Y **el PIN vive en una variable normal**: recargas y hay que
+volver a meterlo. Si te equivocas dice `PIN INCORRECTO` y no pasa nada más.
 
 ### Las reglas
 

@@ -56,8 +56,24 @@ export function addMetres(metres) {
   }
 }
 
+/**
+ * Vehicles handed over by a cheat code.
+ *
+ * Kept apart from `state.unlocked` and never written out, so a debug session
+ * cannot quietly become a save. Close the page and the garage is exactly as
+ * you left it.
+ */
+const granted = new Set();
+
 export function isUnlocked(id) {
-  return state.unlocked.includes(id);
+  return granted.has(id) || state.unlocked.includes(id);
+}
+
+/** Opens a vehicle for this session only. Nothing reaches localStorage. */
+export function grantForSession(id) {
+  if (isUnlocked(id)) return false;
+  granted.add(id);
+  return true;
 }
 
 /** Writes out whatever has accumulated. Called when a run ends. */

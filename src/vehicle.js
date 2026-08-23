@@ -96,8 +96,15 @@ export class Vehicle {
     this.engineOn = true;
     this.slip = 0;
     this.crashCooldown = 0;
-    const p = this.worldFromTrack(this.s, this.lateral);
-    this.position.copy(p);
+    this.moveTo(this.s, this.lateral);
+  }
+
+  /** Puts the car down on the road, pointing along it. */
+  moveTo(s, lateral) {
+    this.s = s;
+    this.lateral = lateral;
+    this.yaw = roadYaw(s);
+    this.position.copy(this.worldFromTrack(s, lateral));
     this.syncModel(0);
   }
 

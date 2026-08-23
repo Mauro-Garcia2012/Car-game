@@ -1,6 +1,7 @@
 /** All DOM: menu, HUD, overlays. The 3D side never touches the document. */
 import { CARS, carRange, carTopSpeed } from './cars/index.js';
 import { isUnlocked, totalMetres } from './progress.js';
+import { isArmed, arm, codeList } from './cheats.js';
 import {
   t,
   applyStaticTranslations,
@@ -125,6 +126,15 @@ export class UI {
       bodyCost: $('body-cost'),
       bodyFix: $('body-fix'),
       mute: $('mute-btn'),
+      cheatBtn: $('cheat-btn'),
+      cheatPanel: $('cheat-panel'),
+      cheatForm: $('cheat-form'),
+      cheatInput: $('cheat-input'),
+      cheatHint: $('cheat-hint'),
+      cheatEcho: $('cheat-echo'),
+      cheatCodes: $('cheat-codes'),
+      cheatUnlock: $('cheat-unlock'),
+      cheatClose: $('cheat-close'),
       overTitle: $('over-title'),
       overText: $('over-text'),
       overDistance: $('over-distance'),
@@ -163,6 +173,11 @@ export class UI {
     }
     if (this.locked(this.selected)) this.selected = CARS[0].id;
     this.selectCar(this.selected, true);
+  }
+
+  /** Repaints the picker after something has been unlocked. */
+  refreshGarage() {
+    this.buildPicker();
   }
 
   /** True while a vehicle is still behind its milestone. */
@@ -324,12 +339,77 @@ export class UI {
     this.el.fareAccept.addEventListener('click', () => this.h.onAcceptFare());
     this.el.bodyFix.addEventListener('click', () => this.h.onRepairBody());
     this.el.mute.addEventListener('click', () => this.h.onToggleMute());
+    this.el.cheatBtn.addEventListener('click', () => this.openCheats());
+    this.el.cheatClose.addEventListener('click', () => this.closeCheats());
+    this.el.cheatUnlock.addEventListener('click', () => this.submitCheat('OPEN'));
+    this.el.cheatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = this.el.cheatInput.value;
+      this.el.cheatInput.value = '';
+      this.submitCheat(text);
+    });
   }
 
   /** Paints the mute button. The keyboard shortcut comes through here too. */
   setMuted(muted) {
     this.el.mute.setAttribute('aria-pressed', muted ? 'true' : 'false');
     this.el.mute.title = t(muted ? 'controls.unmute' : 'controls.mute');
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Debug menu                                                        */
+  /* ---------------------------------------------------------------- */
+
+  openCheats() {
+    this.el.cheatPanel.classList.remove('hidden');
+    this.paintCheats();
+    this.el.cheatInput.focus();
+    this.el.cheatInput.select();
+    this.h.onCheatOpen();
+  }
+
+  closeCheats() {
+    this.el.cheatPanel.classList.add('hidden');
+    this.el.cheatEcho.textContent = '';
+    this.h.onCheatClose();
+  }
+
+  /** Locked or unlocked: the panel is two different screens. */
+  paintCheats() {
+    const open = isArmed();
+    this.el.cheatHint.textContent = t(open ? 'cheat.codeHint' : 'cheat.pinHint');
+    this.el.cheatCodes.classList.toggle('hidden', !open);
+    this.el.cheatUnlock.classList.toggle('hidden', !open);
+    this.el.cheatInput.type = open ? 'text' : 'password';
+    if (!open || this.el.cheatCodes.childElementCount) return;
+    // The list is the documentation, and clicking a line runs it.
+    for (const { code, what } of codeList()) {
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.innerHTML = `<b>${code}</b><span>${what}</span>`;
+      row.addEventListener('click', () => this.submitCheat(code));
+      this.el.cheatCodes.appendChild(row);
+    }
+  }
+
+  submitCheat(text) {
+    const echo = this.el.cheatEcho;
+    if (!isArmed()) {
+      if (!arm(text)) {
+        echo.className = 'cheat-echo bad';
+        echo.textContent = t('cheat.badPin');
+        return;
+      }
+      echo.className = 'cheat-echo good';
+      echo.textContent = t('cheat.armed');
+      this.paintCheats();
+      this.el.cheatInput.focus();
+      return;
+    }
+    const result = this.h.onCheat(text);
+    echo.className = `cheat-echo ${result.ok ? 'good' : 'bad'}`;
+    echo.textContent = result.text;
+    this.el.cheatInput.focus();
   }
 
   hideLoading() {

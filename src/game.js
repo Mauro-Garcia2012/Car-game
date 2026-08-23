@@ -115,6 +115,8 @@ export class Game {
     this.storm = 0;
     this.stormWarned = false;
     this.gust = 0;
+    /** Cheat-menu toggle. Never saved, never on unless you turned it on. */
+    this.godMode = false;
     this.refuelling = false;
     this.checkingIn = 0;
     this.cash = START_CASH;
@@ -516,6 +518,14 @@ export class Game {
     this.renderer.toneMappingExposure = light.exposure;
   }
 
+  /** Snaps the sky to whatever the sleep meter says, with no dawn sweep. */
+  jumpClock() {
+    this.dayPhase = 1 - this.fatigue.level;
+    this.nightOverrun = 0;
+    this.advanceClock(0);
+    this.sky.update(this.vehicle.position);
+  }
+
   menuIdle(dt) {
     this.orbitAngle += dt * 0.24;
     for (const w of this.carModel.userData.wheels || []) {
@@ -536,6 +546,11 @@ export class Game {
 
     if (!frozen) this.updateWeather(dt);
     v.update(dt, input);
+    // Debug only, and never saved: the cheat menu's one toggle.
+    if (this.godMode) {
+      v.fuel = this.spec.tank;
+      v.damage = 0;
+    }
     if (!frozen) {
       // Lifetime odometer: what the unlocks are measured against.
       addMetres(v.distance - this.bankedDistance);

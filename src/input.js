@@ -23,7 +23,15 @@ export class Input {
     this.handbrake = false;
     this.onAction = () => {};
 
+    // Anything typed into a field is for the field, not for the car. Without
+    // this, entering a cheat code drives you into the desert while you do it.
+    const typing = (e) => {
+      const t = e.target;
+      return !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+    };
+
     window.addEventListener('keydown', (e) => {
+      if (typing(e)) return;
       if (e.repeat) {
         if (KEY_MAP[e.code]) e.preventDefault();
         return;
@@ -41,6 +49,7 @@ export class Input {
       if (e.code === 'Enter') this.onAction('enter');
     });
     window.addEventListener('keyup', (e) => {
+      if (typing(e)) return;
       const mapped = KEY_MAP[e.code];
       if (mapped) this.keys.delete(mapped);
     });

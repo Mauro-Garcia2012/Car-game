@@ -287,6 +287,49 @@
       </div>
     </div>
 
+    <!-- Cheats ---------------------------------------------------------
+         A debug tool, behind a PIN that is not remembered between page
+         loads, and nothing it grants is ever written to storage. -->
+    <button id="cheat-btn" type="button" title="Debug">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 7h16M4 12h16M4 17h16" />
+        <circle cx="9" cy="7" r="2" />
+        <circle cx="15" cy="12" r="2" />
+        <circle cx="8" cy="17" r="2" />
+      </svg>
+      <span class="sr-only" data-i18n="cheat.open">Debug menu</span>
+    </button>
+
+    <div id="cheat-panel" class="screen overlay hidden">
+      <div class="cheat-inner">
+        <h2 data-i18n="cheat.title">DEBUG</h2>
+        <p id="cheat-hint" data-i18n="cheat.pinHint">
+          Enter the four-digit PIN.
+        </p>
+        <form id="cheat-form" autocomplete="off">
+          <input
+            id="cheat-input"
+            type="text"
+            maxlength="4"
+            spellcheck="false"
+            autocapitalize="characters"
+            aria-label="code"
+          />
+          <button type="submit" id="cheat-go" data-i18n="cheat.go">ENTER</button>
+        </form>
+        <p id="cheat-echo" class="cheat-echo"></p>
+        <div id="cheat-codes" class="cheat-codes hidden"></div>
+        <div class="cheat-actions">
+          <button type="button" id="cheat-unlock" class="ghost hidden" data-i18n="cheat.unlockAll">
+            UNLOCK EVERYTHING
+          </button>
+          <button type="button" id="cheat-close" class="ghost" data-i18n="cheat.close">
+            CLOSE
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Sound ---------------------------------------------------------
          Outside every screen on purpose: it has to be reachable from the
          garage, mid-drive and on the game-over card alike. -->
