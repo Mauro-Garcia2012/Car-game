@@ -34,6 +34,7 @@ import {
   PASSENGER_BURN,
 } from './fares.js';
 import { BusStops } from './world/busStops.js';
+import { stormLevel, metresToStorm } from './weather.js';
 import { RoadSigns, SpeedCameras, speedLimitAt, FINE } from './world/signs.js';
 import { createSky } from './world/sky.js';
 import { Headlights } from './world/headlights.js';
@@ -55,6 +56,24 @@ import { DustSystem } from './effects.js';
 import { roadPoint, roadYaw } from './track.js';
 import { onLanguageChange } from './i18n.js';
 import { terrainHeight } from './world/road.js';
+
+/**
+ * What the body shop charges, per point of damage.
+ *
+ * Damage used to be a one-way trip: it went up, and at a hundred the run was
+ * over, and nothing you did in between made any difference. Being able to
+ * buy it back turns every crash into a bill instead of a countdown, and
+ * gives the money somewhere to go once the tank is full — which, after a
+ * couple of good fares, it always is.
+ *
+ * Nine dollars a point puts a bad shunt at the price of a decent fare.
+ */
+const BODY_RATE = 9;
+/** Below this it is a scratch, and the shop will not get the hammer out. */
+const BODY_MIN = 4;
+
+/** How hard the wind pushes, in metres per second of drift, at full storm. */
+const WIND_DRIFT = 1.5;
 
 const REFUEL_RATE = 14; // litres per second
 const REFUEL_SPEED_LIMIT = 3.2; // m/s — you have to actually stop
@@ -78,6 +97,9 @@ export class Game {
     this.cameraMode = 0;
     this.shake = 0;
     this.dustAccum = 0;
+    this.sandAccum = 0;
+    this.windA = { x: 0, y: 0, z: 0 };
+    this.windB = { x: 0, y: 0, z: 0 };
     this.stops = new Set();
     this.skipped = new Set();
     this.messageTimer = 0;
@@ -85,6 +107,11 @@ export class Game {
     this.inZone = -1;
     this.motelZone = -1;
     this.busZone = -1;
+    this.canRepair = false;
+    /** 0 clear, 1 the worst of a sandstorm. */
+    this.storm = 0;
+    this.stormWarned = false;
+    this.gust = 0;
     this.refuelling = false;
     this.checkingIn = 0;
     this.cash = START_CASH;
@@ -187,7 +214,7 @@ export class Game {
     } else if (action === 'restart' && this.state !== 'menu') {
       this.start(this.spec.id);
     } else if (action === 'accept') {
-      this.acceptFare();
+      this.acceptOffer();
     } else if (action === 'mute') {
       this.toggleMute();
     } else if (action === 'enter' && this.state === 'menu') {
@@ -271,6 +298,11 @@ export class Game {
     this.fares.reset();
     this.offer = null;
     this.busZone = -1;
+    this.canRepair = false;
+    this.storm = 0;
+    this.stormWarned = false;
+    this.gust = 0;
+    this.vehicle.crosswind = 0;
     this.vehicle.load = 1;
     this.earned = 0;
     this.lowFuelWarned = false;
@@ -472,6 +504,7 @@ export class Game {
       this.nightOverrun = 0;
     }
 
+    this.sky.setStorm(this.storm);
     const light = this.sky.setPhase(this.dayPhase, this.clock.elapsedTime);
     this.headlights.setLevel(light.lamps);
     setNightGlow(Math.min(1, Math.max(0, (light.neon - 0.9) / 1.5)));
@@ -496,6 +529,7 @@ export class Game {
     const input = frozen ? raw : this.fatigue.applyToInput(raw);
     if (this.fatigue.blinked) this.audio.blip(180, 0.5, 'sine', 0.12);
 
+    if (!frozen) this.updateWeather(dt);
     v.update(dt, input);
     if (!frozen) {
       // Lifetime odometer: what the unlocks are measured against.
@@ -529,6 +563,7 @@ export class Game {
 
     this.orbitAngle += dt * 0.3;
     this.emitDust(dt);
+    this.emitSand(dt);
     this.audio.updateEngine({
       rpm: v.rpm,
       throttle: input.throttle,
@@ -536,6 +571,7 @@ export class Game {
       slip: v.slip,
       engineOn: v.engineOn,
       surface: v.surface,
+      wind: this.storm,
     });
     this.pushHud(dt);
     if (this.shake > 0) this.shake = Math.max(0, this.shake - dt * 1.6);
@@ -681,6 +717,10 @@ export class Game {
     const stopped = Math.abs(v.speed) < REFUEL_SPEED_LIMIT;
     const wasRefuelling = this.refuelling;
     this.refuelling = index >= 0 && stopped && v.fuel < this.spec.tank - 0.05;
+
+    // The pump is the body shop too: standing still on the forecourt with a
+    // dented car is the one place you can buy the dents back.
+    this.canRepair = index >= 0 && stopped && v.damage >= BODY_MIN;
 
     const price = index >= 0 ? fuelPricePerLitre(index) : 0;
     this.pumpPrice = price;
@@ -839,6 +879,83 @@ export class Game {
     v.load = this.fares.active ? PASSENGER_BURN : 1;
   }
 
+  /**
+   * One key for whatever is being offered.
+   *
+   * A fare and a body shop can never be in front of you at the same time —
+   * the shelters are kept clear of the station plots — so `E` never has to
+   * choose, and there is no second key to learn.
+   */
+  acceptOffer() {
+    if (this.offer && this.canAccept) this.acceptFare();
+    else this.repairBody();
+  }
+
+  /**
+   * Knocks the dents out, for as much of it as the wallet covers.
+   *
+   * Part-paying is deliberate: arriving at the pump broke and battered and
+   * being told no would just be a slower version of dying, and buying what
+   * you can afford is how the fuel works two metres away.
+   */
+  repairBody() {
+    const v = this.vehicle;
+    if (this.state !== 'playing' || !this.canRepair) return;
+    const full = v.damage * BODY_RATE;
+    const paid = Math.min(full, this.cash);
+    if (paid < 1) {
+      this.audio.warn();
+      this.flash('msg.bodyBroke', 'danger', 3.2, { cost: `$${Math.round(full)}` });
+      return;
+    }
+    v.damage = Math.max(0, v.damage - paid / BODY_RATE);
+    this.cash -= paid;
+    this.spent += paid;
+    this.audio.fanfare();
+    this.flash(
+      v.damage > BODY_MIN ? 'msg.bodyPart' : 'msg.bodyFixed',
+      'good',
+      3.4,
+      { cost: `$${Math.round(paid)}`, left: `${Math.round(v.damage)}%` }
+    );
+  }
+
+  /**
+   * The wind, and what it does to the car.
+   *
+   * The storm belongs to a stretch of road rather than to a clock, so it is
+   * read straight off the odometer and needs nothing in the save. The gust
+   * is the only part that is not deterministic, and it is only ever a
+   * wobble on top of a steady push.
+   */
+  updateWeather(dt) {
+    const v = this.vehicle;
+    const level = stormLevel(v.s);
+    this.storm = level;
+
+    // A steady lean plus a slow gust, so holding a lane is work rather than
+    // a one-off correction. The side comes off the odometer, so a given
+    // storm always blows the same way.
+    this.gust += dt * 1.7;
+    const side = Math.sin(v.s * 0.0007) >= 0 ? 1 : -1;
+    const gust = 0.6 + 0.4 * Math.sin(this.gust) * Math.sin(this.gust * 0.37);
+    // Scaled by speed, because wind does not push a parked car down the
+    // road, and because you cannot steer out of a drift you cannot steer.
+    // Stopped at a pump in a storm you stay where you are.
+    const grip = Math.min(1, Math.abs(v.speed) / 10);
+    v.crosswind = side * level * WIND_DRIFT * gust * grip;
+
+    const ahead = metresToStorm(v.s);
+    if (!this.stormWarned && ahead < 900) {
+      this.stormWarned = true;
+      this.audio.warn();
+      this.flash('msg.stormAhead', 'danger', 4.5);
+    } else if (this.stormWarned && level <= 0 && ahead > 2000) {
+      this.stormWarned = false;
+      this.flash('msg.stormOver', 'good', 3);
+    }
+  }
+
   /** Takes the fare currently on offer, if the car is stopped beside it. */
   acceptFare() {
     if (this.state !== 'playing' || !this.offer || !this.canAccept) return;
@@ -919,6 +1036,44 @@ export class Game {
     }
   }
 
+  /**
+   * Sand blowing past the car in a storm.
+   *
+   * Seeded around the camera rather than the wheels: it is the air that is
+   * full of it, not the ground, and what sells a sandstorm is the stuff
+   * going past your face at the speed of the wind whether you are moving or
+   * not. It rides the same particle pool as the tyre dust, so a storm costs
+   * nothing but the emission.
+   */
+  emitSand(dt) {
+    if (this.storm < 0.05) return;
+    this.sandAccum += this.storm * 170 * dt;
+    const c = this.camera.position;
+    // Blown along the road's lateral axis, the same way the car is being
+    // pushed, and fast: what sells a storm from inside a stopped car is that
+    // the air is still moving.
+    const a = roadPoint(this.vehicle.s, 0, this.windA);
+    const b = roadPoint(this.vehicle.s, 1, this.windB);
+    const push = Math.sign(this.vehicle.crosswind || 1) * (7 + this.storm * 16);
+    while (this.sandAccum >= 1) {
+      this.sandAccum -= 1;
+      this.dust.emit(
+        c.x + (Math.random() - 0.5) * 40,
+        c.y - 4 + Math.random() * 11,
+        c.z + (Math.random() - 0.5) * 40,
+        {
+          spread: 4,
+          size: 4 + Math.random() * 7,
+          life: 0.4 + Math.random() * 0.5,
+          rise: 0.5,
+          driftX: (b.x - a.x) * push,
+          driftZ: (b.z - a.z) * push,
+          color: [0.88, 0.74, 0.5],
+        }
+      );
+    }
+  }
+
   /** Shows a translation key for a few seconds, above the ambient messages. */
   flash(key, level, duration, params = null) {
     this.tempMessage = { key, level, params };
@@ -962,6 +1117,14 @@ export class Game {
       asleep: this.fatigue.asleep,
       toMotel,
       checkingIn: this.checkingIn / CHECKIN_TIME,
+      storm: this.storm,
+      body: this.canRepair
+        ? {
+            damage: v.damage,
+            cost: Math.round(v.damage * BODY_RATE),
+            affordable: this.cash >= v.damage * BODY_RATE,
+          }
+        : null,
       fare: this.fares.active
         ? {
             metres: Math.round(this.fares.remaining(v.s)),

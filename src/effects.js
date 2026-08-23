@@ -57,15 +57,34 @@ export class DustSystem {
     this.geo = geo;
   }
 
-  emit(x, y, z, { spread = 0.6, size = 2.2, life = 1.1, color = [0.82, 0.68, 0.47], rise = 1.2 } = {}) {
+  /**
+   * @param {{spread?:number, size?:number, life?:number, color?:number[],
+   *          rise?:number, driftX?:number, driftZ?:number}} [opts]
+   *   `driftX`/`driftZ` blow the particle sideways: kicked-up dust hangs
+   *   where it was kicked up, but sand in a storm is going somewhere.
+   */
+  emit(
+    x,
+    y,
+    z,
+    {
+      spread = 0.6,
+      size = 2.2,
+      life = 1.1,
+      color = [0.82, 0.68, 0.47],
+      rise = 1.2,
+      driftX = 0,
+      driftZ = 0,
+    } = {}
+  ) {
     const i = this.cursor;
     this.cursor = (this.cursor + 1) % MAX;
     this.positions[i * 3] = x + (Math.random() - 0.5) * spread;
     this.positions[i * 3 + 1] = y + Math.random() * 0.2;
     this.positions[i * 3 + 2] = z + (Math.random() - 0.5) * spread;
-    this.vel[i * 3] = (Math.random() - 0.5) * 1.4;
+    this.vel[i * 3] = driftX + (Math.random() - 0.5) * 1.4;
     this.vel[i * 3 + 1] = rise * (0.5 + Math.random());
-    this.vel[i * 3 + 2] = (Math.random() - 0.5) * 1.4;
+    this.vel[i * 3 + 2] = driftZ + (Math.random() - 0.5) * 1.4;
     this.sizes[i] = size * (0.7 + Math.random() * 0.7);
     this.life[i] = life * (0.75 + Math.random() * 0.5);
     this.maxLife[i] = this.life[i];

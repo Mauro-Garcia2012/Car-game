@@ -183,6 +183,31 @@ export function createSky(scene) {
 
   const u = mat.uniforms;
 
+  let storm = 0;
+  const STORM_FOG = new THREE.Color('#c2a06a');
+
+  /**
+   * Dust does three things to light: it swallows the distance, it kills the
+   * sun as a direction and hands that energy to the sky, and it drains the
+   * colour out of everything. Fog alone reads as haze; it is the flat,
+   * shadowless key that reads as a storm.
+   */
+  function applyStorm() {
+    const k = storm;
+    scene.fog.color.lerp(STORM_FOG, k * 0.85);
+    scene.fog.near = THREE.MathUtils.lerp(scene.fog.near, 6, k);
+    scene.fog.far = THREE.MathUtils.lerp(scene.fog.far, 92, k);
+    sun.intensity *= 1 - 0.72 * k;
+    hemi.intensity = THREE.MathUtils.lerp(hemi.intensity, hemi.intensity * 1.5 + 0.35, k);
+    hemi.color.lerp(STORM_FOG, k * 0.7);
+    fill.intensity *= 1 - 0.4 * k;
+    scene.environmentIntensity *= 1 - 0.45 * k;
+    u.uStars.value *= 1 - k;
+    u.uMoonStrength.value *= 1 - k;
+    u.uHorizon.value.lerp(STORM_FOG, k * 0.9);
+    u.uZenith.value.lerp(STORM_FOG, k * 0.75);
+  }
+
   return {
     dome,
     sun,
@@ -216,7 +241,21 @@ export function createSky(scene) {
 
       // Reflections were baked from the noon sky; dim them as it gets dark.
       scene.environmentIntensity = light.env;
+      if (storm > 0) applyStorm();
       return light;
+    },
+
+    /**
+     * Thickens the air for a sandstorm, on top of whatever hour it is.
+     *
+     * Applied after the day's lighting rather than mixed into the keyframes,
+     * because a storm can arrive at any hour and has to darken noon and
+     * midnight alike. Everything it touches is a value setPhase has just
+     * written, so the next clear frame puts it all back on its own.
+     */
+    setStorm(level) {
+      storm = Math.min(1, Math.max(0, level));
+      if (storm > 0) applyStorm();
     },
 
     /** Keeps the dome and the shadow frustum centred on the player. */

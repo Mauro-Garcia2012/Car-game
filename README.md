@@ -37,7 +37,7 @@ static host.
 | Brake / reverse | `S` / `↓` | Left trigger |
 | Steer | `A` `D` / `←` `→` | Left stick |
 | Handbrake | `Space` / `Shift` | `A` |
-| Take the fare on offer | `E` | |
+| Take the offer in front of you | `E` | |
 | Camera (chase / bonnet / orbit) | `C` | |
 | Pause | `P` or `Esc` | |
 | Restart | `R` | |
@@ -92,6 +92,22 @@ automatically.
   traffic, and they pay what that is worth. **The fare tracks the pump** — when
   the market climbs overnight so does what a lift is worth — and the quote you
   see is today's; accepting freezes it.
+- **The pump is a body shop too.** Damage used to be a one-way trip: it went
+  up, and at 100% the run was over. Stop at a station with a dented car and
+  the shop offers to beat the panels straight at **$9 a point** — a bad shunt
+  costs about what one good fare pays. If you cannot cover the lot it fixes
+  what your wallet reaches, the same way the pump sells you the litres you can
+  afford. It is also where the money finally goes: once the tank is full and
+  the bed is paid, bodywork is the only thing left to spend on.
+- **Sandstorms.** A few times in a long run the wind gets up. The horizon goes
+  first, then everything past ninety metres, and the light goes flat and
+  ochre; a crosswind leans on the car hard enough that holding a lane is work.
+  You can see one coming — the sky browns for the best part of a kilometre
+  before it arrives — so it is a decision, not an ambush: slow down and lose
+  the daylight, or keep your foot in and meet a semi you cannot see. Storms
+  belong to a stretch of road rather than to a clock, so a given seed always
+  has its weather in the same places, and the **NEXT STOP** readout becomes
+  the only way to find a station.
 - **Crates in the sand.** Every 300 m or so a crate sits about **10 m off the
   tarmac**, fallen off somebody's truck. Three out of four hold nothing at all,
   roughly one in five is worth **$10**, and about **3%** are worth **$100**.
@@ -284,6 +300,7 @@ src/
   progress.js       lifetime odometer and the three locked vehicles
   daynight.js       the clock: one sleep meter is one day, dawn to dark
   fares.js          passengers: who is waiting where, and what they pay
+  weather.js        sandstorms: which stretches of road they own
   traffic.js        AI pickups and semis
   input.js          keyboard, touch and gamepad
   audio.js          synthesised engine, tyres and beeps (no audio files)
@@ -382,7 +399,7 @@ pausa.
 | Frenar / marcha atrás | `S` / `↓` | Gatillo izquierdo |
 | Girar | `A` `D` / `←` `→` | Stick izquierdo |
 | Freno de mano | `Espacio` / `Shift` | `A` |
-| Aceptar el viaje ofrecido | `E` | |
+| Aceptar lo que te ofrezcan | `E` | |
 | Cámara (persecución / capó / órbita) | `C` | |
 | Pausa | `P` o `Esc` | |
 | Reiniciar | `R` | |
@@ -479,6 +496,23 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   el mundo sabe lo que cuesta la gasolina, así que cuando el mercado sube de
   noche sube con él. Lo que te enseñan es el precio de hoy, y aceptar lo
   congela.
+- **El surtidor es también un taller de chapa.** Los daños sólo subían: al
+  100% se acababa la partida y no había nada que hacer. Ahora, si paras en una
+  gasolinera con el coche abollado, el taller te ofrece sacarte los golpes a
+  **9 $ el punto** — un buen topetazo cuesta más o menos lo que paga un viaje.
+  Si no llegas, te arregla lo que te dé el dinero, igual que el surtidor te
+  vende los litros que puedas pagar. Y es donde por fin va a parar el dinero:
+  con el depósito lleno y la cama pagada, la chapa es lo único que queda.
+- **Tormentas de arena.** Unas cuantas veces en una partida larga se levanta
+  el viento. Primero desaparece el horizonte, luego todo lo que esté a más de
+  noventa metros, y la luz se vuelve plana y ocre; un viento cruzado empuja el
+  coche lo bastante como para que mantener el carril sea trabajo. **Se ve
+  venir** —el cielo se pone marrón casi un kilómetro antes—, así que es una
+  decisión y no una emboscada: frenas y pierdes luz de día, o sigues a fondo y
+  te encuentras un camión que no ves. Las tormentas pertenecen a un tramo de
+  carretera, no a un reloj, así que una semilla dada tiene siempre su tiempo
+  en los mismos sitios, y el indicador de **PRÓXIMA PARADA** pasa a ser la
+  única forma de encontrar una gasolinera.
 - **Cajas en la arena.** Cada 300 m más o menos hay una caja a unos **10 m de
   la carretera**, caída del camión de alguien. Tres de cada cuatro no llevan
   nada, alrededor de una de cada cinco lleva **$10** y un **3%** lleva **$100**.

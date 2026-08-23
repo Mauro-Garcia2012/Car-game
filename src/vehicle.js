@@ -23,6 +23,10 @@ const GEARS = [0.0, 0.16, 0.32, 0.5, 0.68, 0.85, 1.0];
 
 export const SURFACE = { ROAD: 'road', SHOULDER: 'shoulder', SAND: 'sand' };
 
+/** Scratch for the crosswind's road axis; two per frame, never nested. */
+const WIND_A = { x: 0, y: 0, z: 0 };
+const WIND_B = { x: 0, y: 0, z: 0 };
+
 export class Vehicle {
   constructor(spec, model) {
     this.spec = spec;
@@ -49,6 +53,8 @@ export class Vehicle {
 
     this.s = 0;
     this.lateral = 0;
+    /** Metres per second of sideways drift, set by the weather. */
+    this.crosswind = 0;
     this.position = new THREE.Vector3(0, 0, 0);
     this.yaw = 0; // world heading; 0 = straight down the road
     this.speed = 0;
@@ -191,6 +197,16 @@ export class Vehicle {
     const step = this.speed * dt;
     this.position.x -= Math.sin(this.yaw) * step;
     this.position.z -= Math.cos(this.yaw) * step;
+
+    // A crosswind blows across the road, not across the car, so it is pushed
+    // along the road's own lateral axis. The car never turns into it: you
+    // hold it straight with the wheel, which is the whole point.
+    if (this.crosswind !== 0) {
+      const a = roadPoint(this.s, 0, WIND_A);
+      const b = roadPoint(this.s, 1, WIND_B);
+      this.position.x += (b.x - a.x) * this.crosswind * dt;
+      this.position.z += (b.z - a.z) * this.crosswind * dt;
+    }
 
     roadCoords(this.position.x, this.position.z, this.tmp);
     const advanced = this.tmp.s - this.s;

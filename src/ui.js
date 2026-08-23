@@ -119,6 +119,10 @@ export class UI {
       farePay: $('fare-pay'),
       fareFuel: $('fare-fuel'),
       fareAccept: $('fare-accept'),
+      bodyPanel: $('body-panel'),
+      bodyDamage: $('body-damage'),
+      bodyCost: $('body-cost'),
+      bodyFix: $('body-fix'),
       mute: $('mute-btn'),
       overTitle: $('over-title'),
       overText: $('over-text'),
@@ -317,6 +321,7 @@ export class UI {
     $('garage-btn').addEventListener('click', () => this.h.onQuit());
     // Tapping the offer is the touch equivalent of pressing E.
     this.el.fareAccept.addEventListener('click', () => this.h.onAcceptFare());
+    this.el.bodyFix.addEventListener('click', () => this.h.onRepairBody());
     this.el.mute.addEventListener('click', () => this.h.onToggleMute());
   }
 
@@ -496,6 +501,18 @@ export class UI {
     // Standing offer: distance, fare and what the extra weight will drink.
     // Both panels live in the same corner. Checking in wins — you are
     // already stopped, and the offer is still there when you wake up.
+    // The body shop takes the fare panel's slot, below the refuelling one.
+    // It can never clash with a fare — the shelters are kept clear of the
+    // station plots — and it sits under the pump readout on purpose, so you
+    // watch the bill while the tank fills.
+    e.bodyPanel.classList.toggle('hidden', !s.body);
+    if (s.body) {
+      e.bodyDamage.textContent = `${Math.round(s.body.damage)}%`;
+      e.bodyCost.textContent = `−$${s.body.cost}`;
+      e.bodyFix.textContent = t(s.body.affordable ? 'hud.bodyFix' : 'hud.bodyPart');
+      e.bodyFix.classList.add('ready');
+    }
+
     e.farePanel.classList.toggle('hidden', !s.offer || s.checkingIn > 0);
     if (s.offer) {
       e.fareDest.textContent = t(

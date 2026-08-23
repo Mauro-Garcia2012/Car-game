@@ -111,10 +111,16 @@ export class Audio {
     this.engineGain.gain.setTargetAtTime(vol, now, 0.08);
 
     const rough = s.surface === 'road' ? 0.35 : 1.0;
-    const noiseVol = Math.min(0.28, (s.speed / 90) * 0.22 * rough + s.slip * 0.16);
+    // The same band of noise doubles as the storm: sand on the panels is
+    // tyre roar you did not earn, and it does not go away when you lift off.
+    const wind = s.wind || 0;
+    const noiseVol = Math.min(
+      0.42,
+      (s.speed / 90) * 0.22 * rough + s.slip * 0.16 + wind * 0.2
+    );
     this.noiseGain.gain.setTargetAtTime(noiseVol, now, 0.1);
     this.noiseFilter.frequency.setTargetAtTime(
-      600 + s.speed * 14 + s.slip * 900,
+      600 + s.speed * 14 + s.slip * 900 - wind * 320,
       now,
       0.1
     );

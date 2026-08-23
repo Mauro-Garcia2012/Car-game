@@ -20,7 +20,8 @@ const ui = new UI({
   onQuit: () => game.toMenu(),
   onRetry: () => game.start(game.spec.id),
   onResumeRun: () => game.resumeRun(),
-  onAcceptFare: () => game && game.acceptFare(),
+  onAcceptFare: () => game && game.acceptOffer(),
+  onRepairBody: () => game && game.repairBody(),
   onToggleMute: () => (game ? game.toggleMute() : audio.setMuted(!audio.muted)),
 });
 
