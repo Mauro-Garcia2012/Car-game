@@ -117,6 +117,7 @@ export class UI {
       fareDest: $('fare-dest'),
       fareDistance: $('fare-distance'),
       farePay: $('fare-pay'),
+      fareAdvance: $('fare-advance'),
       fareFuel: $('fare-fuel'),
       fareAccept: $('fare-accept'),
       bodyPanel: $('body-panel'),
@@ -520,6 +521,7 @@ export class UI {
       );
       e.fareDistance.textContent = metres(s.offer.metres);
       e.farePay.textContent = `+$${s.offer.pay}`;
+      e.fareAdvance.textContent = `+$${s.offer.advance}`;
       e.fareFuel.textContent = `+${s.offer.litres.toFixed(1)} L (−$${s.offer.cost.toFixed(2)})`;
       e.fareAccept.textContent = t(
         s.offer.canAccept ? 'hud.fareAccept' : 'hud.fareStop'

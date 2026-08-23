@@ -36,6 +36,27 @@ const PAY_PER_KM_SPREAD = 28;
  * fare quietly becomes worthless over a long run.
  */
 const FUEL_BASE = 1.13;
+/**
+ * How much of the fare is handed over at the kerb.
+ *
+ * Half up front changes what a fare is. It stops being a promise you get
+ * paid for keeping and becomes money you are already holding, which is worth
+ * something the moment you take it — a tank you could not otherwise afford,
+ * a bed, the bodywork — and it means driving past somebody's stop costs you
+ * the balance rather than everything. It also means a broke driver has a way
+ * out that is not simply hoping: there is somebody standing at a shelter ten
+ * kilometres back with half a fare in their hand.
+ */
+export const ADVANCE = 0.5;
+
+/** What this offer pays at the kerb, and what it pays on arrival. */
+export function advanceOf(offer) {
+  return Math.round(offer.pay * ADVANCE);
+}
+export function balanceOf(offer) {
+  return offer.pay - advanceOf(offer);
+}
+
 /** Fuel burn multiplier while somebody is in the car. */
 export const PASSENGER_BURN = 1.12;
 /** Drive this far past the drop-off and they get out without paying. */

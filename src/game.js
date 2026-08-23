@@ -31,10 +31,13 @@ import {
   Fares,
   offerAt,
   extraLitresFor,
+  advanceOf,
+  balanceOf,
   PASSENGER_BURN,
 } from './fares.js';
 import { BusStops } from './world/busStops.js';
 import { stormLevel, metresToStorm } from './weather.js';
+import { Wildlife } from './world/wildlife.js';
 import { RoadSigns, SpeedCameras, speedLimitAt, FINE } from './world/signs.js';
 import { createSky } from './world/sky.js';
 import { Headlights } from './world/headlights.js';
@@ -166,6 +169,7 @@ export class Game {
     this.motels = new Motels(this.scene);
     this.buses = new BusStops(this.scene);
     this.sideRoads = new SideRoads(this.scene);
+    this.wildlife = new Wildlife(this.scene);
     // Everything with words painted on it has to be repainted when the
     // language changes, roadside signage included.
     onLanguageChange(() => {
@@ -277,6 +281,7 @@ export class Game {
     this.sleptAt = -1;
     this.setWornEngine(false);
     this.dust.clear();
+    this.wildlife.reset();
     this.stops.clear();
     this.skipped.clear();
     this.beds = new Set();
@@ -545,6 +550,7 @@ export class Game {
     this.buses.update(v.s, this.busWaiter);
     this.sideRoads.update(v.s);
     this.traffic.update(dt, v.s);
+    this.wildlife.update(dt, v.s, this.sky.light.lamps);
 
     if (!frozen) {
       this.handleCollisions();
@@ -637,6 +643,31 @@ export class Game {
 
   handleCollisions() {
     const v = this.vehicle;
+    // A deer is softer than a semi and takes about a third of the hit, but
+    // at a hundred and forty in the dark that is still a night at the pump.
+    const deer = this.wildlife.collide(
+      v.s,
+      v.lateral,
+      v.speed,
+      this.spec.collisionRadius
+    );
+    if (deer > 0) {
+      const severity = v.crash(deer * 0.34);
+      if (severity > 0) {
+        this.audio.crash(severity * 0.8);
+        this.shake = Math.min(1.1, 0.4 + severity);
+        for (let i = 0; i < 18; i++) {
+          this.dust.emit(v.position.x, v.position.y + 0.6, v.position.z, {
+            spread: 2.2,
+            size: 2.6,
+            life: 1,
+            rise: 2.2,
+            color: [0.48, 0.36, 0.25],
+          });
+        }
+      }
+      this.flash('msg.deer', 'danger', 3.4);
+    }
     const closing = this.traffic.collide(
       v.s,
       v.lateral,
@@ -851,25 +882,28 @@ export class Game {
     this.busZone = index;
     const stopped = Math.abs(v.speed) < REFUEL_SPEED_LIMIT;
 
-    // Dropping off: pay out the moment the car stops at the right shelter.
+    // Dropping off: the balance is handed over the moment the car stops at
+    // the right shelter. The other half was paid at the kerb.
     if (index >= 0 && stopped && this.fares.isDestination(index)) {
-      const { pay } = this.fares.active;
-      this.cash += pay;
-      this.earned += pay;
+      const balance = balanceOf(this.fares.active);
+      this.cash += balance;
+      this.earned += balance;
       this.fares.clear();
       v.load = 1;
       this.audio.fanfare();
-      this.flash('msg.dropOff', 'good', 3.4, { pay: `$${pay}` });
+      this.flash('msg.dropOff', 'good', 3.4, { pay: `$${balance}` });
       this.offer = null;
       return;
     }
 
     // The passenger gives up if you drive well past where they asked for.
+    // They do not ask for the advance back — they just get out.
     if (this.fares.missed(v.s)) {
+      const lost = balanceOf(this.fares.active);
       this.fares.clear();
       v.load = 1;
       this.audio.warn();
-      this.flash('msg.fareLost', 'danger', 3.2);
+      this.flash('msg.fareLost', 'danger', 3.6, { lost: `$${lost}` });
     }
 
     // Standing offer at the shelter the car is rolling through.
@@ -959,12 +993,16 @@ export class Game {
   /** Takes the fare currently on offer, if the car is stopped beside it. */
   acceptFare() {
     if (this.state !== 'playing' || !this.offer || !this.canAccept) return;
+    const advance = advanceOf(this.offer);
     this.fares.board(this.offer);
+    this.cash += advance;
+    this.earned += advance;
     this.vehicle.load = PASSENGER_BURN;
     this.audio.blip(880, 0.1, 'triangle', 0.16);
-    this.flash('msg.fareTaken', 'good', 3.4, {
+    this.flash('msg.fareTaken', 'good', 3.8, {
       distance: `${(this.offer.distance / 1000).toFixed(1)} km`,
-      pay: `$${this.offer.pay}`,
+      paid: `$${advance}`,
+      rest: `$${balanceOf(this.offer)}`,
     });
     this.offer = null;
   }
@@ -1129,7 +1167,7 @@ export class Game {
         ? {
             metres: Math.round(this.fares.remaining(v.s)),
             total: Math.round(this.fares.active.distance),
-            pay: this.fares.active.pay,
+            pay: balanceOf(this.fares.active),
             hops: this.fares.active.hops,
           }
         : null,
@@ -1137,6 +1175,7 @@ export class Game {
         ? {
             metres: Math.round(this.offer.distance),
             pay: this.offer.pay,
+            advance: advanceOf(this.offer),
             hops: this.offer.hops,
             litres: extraLitresFor(spec, this.offer.distance),
             cost:

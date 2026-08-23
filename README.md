@@ -85,6 +85,12 @@ automatically.
   A passenger burns **12% more fuel**, and while one is aboard the HUD counts
   down to their shelter. Pull in where they asked and you get paid; drive
   **500 m past it** and they get out for nothing.
+- **Half up front.** You are handed half the fare at the kerb and the other
+  half when they get out. That changes what a fare is: it stops being a
+  promise you get paid for keeping and becomes money you are already holding —
+  a tank you could not otherwise afford, a bed, the bodywork. It also means
+  driving past somebody's shelter costs you the balance rather than
+  everything, and that a broke driver has a way out that is not simply hoping.
 - **And they pay properly.** Rides run **$44–72 a kilometre** with the market
   freshly opened, which is **$450 for a short hop and better than $1,600 for a
   long one**, against $62 to fill the supercar. Nobody out here is catching a
@@ -108,6 +114,18 @@ automatically.
   belong to a stretch of road rather than to a clock, so a given seed always
   has its weather in the same places, and the **NEXT STOP** readout becomes
   the only way to find a station.
+- **A bent car drives like one.** Damage used to be a life bar and nothing
+  else: eighty per cent handled exactly like nothing, right up until a hundred
+  ended the run. Now it goes off with you — **a fifth of the grip and a tenth
+  of the top speed** by the time it is written off, half a second more to
+  100 km/h, and a lean towards one side that you hold out with the wheel. The
+  side is the car's own and never changes, so you learn it. It is also what
+  makes the body shop worth visiting before the number gets frightening.
+- **Deer, after dark.** Night used to be a colour. Now something walks onto
+  the road: one stands on the verge with its eyes lit up in the beams from a
+  long way out, holds until you are nearly on it, and bolts across. Lift off
+  early and it is nothing; keep your foot in at 140 and it is a bill at the
+  next pump. They are only about once it is properly dark.
 - **Crates in the sand.** Every 300 m or so a crate sits about **10 m off the
   tarmac**, fallen off somebody's truck. Three out of four hold nothing at all,
   roughly one in five is worth **$10**, and about **3%** are worth **$100**.
@@ -311,7 +329,8 @@ src/
   cars/             the three player cars, built from extruded side profiles
   world/            sky and the day/night rig, road, terrain, scenery,
                     stations, motels, bus stops, signs, cameras, headlamps,
-                    crates, dirt spurs and the briefcases at the end of them
+                    crates, dirt spurs, the briefcases at the end of them,
+                    and the deer that walk out after dark
 vendor/three/       three.js r169 (MIT), vendored so the game runs offline
 ```
 
@@ -490,6 +509,12 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   sueño por el camino. Llevar a alguien gasta un **12% más**, y mientras va
   contigo el HUD va **descontando** lo que queda hasta su marquesina. Si paras
   donde te pidió, cobras; si te pasas **500 m**, se baja sin pagarte.
+- **La mitad por delante.** Te dan la mitad del viaje al subir y la otra
+  mitad al bajarse. Eso cambia lo que es un viaje: deja de ser una promesa que
+  te pagan por cumplir y pasa a ser dinero que ya tienes en la mano — un
+  depósito que si no no podrías pagar, una cama, la chapa. Y también: pasarte
+  de su parada te cuesta la mitad que falta, no todo, y un conductor sin un
+  dólar tiene una salida que no consiste sólo en confiar.
 - **Y pagan de verdad.** El viaje sale a **44–72 $ el kilómetro** con la
   gasolina recién abierta: **450 $ el corto y más de 1.600 $ el largo**, frente
   a los 62 $ de llenar el deportivo. **La tarifa sigue al surtidor**: aquí todo
@@ -513,6 +538,19 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   carretera, no a un reloj, así que una semilla dada tiene siempre su tiempo
   en los mismos sitios, y el indicador de **PRÓXIMA PARADA** pasa a ser la
   única forma de encontrar una gasolinera.
+- **Un coche abollado conduce como tal.** Los daños eran una barra de vida y
+  nada más: al ochenta por ciento se conducía exactamente igual que a cero,
+  hasta que al cien se acababa. Ahora el coche se estropea contigo: **un
+  quinto del agarre y un décimo de la punta** cuando está para el desguace,
+  medio segundo más a los 100 km/h, y un tirón hacia un lado que hay que
+  aguantar con el volante. El lado es el suyo y no cambia nunca, así que te lo
+  aprendes. Es también lo que hace que merezca la pena pasar por el taller
+  antes de que el número dé miedo.
+- **Ciervos, de noche.** La noche era un color y poco más. Ahora algo se te
+  cruza: uno se queda en el arcén con los ojos encendidos en los faros desde
+  muy lejos, aguanta hasta que casi lo tienes encima, y sale corriendo. Si
+  levantas el pie a tiempo no pasa nada; si sigues a 140 es una factura en la
+  siguiente gasolinera. Sólo andan por ahí cuando ya es noche cerrada.
 - **Cajas en la arena.** Cada 300 m más o menos hay una caja a unos **10 m de
   la carretera**, caída del camión de alguien. Tres de cada cuatro no llevan
   nada, alrededor de una de cada cinco lleva **$10** y un **3%** lleva **$100**.

@@ -55,6 +55,13 @@ export class Vehicle {
     this.lateral = 0;
     /** Metres per second of sideways drift, set by the weather. */
     this.crosswind = 0;
+    /**
+     * Which way a bent car pulls. Taken off the vehicle's own id, so it is
+     * the same every time you drive it and you learn it rather than
+     * rediscovering it.
+     */
+    this.pullSide =
+      [...this.spec.id].reduce((h, c) => h + c.charCodeAt(0), 0) % 2 ? 1 : -1;
     this.position = new THREE.Vector3(0, 0, 0);
     this.yaw = 0; // world heading; 0 = straight down the road
     this.speed = 0;
@@ -118,12 +125,23 @@ export class Vehicle {
     this.surface = surface;
 
     const onTarmac = surface === SURFACE.ROAD;
+    /**
+     * How bent it is, 0 to 1.
+     *
+     * Damage used to be nothing but a life bar: a car at eighty per cent
+     * drove exactly like a car at nothing, right up until it stopped being a
+     * car at all. Now it goes off — less grip, less pull, and a lean towards
+     * one side that you hold out with the wheel — so you can feel what the
+     * body shop is charging you for before the number reaches a hundred.
+     */
+    const wear = this.damage / 100;
     const grip =
-      surface === SURFACE.ROAD
+      (surface === SURFACE.ROAD
         ? spec.grip
         : surface === SURFACE.SHOULDER
           ? spec.grip * 0.62 + spec.offroadGrip * 0.38
-          : spec.offroadGrip;
+          : spec.offroadGrip) *
+      (1 - 0.2 * wear);
     const surfaceDrag =
       surface === SURFACE.ROAD ? 0 : surface === SURFACE.SHOULDER ? spec.offroadDrag * 0.35 : spec.offroadDrag;
 
@@ -131,16 +149,16 @@ export class Vehicle {
     if (outOfFuel) this.engineOn = false;
 
     const throttle = this.engineOn ? input.throttle : 0;
-    const topSpeed = onTarmac
-      ? spec.topSpeed
-      : spec.topSpeed * (0.32 + 0.55 * spec.offroadGrip);
+    const topSpeed =
+      (onTarmac ? spec.topSpeed : spec.topSpeed * (0.32 + 0.55 * spec.offroadGrip)) *
+      (1 - 0.12 * wear);
 
     // Longitudinal forces.
     let a = 0;
     const v = this.speed;
     if (throttle > 0) {
       const fade = Math.max(0, 1 - Math.abs(v) / topSpeed);
-      a += spec.power * throttle * (0.35 + 0.65 * fade);
+      a += spec.power * (1 - 0.15 * wear) * throttle * (0.35 + 0.65 * fade);
     }
     a -= this.dragK * v * Math.abs(v); // aero drag
     a -= Math.sign(v) * (ROLLING + surfaceDrag); // rolling resistance
@@ -200,12 +218,15 @@ export class Vehicle {
 
     // A crosswind blows across the road, not across the car, so it is pushed
     // along the road's own lateral axis. The car never turns into it: you
-    // hold it straight with the wheel, which is the whole point.
-    if (this.crosswind !== 0) {
+    // hold it straight with the wheel, which is the whole point. A bent car
+    // pulls the same way, just quieter, and always to its own side.
+    const pull = wear * wear * this.pullSide * 0.55 * Math.min(1, speedAbs / 12);
+    if (this.crosswind !== 0 || pull !== 0) {
       const a = roadPoint(this.s, 0, WIND_A);
       const b = roadPoint(this.s, 1, WIND_B);
-      this.position.x += (b.x - a.x) * this.crosswind * dt;
-      this.position.z += (b.z - a.z) * this.crosswind * dt;
+      const sideways = this.crosswind + pull;
+      this.position.x += (b.x - a.x) * sideways * dt;
+      this.position.z += (b.z - a.z) * sideways * dt;
     }
 
     roadCoords(this.position.x, this.position.z, this.tmp);
