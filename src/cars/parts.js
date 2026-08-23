@@ -6,6 +6,7 @@
  * world space and +X in profile space, so `profilePiece()` does the mapping.
  */
 import * as THREE from 'three';
+import { glowAtNight } from '../world/nightlights.js';
 import {
   mergeGeometries,
   toCreasedNormals,
@@ -58,20 +59,29 @@ export const MAT = {
     metalness: 0.55,
     roughness: 0.35,
   }),
-  headlight: new THREE.MeshStandardMaterial({
-    color: '#eaf2ff',
-    emissive: '#cfe4ff',
-    emissiveIntensity: 1.4,
-    metalness: 0.2,
-    roughness: 0.15,
-  }),
-  tail: new THREE.MeshStandardMaterial({
-    color: '#c11d1d',
-    emissive: '#ff2b1a',
-    emissiveIntensity: 1.1,
-    metalness: 0.2,
-    roughness: 0.25,
-  }),
+  // Lenses, on every vehicle in the game. They lift hard after dark: a semi
+  // coming the other way used to be invisible until it was inside your own
+  // beams, which is not a hazard, it is an ambush.
+  headlight: glowAtNight(
+    new THREE.MeshStandardMaterial({
+      color: '#eaf2ff',
+      emissive: '#cfe4ff',
+      emissiveIntensity: 1.4,
+      metalness: 0.2,
+      roughness: 0.15,
+    }),
+    5.5
+  ),
+  tail: glowAtNight(
+    new THREE.MeshStandardMaterial({
+      color: '#c11d1d',
+      emissive: '#ff2b1a',
+      emissiveIntensity: 1.1,
+      metalness: 0.2,
+      roughness: 0.25,
+    }),
+    3.2
+  ),
   amber: new THREE.MeshStandardMaterial({
     color: '#e08b1a',
     emissive: '#ff9d20',

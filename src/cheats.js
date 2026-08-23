@@ -22,6 +22,7 @@ import { motelDistance, nextMotelIndex } from './world/motel.js';
 import { stopDistance, nextStopIndex } from './world/busStops.js';
 import { trackAt, nextTrackIndex } from './world/sideroads.js';
 import { stormAt, nextStormIndex } from './weather.js';
+import { sightAt, nextSightIndex } from './world/landmarks.js';
 
 /** The way in. Four digits, same shape as the codes. */
 const PIN = '5214';
@@ -55,6 +56,7 @@ function teleport(game, s) {
   game.motels.update(v.s);
   game.buses.update(v.s, game.busWaiter);
   game.sideRoads.update(v.s);
+  game.landmarks.update(v.s);
   game.traffic.reset();
   game.wildlife.reset();
   game.snapCamera();
@@ -161,6 +163,15 @@ const CODES = {
     run: (g) => {
       teleport(g, trackAt(nextTrackIndex(g.vehicle.s + 40)).s);
       return 'at the junction';
+    },
+  },
+
+  SEEE: {
+    what: 'to the next landmark',
+    run: (g) => {
+      const sight = sightAt(nextSightIndex(g.vehicle.s + 400));
+      teleport(g, sight.s - 260);
+      return sight.kind;
     },
   },
 

@@ -96,6 +96,31 @@ export class Audio {
     }
   }
 
+  /**
+   * The horn. Two notes a fourth apart, the way a car horn actually is —
+   * one alone reads as a beep and never as a vehicle.
+   */
+  horn() {
+    if (!this.started || this.muted) return;
+    const now = this.ctx.currentTime;
+    const bus = this.ctx.createGain();
+    bus.gain.setValueAtTime(0.0001, now);
+    bus.gain.exponentialRampToValueAtTime(0.2, now + 0.02);
+    bus.gain.setValueAtTime(0.2, now + 0.26);
+    bus.gain.exponentialRampToValueAtTime(0.0001, now + 0.36);
+    bus.connect(this.master);
+    for (const [freq, gain] of [[420, 0.6], [560, 0.5], [840, 0.16]]) {
+      const o = this.ctx.createOscillator();
+      o.type = 'sawtooth';
+      o.frequency.value = freq;
+      const g = this.ctx.createGain();
+      g.gain.value = gain;
+      o.connect(g).connect(bus);
+      o.start(now);
+      o.stop(now + 0.4);
+    }
+  }
+
   /** @param {{rpm:number, throttle:number, speed:number, slip:number, engineOn:boolean, surface:string}} s */
   updateEngine(s) {
     if (!this.started) return;

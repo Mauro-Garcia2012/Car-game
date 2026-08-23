@@ -38,12 +38,13 @@ import {
 import { BusStops } from './world/busStops.js';
 import { stormLevel, metresToStorm } from './weather.js';
 import { Wildlife } from './world/wildlife.js';
+import { Landmarks } from './world/landmarks.js';
 import { RoadSigns, SpeedCameras, speedLimitAt, FINE } from './world/signs.js';
 import { createSky } from './world/sky.js';
 import { Headlights } from './world/headlights.js';
 import { setNightGlow } from './world/nightlights.js';
 import { clockFor, DAY_START_HOUR, NIGHT_HOUR } from './daynight.js';
-import { setWorldSeed, worldSeed } from './rng.js';
+import { setWorldSeed, worldSeed, hashRand } from './rng.js';
 import {
   addMetres,
   claimUnlocked,
@@ -74,6 +75,10 @@ import { terrainHeight } from './world/road.js';
 const BODY_RATE = 9;
 /** Below this it is a scratch, and the shop will not get the hammer out. */
 const BODY_MIN = 4;
+
+/** Metres between the things a passenger says, and how many they can say. */
+const CHAT_EVERY = 2000;
+const CHAT_LINES = 12;
 
 /** How hard the wind pushes, in metres per second of drift, at full storm. */
 const WIND_DRIFT = 1.5;
@@ -115,6 +120,11 @@ export class Game {
     this.storm = 0;
     this.stormWarned = false;
     this.gust = 0;
+    /** Fastest the run ever went, for the card at the end of it. */
+    this.topSpeed = 0;
+    /** Metres into the current ride at which the passenger next speaks. */
+    this.chatAt = 0;
+    this.chatLast = -1;
     /** Cheat-menu toggle. Never saved, never on unless you turned it on. */
     this.godMode = false;
     this.refuelling = false;
@@ -172,6 +182,7 @@ export class Game {
     this.buses = new BusStops(this.scene);
     this.sideRoads = new SideRoads(this.scene);
     this.wildlife = new Wildlife(this.scene);
+    this.landmarks = new Landmarks(this.scene);
     // Everything with words painted on it has to be repainted when the
     // language changes, roadside signage included.
     onLanguageChange(() => {
@@ -221,6 +232,9 @@ export class Game {
       this.start(this.spec.id);
     } else if (action === 'accept') {
       this.acceptOffer();
+    } else if (action === 'horn') {
+      this.audio.horn();
+      this.wildlife.spook(this.vehicle.s);
     } else if (action === 'mute') {
       this.toggleMute();
     } else if (action === 'enter' && this.state === 'menu') {
@@ -306,6 +320,9 @@ export class Game {
     this.offer = null;
     this.busZone = -1;
     this.canRepair = false;
+    this.topSpeed = 0;
+    this.chatAt = 0;
+    this.chatLast = -1;
     this.storm = 0;
     this.stormWarned = false;
     this.gust = 0;
@@ -421,6 +438,7 @@ export class Game {
     this.cameras.reset(v.s);
     this.motels.update(v.s);
     this.buses.update(v.s, this.busWaiter);
+    this.landmarks.update(v.s);
     this.sideRoads.taken = new Set(run.cases || []);
     this.sideRoads.update(v.s);
     this.setWornEngine(!!run.worn);
@@ -470,6 +488,10 @@ export class Game {
       distance: this.vehicle.distance,
       stops: this.stops.size,
       days: this.day,
+      earned: this.earned,
+      spent: this.spent,
+      fares: this.fares.used.size,
+      topSpeed: this.topSpeed * 3.6,
     });
   }
 
@@ -557,6 +579,8 @@ export class Game {
       this.bankedDistance = v.distance;
     }
 
+    if (!frozen) this.topSpeed = Math.max(this.topSpeed, Math.abs(v.speed));
+
     this.road.update(v.s);
     this.stations.update(v.s);
     this.signs.update(v.s);
@@ -564,6 +588,7 @@ export class Game {
     this.motels.update(v.s);
     this.buses.update(v.s, this.busWaiter);
     this.sideRoads.update(v.s);
+    this.landmarks.update(v.s);
     this.traffic.update(dt, v.s);
     this.wildlife.update(dt, v.s, this.sky.light.lamps);
 
@@ -575,6 +600,7 @@ export class Game {
       this.handleRefuelling(dt);
       this.handleMotel(dt);
       this.handleFares();
+      this.handleChat();
       this.handleStationBookkeeping();
       this.checkGameOver();
 
@@ -967,6 +993,35 @@ export class Game {
       3.4,
       { cost: `$${Math.round(paid)}`, left: `${Math.round(v.damage)}%` }
     );
+  }
+
+  /**
+   * The passenger says something, every couple of kilometres.
+   *
+   * A fare was a number that walked into the car and a number that walked
+   * out of it. One line every two thousand metres is enough to make it a
+   * person instead, and rare enough that it never becomes chatter — a long
+   * ride is five or six of them, spread over a quarter of an hour.
+   *
+   * Which line is deterministic from the ride and the count, so a passenger
+   * never repeats themselves and a resumed run carries on where it was.
+   */
+  handleChat() {
+    const fare = this.fares.active;
+    if (!fare) {
+      this.chatAt = 0;
+      return;
+    }
+    const gone = this.vehicle.s - fare.from;
+    if (gone < CHAT_EVERY || gone < this.chatAt) return;
+    const n = Math.floor(gone / CHAT_EVERY);
+    this.chatAt = (n + 1) * CHAT_EVERY;
+    let line = Math.floor(hashRand(fare.index * 31 + n, 7717) * CHAT_LINES);
+    // Twelve lines and a hash will collide; nobody says the same thing twice
+    // in a row, so step off it when it does.
+    if (line === this.chatLast) line = (line + 1) % CHAT_LINES;
+    this.chatLast = line;
+    this.flash(`chat.${line}`, 'chat', 5);
   }
 
   /**

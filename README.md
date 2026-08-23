@@ -41,6 +41,7 @@ static host.
 | Camera (chase / bonnet / orbit) | `C` | |
 | Pause | `P` or `Esc` | |
 | Restart | `R` | |
+| Horn | `H` | |
 | Mute | `M`, or the speaker button top right | |
 
 The speaker button is always there — in the garage, mid-drive and on the
@@ -141,7 +142,25 @@ again. Getting it wrong says `PIN INCORRECTO` and nothing else happens.
   the road: one stands on the verge with its eyes lit up in the beams from a
   long way out, holds until you are nearly on it, and bolts across. Lift off
   early and it is nothing; keep your foot in at 140 and it is a bill at the
-  next pump. They are only about once it is properly dark.
+  next pump. They are only about once it is properly dark. **Sound the horn**
+  and anything within two hundred metres goes now rather than later, which is
+  the whole reason to have one: a deer that crosses while you are still back
+  there is a deer you never meet.
+- **Everything on the road has its lights on.** Headlamps and tail lights on
+  the traffic lift hard after dark — a semi coming the other way used to be
+  invisible until it was inside your own beams, which is not a hazard, it is
+  an ambush. Now it is two white dots a long way off, closing.
+- **Landmarks.** Every twenty-odd kilometres there is one thing not built out
+  of the same parts as everything else: a **dead town**, a **drive-in** nobody
+  switched off, an **airliner** on its belly in the sand, a **roadside
+  dinosaur**, a **water tower** with its beacon still lit. They stand well
+  back and you cannot touch them; they are there so distance has somewhere to
+  land. They come off a deck rather than a die, so you never get the same one
+  twice running, and the deck is seeded — the same run always has the same
+  sights in the same places.
+- **The passenger talks.** Every couple of kilometres somebody riding with you
+  says something. Twelve lines, never the same one twice in a row, and quiet
+  enough that they are company rather than commentary.
 - **Crates in the sand.** Every 300 m or so a crate sits about **10 m off the
   tarmac**, fallen off somebody's truck. Three out of four hold nothing at all,
   roughly one in five is worth **$10**, and about **3%** are worth **$100**.
@@ -353,7 +372,7 @@ src/
   world/            sky and the day/night rig, road, terrain, scenery,
                     stations, motels, bus stops, signs, cameras, headlamps,
                     crates, dirt spurs, the briefcases at the end of them,
-                    and the deer that walk out after dark
+                    the deer that walk out after dark, and the landmarks
 vendor/three/       three.js r169 (MIT), vendored so the game runs offline
 ```
 
@@ -445,6 +464,7 @@ pausa.
 | Cámara (persecución / capó / órbita) | `C` | |
 | Pausa | `P` o `Esc` | |
 | Reiniciar | `R` | |
+| Claxon | `H` | |
 | Silencio | `M`, o el botón del altavoz arriba a la derecha | |
 
 El botón del altavoz está siempre ahí —en el garaje, conduciendo y en la
@@ -596,7 +616,25 @@ volver a meterlo. Si te equivocas dice `PIN INCORRECTO` y no pasa nada más.
   cruza: uno se queda en el arcén con los ojos encendidos en los faros desde
   muy lejos, aguanta hasta que casi lo tienes encima, y sale corriendo. Si
   levantas el pie a tiempo no pasa nada; si sigues a 140 es una factura en la
-  siguiente gasolinera. Sólo andan por ahí cuando ya es noche cerrada.
+  siguiente gasolinera. Sólo andan por ahí cuando ya es noche cerrada. **Toca
+  el claxon** y todo lo que haya a doscientos metros sale ya en vez de luego,
+  que es para lo que sirve: un ciervo que cruza cuando aún estás lejos es un
+  ciervo con el que no te encuentras.
+- **Todo lo que va por la carretera lleva las luces puestas.** Los faros y los
+  pilotos del tráfico se encienden de noche. Antes un camión de frente era
+  invisible hasta que entraba en tus propios faros, y eso no es un peligro,
+  es una emboscada. Ahora son dos puntos blancos muy lejos, acercándose.
+- **Monumentos.** Cada veintitantos kilómetros hay una cosa que no está hecha
+  con las mismas piezas que todo lo demás: un **pueblo abandonado**, un
+  **autocine** que nadie apagó, un **avión** panza abajo en la arena, un
+  **dinosaurio de carretera**, un **depósito de agua** con la baliza aún
+  encendida. Están lejos de la vía y no se pueden tocar; están ahí para que la
+  distancia tenga dónde aterrizar. Salen de una baraja, no de un dado, así que
+  nunca te toca el mismo dos veces seguidas, y la baraja va con la semilla:
+  una partida dada tiene siempre las mismas vistas en los mismos sitios.
+- **El pasajero habla.** Cada par de kilómetros, quien va contigo dice algo.
+  Doce frases, nunca la misma dos veces seguidas, y lo bastante bajito como
+  para ser compañía y no comentario.
 - **Cajas en la arena.** Cada 300 m más o menos hay una caja a unos **10 m de
   la carretera**, caída del camión de alguien. Tres de cada cuatro no llevan
   nada, alrededor de una de cada cinco lleva **$10** y un **3%** lleva **$100**.

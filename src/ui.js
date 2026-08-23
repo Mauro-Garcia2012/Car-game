@@ -141,6 +141,10 @@ export class UI {
       overStops: $('over-stops'),
       overDays: $('over-days'),
       overBest: $('over-best'),
+      overEarned: $('over-earned'),
+      overSpent: $('over-spent'),
+      overFares: $('over-fares'),
+      overTop: $('over-top'),
     };
 
     this.selected = CARS[0].id;
@@ -460,6 +464,7 @@ export class UI {
    *           distance:number, stops:number, days:number}} result */
   showGameOver(result) {
     const { titleKey, textKey, textParams, distance, stops, days } = result;
+    const { earned = 0, spent = 0, fares = 0, topSpeed = 0 } = result;
     this.lastResult = result;
     this.best = Math.max(this.best, distance);
     localStorage.setItem(BEST_KEY, String(Math.round(this.best)));
@@ -469,6 +474,10 @@ export class UI {
     this.el.overStops.textContent = String(stops);
     this.el.overDays.textContent = String(days);
     this.el.overBest.textContent = km(this.best);
+    this.el.overEarned.textContent = `$${Math.round(earned).toLocaleString('en-US')}`;
+    this.el.overSpent.textContent = `$${Math.round(spent).toLocaleString('en-US')}`;
+    this.el.overFares.textContent = String(fares);
+    this.el.overTop.textContent = `${Math.round(topSpeed)} km/h`;
     this.el.gameover.classList.remove('hidden');
   }
 

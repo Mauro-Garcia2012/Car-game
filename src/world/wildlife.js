@@ -179,6 +179,25 @@ export class Wildlife {
     }
   }
 
+  /**
+   * The horn. Anything within earshot ahead goes now rather than later,
+   * which is the whole reason to sound one: a deer that crosses while you
+   * are still two hundred metres back is a deer you never meet.
+   *
+   * @returns {number} how many heard it
+   */
+  spook(playerS, range = 220) {
+    let n = 0;
+    for (const it of this.items) {
+      if (!it.active || it.bolting) continue;
+      const gap = it.s - playerS;
+      if (gap < -10 || gap > range) continue;
+      it.bolting = true;
+      n++;
+    }
+    return n;
+  }
+
   /** Closing speed of a strike this frame, or 0. It does not survive one. */
   collide(playerS, playerLateral, playerSpeed, playerRadius) {
     for (const it of this.items) {

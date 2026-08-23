@@ -46,6 +46,7 @@ export class Input {
       if (e.code === 'KeyR') this.onAction('restart');
       if (e.code === 'KeyP' || e.code === 'Escape') this.onAction('pause');
       if (e.code === 'KeyM') this.onAction('mute');
+      if (e.code === 'KeyH') this.onAction('horn');
       if (e.code === 'Enter') this.onAction('enter');
     });
     window.addEventListener('keyup', (e) => {

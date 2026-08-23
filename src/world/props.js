@@ -12,6 +12,7 @@ import { hashRand } from '../rng.js';
 import { rockTexture } from '../textures.js';
 import { groundHeight, CHUNK_LEN } from './road.js';
 import { trackNear } from './sideroads.js';
+import { sightNear } from './landmarks.js';
 
 const M = new THREE.Matrix4();
 const Q = new THREE.Quaternion();
@@ -494,6 +495,14 @@ export class PropField {
       // it, so anything sharing that corridor stands down.
       const spur = trackNear(s, reach * stretch + 260);
       if (spur && spur.side === side) {
+        this.mesa.set(slot, i, 0, 0, 0, 0, 0);
+        continue;
+      }
+      // Same for the landmarks, and for the same reason: a butte on top of
+      // the dinosaur is a butte, and the whole point of the dinosaur is that
+      // it is not another butte.
+      const sight = sightNear(s, reach * stretch + 300);
+      if (sight && sight.side === side) {
         this.mesa.set(slot, i, 0, 0, 0, 0, 0);
         continue;
       }
