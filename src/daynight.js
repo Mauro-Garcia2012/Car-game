@@ -15,10 +15,23 @@ import * as THREE from 'three';
 
 /** Clock face. The run opens here and nightfall lands on the other. */
 export const DAY_START_HOUR = 7;
-export const NIGHT_HOUR = 22;
+export const NIGHT_HOUR = 21;
+
+/**
+ * Where the day ends on the meter.
+ *
+ * The whole day used to fill the bar, which meant the headlamps only came on
+ * with the last few per cent of it — you were already fighting to stay awake
+ * before you were ever driving in the dark, and night was a thing that
+ * happened to you on the way to a motel rather than a stretch of the run.
+ * Compressing daylight into the first three quarters leaves the last quarter
+ * as proper night driving: lamps on, stars out, and enough of the meter left
+ * to actually go somewhere in it.
+ */
+const NIGHTFALL_AT = 0.75;
 
 /** The phase at which the sun touches the horizon; the rest is dusk. */
-const SUNSET_AT = 0.86;
+const SUNSET_AT = 0.66;
 
 /** Where the sun comes up, as seen from a car pointing down the road. */
 const EAST = new THREE.Vector3(-0.62, 0, 0.78).normalize();
@@ -53,7 +66,7 @@ const STOPS = [
     neon: 1.5,
   },
   {
-    at: 0.14, // morning proper
+    at: 0.1, // morning proper
     zenith: '#3a79c8',
     horizon: '#dbd2c0',
     ground: '#c8ab88',
@@ -75,7 +88,7 @@ const STOPS = [
     neon: 1,
   },
   {
-    at: 0.4, // high noon, the flattest and harshest light of the run
+    at: 0.3, // high noon, the flattest and harshest light of the run
     zenith: '#2f7ad6',
     horizon: '#c3d6e8',
     ground: '#cbb392',
@@ -97,7 +110,7 @@ const STOPS = [
     neon: 0.9,
   },
   {
-    at: 0.62, // the late afternoon the game used to live in permanently
+    at: 0.46, // the late afternoon the game used to live in permanently
     zenith: '#3c7fd0',
     horizon: '#e9cba6',
     ground: '#cdad86',
@@ -119,7 +132,7 @@ const STOPS = [
     neon: 1,
   },
   {
-    at: 0.78, // golden hour
+    at: 0.58, // golden hour
     zenith: '#2f6bbe',
     horizon: '#f8ba77',
     ground: '#c08d5f',
@@ -163,7 +176,7 @@ const STOPS = [
     neon: 1.7,
   },
   {
-    at: 0.93, // blue hour: the light is gone but the sky is not black yet
+    at: 0.71, // blue hour: the light is gone but the sky is not black yet
     zenith: '#101f42',
     horizon: '#6a4870',
     ground: '#392f47',
@@ -185,7 +198,7 @@ const STOPS = [
     neon: 2.1,
   },
   {
-    at: 1.0, // full night, and here it stays until somebody sleeps
+    at: NIGHTFALL_AT, // full night, and here it stays until somebody sleeps
     zenith: '#04060e',
     horizon: '#0c1526',
     ground: '#070911',
@@ -243,7 +256,7 @@ export function sunDirection(phase, out) {
  * which puts it in the windscreen rather than behind your head.
  */
 export function moonDirection(phase, out) {
-  const rise = 0.24 + clamp01((phase - 0.7) / 0.3) * 0.17;
+  const rise = 0.24 + clamp01((phase - SUNSET_AT) / 0.34) * 0.17;
   return out.set(-0.46, rise, -0.72).normalize();
 }
 
@@ -271,7 +284,7 @@ export function sampleLighting(phase, out) {
 
   // The key light hands over from sun to moon across dusk. Both are weak by
   // then, so the shadows swing round without anybody noticing.
-  const handover = clamp01((p - 0.84) / 0.1);
+  const handover = clamp01((p - SUNSET_AT) / 0.09);
   out.keyDir
     .copy(out.sunDir)
     .multiplyScalar(1 - handover)
@@ -286,7 +299,17 @@ export function sampleLighting(phase, out) {
  * and then keeps ticking into the small hours while you refuse to stop.
  */
 export function clockFor(phase, overrun = 0) {
-  const hours = DAY_START_HOUR + clamp01(phase) * (NIGHT_HOUR - DAY_START_HOUR) + overrun;
+  // Two rates, because the day and the night are no longer the same length
+  // on the meter: fourteen hours of daylight over the first three quarters,
+  // then three hours of dark over the last one.
+  const p = clamp01(phase);
+  const day =
+    p < NIGHTFALL_AT
+      ? (p / NIGHTFALL_AT) * (NIGHT_HOUR - DAY_START_HOUR)
+      : NIGHT_HOUR -
+        DAY_START_HOUR +
+        ((p - NIGHTFALL_AT) / (1 - NIGHTFALL_AT)) * 3;
+  const hours = DAY_START_HOUR + day + overrun;
   const wrapped = ((hours % 24) + 24) % 24;
   const h = Math.floor(wrapped);
   const m = Math.floor((wrapped - h) * 60);

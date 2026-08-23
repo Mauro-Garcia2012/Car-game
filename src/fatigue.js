@@ -11,10 +11,29 @@
  * black out for a second at a time. What happens next is up to the road.
  */
 
-/** Seconds of driving from a full night's sleep to nodding off. */
-export const AWAKE_TIME = 360;
+/**
+ * Seconds of driving from a full night's sleep to nodding off.
+ *
+ * Twelve minutes rather than six. At six the meter was the tightest thing in
+ * the game by a distance: anything slower than a brisk cruise did not reach
+ * the next bed, which quietly ruled out half the garage and turned every day
+ * into the same hurried dash. At twelve there is room to stop for a fare, to
+ * take a dirt spur, to sit out a sandstorm — and the moped can make a motel.
+ */
+export const AWAKE_TIME = 720;
 /** Below this the wheel starts to wander and the screen closes in. */
 const DROWSY_FROM = 0.3;
+/**
+ * How much the wheel wanders.
+ *
+ * Tired driving should be a thing you notice and correct, not a thing that
+ * takes the car off you. These are deliberately small: at the very end of
+ * the meter the drift is a few centimetres a second, which is a nag in the
+ * hands rather than a fight, and the closing veil and the blackouts carry
+ * the feeling instead.
+ */
+const DROWSY_PULL = 0.09;
+const MICROSLEEP_PULL = 0.18;
 const MICROSLEEP_MIN = 0.55;
 const MICROSLEEP_SPREAD = 0.6;
 const BETWEEN_MICROSLEEPS = 3.2;
@@ -85,13 +104,15 @@ export class Fatigue {
       handbrake: input.handbrake,
     };
     if (this.microsleep > 0) {
-      // Hands off the wheel, foot still on the pedal.
-      out.steer = this.wander * 0.5;
+      // Foot still on the pedal, and the hands go slack rather than letting
+      // go: you keep most of your own steering through a blackout, so a
+      // second of it is a fright rather than an automatic trip into the sand.
+      out.steer = out.steer * 0.8 + this.wander * MICROSLEEP_PULL;
       out.brake = 0;
       return out;
     }
     if (this.drowsiness > 0) {
-      out.steer = Math.max(-1, Math.min(1, out.steer + this.wander * 0.32));
+      out.steer = Math.max(-1, Math.min(1, out.steer + this.wander * DROWSY_PULL));
     }
     return out;
   }

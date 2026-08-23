@@ -137,12 +137,14 @@ automatically.
   nothing but a few seconds.
 - **The sleep meter is the clock.** It is not just a stamina bar — it is what
   time of day it is. You leave the garage at **07:00** in the low morning sun,
-  and as the meter drains the sun crosses the sky: high noon around the
-  halfway mark, golden hour at three quarters, and the sun on the horizon with
-  a quarter left. **The last of the light goes with the last of the meter, at
-  22:00.** After that the world stops moving: it stays night, the moon stays
-  up, and no amount of driving brings the morning back. Only a bed does — you
-  wake at dawn on the next day, and the day counter ticks over.
+  and as the meter drains the sun crosses the sky. Daylight fills the first
+  three quarters: high noon at 30%, golden hour at 58%, the sun on the horizon
+  at 66%. **By the time a quarter of the meter is left it is 21:00 and fully
+  dark, headlamps on, stars out** — so the last quarter of every day is night
+  driving with enough left in the tank to go somewhere in it. After the meter
+  empties the world stops moving: it stays night, the moon stays up, and no
+  amount of driving brings the morning back. Only a bed does — you wake at
+  dawn on the next day, and the day counter ticks over.
 - **Driving at night is a different game.** Your headlamps come up on their own
   through dusk and past that they are all you have: a hundred metres of tarmac
   and whatever is standing in it. The desert reads as silhouettes under the
@@ -150,16 +152,20 @@ automatically.
   road is a glow on the horizon long before it is a building. Getting caught
   out at night is the natural punishment for dawdling — and it is also the
   best the game looks.
-- **Sleep runs on the clock, not the odometer.** Six minutes of driving takes
-  you from wide awake to nodding off, and the only place to fix it is a
-  **motel** — the bed is free, but the night costs you at the pump, and they
-  sit about 7.5 km apart, several gas stations' worth. About one in four shares a plot with a station; the rest stand alone
-  with nothing but their neon. Park in the lot, stop, and you check in.
-- Cruise at 120 km/h and you reach the next bed with a quarter of the meter
-  left. **Dawdle at 70 km/h and you do not make it**: the last few hundred
-  metres are driven asleep, with the wheel wandering, the edges of the world
-  closing in and blackouts of about a second. Sleep never kills you by
-  itself — it just makes you a much worse driver.
+- **Sleep runs on the clock, not the odometer.** **Twelve minutes** of driving
+  takes you from wide awake to nodding off, and the only place to fix it is a
+  **motel** — they sit about 8 km apart, several gas stations' worth. About one
+  in four shares a plot with a station; the rest stand alone with nothing but
+  their neon. Park in the lot, stop, and you check in.
+- A day's sleep is **24 km at 120 km/h, 14 at 70, 9 on the moped**, against a
+  motel every 8: every vehicle in the garage can reach a bed, and there is
+  room in a day to stop for a fare, take a dirt spur or sit out a sandstorm
+  rather than sprinting bed to bed.
+- Run it down anyway and it does not take the car off you. The wheel wanders,
+  the edges of the world close in, and past empty you black out for about a
+  second at a time — but a driver who keeps hold of it wanders under two
+  metres and stays on the road. Sleep never kills you by itself, and it does
+  not steer for you either: it just makes you a much worse driver.
 - Driving on sand is slow and burns **70% more fuel**; the gravel shoulder
   costs 25% more. Standing still still burns fuel — the engine is idling.
 - Traffic is thin on the ground, like the real thing: a vehicle every
@@ -291,10 +297,11 @@ than a fresh one.
 does per metre, so four and a half litres will carry it past five gas stations
 and to within a few hundred metres of the sixth: the fuel gauge simply stops
 being the thing you worry about. What replaces it is the clock. Restricted to
-45 km/h it covers 4.5 km in a day's worth of sleep, and the motels are 7.4 km
-apart — so **you cannot reach a bed before the meter empties, ever.** The last
-two or three kilometres of every night are ridden asleep, wandering, blacking
-out a second at a time.
+45 km/h it covers 9 km in a day's worth of sleep against motels about 8 km
+apart, so it reaches a bed — but only just, and only if nothing goes wrong.
+There is no room in its day for a dirt spur, a long fare or a sandstorm sat
+out at the roadside: anything that costs time is a night ridden asleep,
+wandering, blacking out a second at a time.
 
 And there is nothing around you. A car takes three big hits before it is
 finished; the moped takes **one head-on and the run is over**, whatever the
@@ -451,12 +458,15 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   pase lo que pase, son **2,37 $**.
 - **La barra de sueño es el reloj.** No es solo una barra de aguante: es la
   hora que es. Sales del garaje a las **07:00** con el sol bajo de la mañana y,
-  según baja la barra, el sol cruza el cielo: mediodía a la mitad, hora dorada
-  a tres cuartos y el sol en el horizonte cuando te queda un cuarto. **La
-  última luz se va con el último trozo de barra, a las 22:00.** A partir de ahí
-  el mundo se para: se queda de noche, la luna se queda arriba y por mucho que
-  conduzcas no vuelve a amanecer. Solo lo hace una cama: despiertas al alba del
-  día siguiente y el contador de días sube.
+  según baja la barra, el sol cruza el cielo. La luz de día ocupa los tres
+  primeros cuartos: mediodía al 30 %, hora dorada al 58 %, el sol en el
+  horizonte al 66 %. **Cuando te queda un cuarto de barra son las 21:00 y ya
+  es noche cerrada, con los faros puestos y las estrellas fuera** — así que el
+  último cuarto de cada día es conducción nocturna con barra de sobra para
+  llegar a algún sitio. Cuando la barra se vacía el mundo se para: se queda de
+  noche, la luna se queda arriba y por mucho que conduzcas no vuelve a
+  amanecer. Solo lo hace una cama: despiertas al alba del día siguiente y el
+  contador de días sube.
 - **Conducir de noche es otro juego.** Los faros se encienden solos al
   anochecer y a partir de ahí son lo único que tienes: cien metros de asfalto y
   lo que haya plantado en ellos. El desierto se queda en siluetas bajo la luna,
@@ -464,18 +474,21 @@ En móviles y tablets aparecen pedales y botones de dirección en pantalla.
   segundos es un resplandor en el horizonte mucho antes de ser un edificio.
   Llegar de noche es el castigo natural por ir despacio — y también es cuando
   mejor se ve el juego.
-- **El sueño va por tiempo, no por kilómetros.** Seis minutos al volante te
-  llevan de estar fresco a caerte de sueño, y lo único que lo arregla es un
-  **motel** — la habitación son **20 $** y la noche te la cobran también en el
-  surtidor, y
-  están a unos 7,5 km unos de otros, varias gasolineras de por medio. Uno de cada cuatro comparte parcela con una
+- **El sueño va por tiempo, no por kilómetros.** **Doce minutos** al volante
+  te llevan de estar fresco a caerte de sueño, y lo único que lo arregla es un
+  **motel** — la habitación son **20 $**, y están a unos 8 km unos de otros,
+  varias gasolineras de por medio. Uno de cada cuatro comparte parcela con una
   gasolinera; el resto están solos en mitad de la nada con su neón. Aparca en
   el parking, párate del todo y te registras.
-- A 120 km/h llegas a la cama con un cuarto de la barra. **A 70 km/h no
-  llegas**: los últimos cientos de metros los haces dormido, con el volante
-  yéndose solo, la pantalla cerrándose por los bordes y apagones de casi un
-  segundo. El sueño nunca te mata por sí mismo: solo te convierte en un
-  conductor pésimo.
+- Un día de sueño son **24 km a 120 km/h, 14 a 70 y 9 en la Vespino**, contra
+  un motel cada 8: cualquier vehículo del garaje llega a una cama, y sobra día
+  para parar a por un viaje, meterse por un camino de tierra o esperar a que
+  pase una tormenta en vez de ir de cama en cama sin levantar el pie.
+- Aun así, agotarla no te quita el coche. El volante se va, la pantalla se
+  cierra por los bordes y, pasado el cero, te quedas frito casi un segundo
+  cada pocos — pero quien sujeta el volante se mueve menos de dos metros y no
+  se sale. El sueño nunca te mata por sí mismo, y tampoco conduce por ti: solo
+  te convierte en un conductor mucho peor.
 - La arena es lenta y gasta un **70% más** de gasolina; el arcén, un 25% más.
   Parado también gastas: el motor sigue al ralentí.
 - Hay muy poco tráfico, como en el desierto de verdad: un vehículo cada
@@ -642,10 +655,11 @@ sitios, las mesetas en otra parte—, así que reanudar tiene que devolverte a
 superdeportivo por metro, así que con cuatro litros y medio se planta más allá
 de cinco gasolineras y a unos cientos de metros de la sexta: la aguja de la
 gasolina deja de ser el problema. Lo que la sustituye es el reloj. Limitado a
-45 km/h recorre 4,5 km con un depósito de sueño lleno, y los moteles están a
-7,4 km — o sea que **no puedes llegar a una cama antes de que se acabe la
-barra, nunca.** Los últimos dos o tres kilómetros de cada noche los haces
-dormido, dando bandazos y con apagones de un segundo.
+45 km/h recorre 9 km con un depósito de sueño lleno contra moteles cada 8 km,
+así que llega a la cama — pero justo, y sólo si no pasa nada. En su día no cabe
+un camino de tierra, ni un viaje largo, ni esperar a que pase una tormenta:
+cualquier cosa que cueste tiempo es una noche montada dormido, dando bandazos
+y con apagones de un segundo. **No puedes permitirte perder ni un minuto.**
 
 Y no llevas nada alrededor. Un coche aguanta tres golpes fuertes antes de
 quedarse; el ciclomotor se acaba **con un frontal y ya**, marque lo que marque
