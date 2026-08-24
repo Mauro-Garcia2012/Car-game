@@ -48,13 +48,13 @@ export const PRIZE_WORN = 'worn';
 export const PRIZE_HATCH = 'hatch';
 export const PRIZE_SUPER = 'super';
 /**
- * A luggage rack and panniers: the one thing that lets a bike carry freight.
+ * A road atlas: fifty kilometres of what is coming, on paper.
  *
- * Only worth anything if you are on two wheels, so the draw is context
- * sensitive — see `prizeAt`. Somebody left it out here; on four wheels it is
- * scrap and the case pays out in notes instead.
+ * Worthless if you already have one, so the draw is context sensitive — see
+ * `prizeAt`. Somebody out here was planning further ahead than they managed
+ * to get.
  */
-export const PRIZE_RACK = 'rack';
+export const PRIZE_ATLAS = 'atlas';
 
 export const CASE_CASH = 300;
 export const REPAIR_COST = 100;
@@ -102,16 +102,15 @@ export function trackAt(index) {
 /**
  * What is in the case at the end of spur `index`.
  *
- * @param {boolean} [wantsRack] true when a rack would actually be worth
- *   something — on a bike, without one already. When it is not, that tenth of
- *   the draw pays out in notes rather than handing you a part for a vehicle
- *   you are not riding.
+ * @param {boolean} [wantsAtlas] true when an atlas would be worth something —
+ *   that is, when you have not got one. When you have, that tenth of the draw
+ *   pays out in notes instead of handing you a second copy of a map.
  */
-export function prizeAt(index, wantsRack = false) {
+export function prizeAt(index, wantsAtlas = false) {
   const r = hashRand(index, 617);
   if (r < 0.01) return PRIZE_SUPER;
   if (r < 0.11) return PRIZE_HATCH;
-  if (r < 0.21) return wantsRack ? PRIZE_RACK : PRIZE_CASH;
+  if (r < 0.21) return wantsAtlas ? PRIZE_ATLAS : PRIZE_CASH;
   if (r < 0.66) return PRIZE_CASH;
   return PRIZE_WORN;
 }
@@ -309,8 +308,8 @@ export class SideRoads {
 
     /** Cases already picked up this run, by track index. */
     this.taken = new Set();
-    /** Set by the game: is a luggage rack worth anything to us right now? */
-    this.wantsRack = false;
+    /** Set by the game: would an atlas be worth anything to us right now? */
+    this.wantsAtlas = false;
     this.tmp = { x: 0, y: 0, z: 0 };
     onReseed(() => {
       for (const slot of this.slots) slot.index = null;
@@ -431,7 +430,7 @@ export class SideRoads {
       slot.box.visible = false;
       return {
         index,
-        prize: prizeAt(index, this.wantsRack),
+        prize: prizeAt(index, this.wantsAtlas),
         x: slot.box.position.x,
         y: slot.box.position.y,
         z: slot.box.position.z,

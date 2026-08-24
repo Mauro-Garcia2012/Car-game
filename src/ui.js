@@ -765,6 +765,9 @@ export class UI {
     // damage bar next to it.
     e.tyre.style.width = `${Math.max(0, s.tyre)}%`;
     e.tyre.classList.toggle('low', s.tyre < 22 || s.blown);
+    // No atlas, no map: the button stays there so you know the thing exists,
+    // but it is greyed so you are not pressing Tab hoping.
+    e.mapBtn.classList.toggle('locked', !s.atlas);
 
     e.day.textContent = String(s.day);
     e.cash.textContent = `$${s.cash.toFixed(0)}`;

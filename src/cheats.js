@@ -89,9 +89,15 @@ const CODES = {
       g.cash += 25000;
       g.fatigue.sleep();
       g.setWornEngine(false);
+      g.upgrades.atlas = 1;
       unlockAll(g);
       return 'everything';
     },
+  },
+
+  MAPP: {
+    what: 'a road atlas',
+    run: (g) => ((g.upgrades.atlas = 1), 'atlas in the glovebox'),
   },
 
   /* --- what the run is made of --- */

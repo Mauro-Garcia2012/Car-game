@@ -32,7 +32,7 @@ import {
   PRIZE_WORN,
   PRIZE_HATCH,
   PRIZE_SUPER,
-  PRIZE_RACK,
+  PRIZE_ATLAS,
 } from './world/sideroads.js';
 import { Fatigue, AWAKE_TIME } from './fatigue.js';
 import {
@@ -257,6 +257,11 @@ export class Game {
    * glance at while driving — would have to be small enough to be useless.
    */
   toggleMap() {
+    if (!this.upgrades.atlas && !this.ui.mapOpen) {
+      this.audio.warn();
+      this.flash('msg.noAtlas', 'danger', 3.6);
+      return;
+    }
     if (this.ui.mapOpen) {
       this.ui.closeMap();
       if (this.pausedForMap) this.setPaused(false);
@@ -659,7 +664,7 @@ export class Game {
       this.handleMotel(dt);
       this.handleFares();
       this.handleChat();
-      this.sideRoads.wantsRack = isBike(this.spec) && !this.upgrades.rack;
+      this.sideRoads.wantsAtlas = !this.upgrades.atlas;
       this.shopRows = this.atShop ? counter(this) : [];
       this.handleFreight();
       this.handleStationBookkeeping();
@@ -728,10 +733,10 @@ export class Game {
       prize = PRIZE_CASH; // already in the garage
     }
 
-    if (prize === PRIZE_RACK) {
-      this.upgrades.rack = 1;
+    if (prize === PRIZE_ATLAS) {
+      this.upgrades.atlas = 1;
       this.audio.fanfare();
-      this.flash('msg.caseRack', 'good', 5);
+      this.flash('msg.caseAtlas', 'good', 5);
       return;
     }
 
@@ -1107,10 +1112,9 @@ export class Game {
    */
   handleFreight() {
     const v = this.vehicle;
-    // A bike has nowhere to put it until somebody bolts a rack on. Anything
-    // already aboard from a swap falls off the back here rather than riding
-    // along invisibly.
-    if (isBike(this.spec) && !this.upgrades.rack) {
+    // A bike has nowhere to put it. Anything already aboard from a swap
+    // falls off the back here rather than riding along invisibly.
+    if (isBike(this.spec)) {
       if (this.freight.active) this.freight.clear();
       v.freight = 0;
       return;
@@ -1425,6 +1429,7 @@ export class Game {
       toMotel,
       checkingIn: this.checkingIn / CHECKIN_TIME,
       storm: this.storm,
+      atlas: !!this.upgrades.atlas,
       tyre: v.tyre,
       blown: v.blown,
       shop: this.atShop ? this.shopRows : null,

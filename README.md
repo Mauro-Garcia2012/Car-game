@@ -170,8 +170,8 @@ again. Getting it wrong says `PIN INCORRECTO` and nothing else happens.
   and the **storms come round twice as often**. It saturates rather than
   climbing forever, so the road is eventually as bad as it gets and no worse —
   and the answer to it is the counter at every station.
-- **The route map.** Everything this game asks you to plan was information
-  you only got by arriving at it: the HUD gives you the next station and
+- **The route map, once you have a map.** Everything this game asks you to
+  plan was information you only got by arriving at it: the HUD gives you the next station and
   nothing about the one after, so there was no such thing as *choosing* a
   station. `Tab` opens the atlas out of the glovebox — the next **50 km** as a
   strip, with the pumps **and their prices** (the cheapest ahead marked), the
@@ -182,6 +182,14 @@ again. Getting it wrong says `PIN INCORRECTO` and nothing else happens.
   fuel and sleep stop being numbers and become distances you can hold against
   the things on the road. It does not show the patrol cars, deliberately:
   knowing where they are would turn the one gamble on this road into a lookup.
+- **And you have to get hold of one.** You start with an empty glovebox. The
+  atlas is **$4,500 at any pump — the dearest thing on the counter by a
+  distance**, above every part, because knowing where the cheap fuel is and
+  how far your two ranges actually reach is worth more than any of them. Or
+  find one: it is in **one briefcase in ten** at the end of a dirt track,
+  and once you have it that tenth of the draw pays out in notes instead, so
+  the case never hands you a second copy. Until then the road is what it
+  always was — whatever is in front of you.
 - **One billboard, at kilometre ninety.** Forty-eight metres of it, on the
   empty side of the road, saying *the pumps get further apart from here on —
   I'd get a bigger tank at our workshop, unless you fancy the walk.* It stands
@@ -213,12 +221,7 @@ again. Getting it wrong says `PIN INCORRECTO` and nothing else happens.
   because nobody rides pillion for ninety minutes with a bag between their
   knees at full fare. Both are on the card in the garage, before you pick.
   It turns the bikes from "the ones with better economy" into a different way
-  to play: almost free to run, and almost impossible to earn on. The way out
-  is a **rack and panniers at $4,800** — by far the dearest thing on the
-  counter — or the same rack in a briefcase, which is **one dirt track in
-  ten** while you are on a bike without one. On four wheels that tenth of the
-  draw pays out in notes instead, so the case never hands you a part for a
-  vehicle you are not riding.
+  to play: almost free to run, and almost impossible to earn on.
 - **Freight.** A fare is ten to twenty kilometres. A load is **forty to a
   hundred**, for money that dwarfs it, taken on at one station and handed over
   at another. It is also a car that will not pull away and will not stop:
@@ -733,6 +736,14 @@ volver a meterlo. Si te equivocas dice `PIN INCORRECTO` y no pasa nada más.
   puedes comparar con lo que hay en la carretera. No enseña los coches de
   policía, a propósito: saber dónde están convertiría la única apuesta de esta
   carretera en una consulta.
+- **Y hay que conseguirlo.** Empiezas con la guantera vacía. El mapa cuesta
+  **4.500 $ en cualquier surtidor —de lejos lo más caro del mostrador**, por
+  encima de cualquier pieza, porque saber dónde está la gasolina barata y
+  hasta dónde llegan de verdad tus dos autonomías vale más que todas ellas. O
+  lo encuentras: sale en **un maletín de cada diez** al final de un camino de
+  tierra, y una vez lo tienes esa décima parte del sorteo paga en billetes,
+  así que el maletín nunca te da una segunda copia. Hasta entonces la
+  carretera es lo que siempre fue: lo que tengas delante.
 - **Una valla publicitaria, en el kilómetro noventa.** Cuarenta y ocho metros
   de valla, en el lado despejado de la carretera: *de aquí en adelante las
   gasolineras se distancian — yo que tú ampliaría el depósito en nuestro
@@ -765,12 +776,7 @@ volver a meterlo. Si te equivocas dice `PIN INCORRECTO` y no pasa nada más.
   mitad**, porque nadie va de paquete hora y media con la bolsa entre las
   rodillas a precio entero. Las dos cosas están en la ficha del garaje, antes
   de elegir. Eso convierte a las motos de «las que gastan menos» en otra forma
-  de jugar: casi gratis de mantener y casi imposibles de rentabilizar. La
-  salida es una **baca con alforjas por 4.800 $** —de lejos lo más caro del
-  mostrador— o esa misma baca en un maletín, que sale **un camino de tierra de
-  cada diez** mientras vayas en moto sin ella. En coche esa décima parte del
-  sorteo paga en billetes, así que el maletín nunca te da una pieza para un
-  vehículo que no llevas.
+  de jugar: casi gratis de mantener y casi imposibles de rentabilizar.
 - **Mercancía.** Un viaje son diez o veinte kilómetros. Una carga son **de
   cuarenta a cien**, por un dinero que no tiene comparación, que se coge en una
   gasolinera y se entrega en otra. Y es también un coche que no arranca y no

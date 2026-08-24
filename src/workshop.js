@@ -17,8 +17,6 @@
  * this road, and it dies with the car.
  */
 
-import { isBike } from './cars/index.js';
-
 /** The counter, in the order it is listed. */
 export const ITEMS = [
   {
@@ -83,20 +81,21 @@ export const ITEMS = [
     },
   },
   {
-    id: 'rack',
-    key: 'shop.rack',
+    id: 'atlas',
+    key: 'shop.atlas',
     max: 1,
     /**
-     * Panniers and a rack, and the only thing on the counter that is not
-     * worth having: nobody with four wheels needs it and nobody with two can
-     * easily afford it. That is the point — a bike is cheap to run and
-     * cannot earn, and this is the several-thousand-dollar door out of that,
-     * which you either save for or find at the end of a dirt track.
+     * The road atlas, and the dearest thing on the counter by a distance.
+     *
+     * It is the only item that changes what you know rather than what the
+     * car does, and knowing where the cheap fuel is, where the beds are and
+     * how far your two ranges actually reach is worth more than any of the
+     * parts — so it is priced above all of them, and until you have it the
+     * road is what it always was: whatever is in front of you.
      */
-    price: () => 4800,
-    offered: (g) => isBike(g.spec),
+    price: () => 4500,
     buy: (g) => {
-      g.upgrades.rack = 1;
+      g.upgrades.atlas = 1;
     },
   },
   {
@@ -113,7 +112,7 @@ export const ITEMS = [
 
 /** A fresh set of counters. */
 export function emptyUpgrades() {
-  return { cans: 0, grip: 0, armour: 0, lamps: 0, tune: 0, rack: 0 };
+  return { cans: 0, grip: 0, armour: 0, lamps: 0, tune: 0, atlas: 0 };
 }
 
 /** Puts a set of upgrades back onto the car, after a swap or a resume. */

@@ -1859,3 +1859,9 @@ body.touch .touch-controls {
   line-height: 1.45;
   opacity: 0.8;
 }
+
+/* No atlas yet: the button is still there, just plainly not usable. */
+#map-btn.locked {
+  opacity: 0.38;
+  border-style: dashed;
+}
