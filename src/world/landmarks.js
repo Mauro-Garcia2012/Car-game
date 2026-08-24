@@ -47,8 +47,31 @@ onReseed(() => {
   sights.length = 0;
 });
 
+
 /** Names of the builders below, in deck order. */
-const KINDS = ['town', 'drivein', 'plane', 'dino', 'tower'];
+const KINDS = [
+  'town',
+  'drivein',
+  'plane',
+  'dino',
+  'tower',
+  'junkyard',
+  'mine',
+  'dish',
+  'church',
+  'silos',
+  'diner',
+  'buses',
+  'arrow',
+  'trailers',
+];
+
+/** The smallest step through the deck that still visits every card. */
+const STRIDE = (() => {
+  const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+  for (let k = 3; k < 40; k++) if (gcd(k, KINDS.length) === 1) return k;
+  return 1;
+})();
 
 function computeSight(i) {
   const s =
@@ -57,9 +80,11 @@ function computeSight(i) {
       : sights[i - 1].s + GAP_MIN + Math.round(hashRand(i, 8101) * GAP_SPREAD);
   // A deck, not a die: step through the kinds by a stride coprime with the
   // count, starting where the seed says, so no two in a row ever match and
-  // all five come round before any repeats.
+  // every one comes round before any repeats. The stride has to be worked
+  // out rather than written down — with fourteen kinds a hardcoded 2 would
+  // show you seven of them and hide the rest forever.
   const start = Math.floor(hashRand(0, 8117) * KINDS.length);
-  const kind = KINDS[(start + i * 2) % KINDS.length];
+  const kind = KINDS[(start + i * STRIDE) % KINDS.length];
   const side = hashRand(i, 8123) < 0.5 ? -1 : 1;
   const out = OUT_MIN + hashRand(i, 8131) * OUT_SPREAD;
   return { s, kind, side, out, turn: (hashRand(i, 8147) - 0.5) * 1.1 };
@@ -339,6 +364,226 @@ function buildTower() {
   return b.bake(new THREE.Group());
 }
 
+/** A yard of dead cars, stacked two high and going nowhere. */
+function buildJunkyard() {
+  const mat = materials();
+  const b = new Batch();
+  const shell = (x, y, z, ry, rz) => {
+    b.box(2.0, 0.8, 4.4, mat.rust, x, y + 0.6, z, ry, rz);
+    b.box(1.7, 0.7, 2.0, mat.rust, x, y + 1.3, z + 0.3, ry, rz);
+  };
+  for (let i = 0; i < 7; i++) {
+    const r = hashRand(i, 8201);
+    shell(2 + (i % 3) * 3.2, 0, -9 + Math.floor(i / 3) * 5.2, r * 6.3, (r - 0.5) * 0.2);
+  }
+  for (let i = 0; i < 4; i++) {
+    const r = hashRand(i, 8207);
+    shell(3 + (i % 2) * 3.2, 1.6, -7 + Math.floor(i / 2) * 5.2, r * 6.3, (r - 0.5) * 0.35);
+  }
+  // A crusher and a stack of cubes it already got through.
+  b.box(4.0, 3.2, 3.0, mat.steel, 13, 1.6, 4);
+  b.box(4.4, 0.5, 3.4, mat.rust, 13, 3.5, 4);
+  for (let i = 0; i < 5; i++) {
+    b.box(1.5, 1.2, 1.5, mat.rust, 12 + (i % 2) * 1.7, 0.6 + Math.floor(i / 2) * 1.25, 8);
+  }
+  // Chain-link fence round the lot, as posts and a top rail.
+  for (let i = 0; i <= 12; i++) {
+    b.cyl(0.07, 0.07, 2.4, 6, mat.steel, -2, 1.2, -12 + i * 2);
+  }
+  b.box(0.07, 0.07, 24, mat.steel, -2, 2.3, 0);
+  return b.bake(new THREE.Group());
+}
+
+/** A mine head: a headframe, an ore bin and a slope of tailings. */
+function buildMine() {
+  const mat = materials();
+  const b = new Batch();
+  const H = 13;
+  for (const [dx, dz] of [[-1.6, -1.6], [1.6, -1.6], [-1.6, 1.6], [1.6, 1.6]]) {
+    b.box(0.3, H, 0.3, mat.timber, dx, H / 2, dz, 0, -dx * 0.045);
+  }
+  for (const y of [4, 8, 11.5]) {
+    for (const a of [0, Math.PI / 2]) b.box(0.16, 0.16, 3.6, mat.timber, 0, y, 0, a);
+  }
+  b.box(3.6, 0.4, 3.6, mat.timber, 0, H, 0);
+  b.cyl(1.3, 1.3, 0.5, 14, mat.steel, 0, H + 0.8, 0, 0, Math.PI / 2);
+  // The back legs of the frame lean out to the hoist house.
+  b.box(0.3, 14, 0.3, mat.timber, 4.4, 6.4, 0, 0, 0.36);
+  b.box(0.3, 14, 0.3, mat.timber, 4.4, 6.4, 2.4, 0, 0.36);
+  b.box(4.5, 3.0, 5.0, mat.tin, 9, 1.5, 1.2);
+  b.box(5.0, 0.2, 5.4, mat.rust, 9, 3.1, 1.2, 0, 0.06);
+  // Ore bin on legs, and the grey heap under it.
+  b.box(3.4, 2.6, 3.4, mat.timber, -6, 3.4, -3, 0.3);
+  for (const [dx, dz] of [[-1.4, -1.4], [1.4, -1.4], [-1.4, 1.4], [1.4, 1.4]]) {
+    b.box(0.26, 2.2, 0.26, mat.timber, -6 + dx, 1.1, -3 + dz);
+  }
+  b.cyl(0.1, 7.5, 3.2, 12, mat.tin, -9, 1.6, 5);
+  return b.bake(new THREE.Group());
+}
+
+/** A radio dish on a mount, still pointed at something. */
+function buildDish() {
+  const mat = materials();
+  const b = new Batch();
+  b.cyl(2.6, 3.4, 1.2, 16, mat.tin, 0, 0.6, 0);
+  b.cyl(0.9, 1.1, 6.5, 14, mat.steel, 0, 3.9, 0);
+  b.box(2.6, 1.8, 2.6, mat.steel, 0, 7.6, 0);
+  // The dish itself: a shallow cone, face up and tilted at the sky.
+  b.add(
+    new THREE.ConeGeometry(7.5, 2.6, 26, 1, true),
+    mat.screen,
+    0,
+    9.6,
+    -1.4,
+    0,
+    0.62
+  );
+  b.cyl(0.22, 0.22, 5.4, 8, mat.steel, 1.4, 10.6, -3.4, 0, 0.62 - Math.PI / 2);
+  b.box(0.9, 0.9, 0.9, mat.rust, 3.6, 11.7, -5.4);
+  for (const a of [0.5, 2.6, 4.2]) {
+    b.box(0.16, 0.16, 8, mat.steel, Math.cos(a) * 3, 8.2, Math.sin(a) * 3, a, 1.1);
+  }
+  b.box(3.0, 2.4, 3.0, mat.tin, 9, 1.2, 6);
+  return b.bake(new THREE.Group());
+}
+
+/** A clapboard mission church, roof half gone, bell still up there. */
+function buildChurch() {
+  const mat = materials();
+  const b = new Batch();
+  b.box(7.5, 5.0, 13, mat.timberPale, 0, 2.5, 0);
+  // Pitched roof as two leaning slabs, one of them fallen in.
+  b.box(0.3, 5.4, 13.2, mat.tin, -1.9, 6.2, 0, 0, 0.72);
+  b.box(0.3, 5.4, 7.0, mat.tin, 1.9, 6.2, -3, 0, -0.72);
+  b.box(0.3, 3.4, 5.5, mat.tin, 2.6, 4.6, 4.2, 0.35, -1.0);
+  // Tower, belfry and cross.
+  b.box(3.4, 9.5, 3.4, mat.timberPale, 0, 4.75, -7.4);
+  b.box(3.0, 2.2, 3.0, mat.timber, 0, 10.4, -7.4);
+  b.cyl(0.1, 2.4, 2.4, 4, mat.tin, 0, 12.6, -7.4);
+  b.box(0.18, 1.8, 0.18, mat.timber, 0, 14.6, -7.4);
+  b.box(0.9, 0.18, 0.18, mat.timber, 0, 15.0, -7.4);
+  b.cyl(0.45, 0.6, 0.7, 10, mat.rust, 0, 10.4, -7.4);
+  // Door, two windows and a fenced plot with three markers.
+  b.box(0.2, 2.6, 1.6, mat.timber, -1.78, 1.3, -7.4);
+  for (const z of [-2, 2.5]) b.box(0.2, 2.0, 1.1, mat.glass, -3.78, 3.0, z);
+  for (let i = 0; i < 3; i++) {
+    b.box(0.12, 0.9, 0.5, mat.tin, 7 + i * 0.4, 0.45, -3 + i * 2.4, hashRand(i, 8211));
+  }
+  return b.bake(new THREE.Group());
+}
+
+/** Three grain silos and a conveyor, miles from any grain. */
+function buildSilos() {
+  const mat = materials();
+  const b = new Batch();
+  for (let i = 0; i < 3; i++) {
+    const z = -7 + i * 7;
+    b.cyl(3.0, 3.0, 15, 18, mat.tin, 0, 7.5, z);
+    b.cyl(0.5, 3.2, 2.4, 18, mat.tin, 0, 16.2, z);
+    b.cyl(3.05, 3.05, 0.3, 18, mat.rust, 0, 3.5, z);
+    b.cyl(3.05, 3.05, 0.3, 18, mat.rust, 0, 11.5, z);
+  }
+  // The gallery along the top and the leg that feeds it.
+  b.box(1.4, 1.2, 16, mat.tin, 0, 18.2, 0);
+  b.box(1.8, 1.8, 18, mat.steel, 6.5, 9.5, 0, 0, 0.62);
+  b.box(4.0, 3.0, 4.0, mat.tin, 11, 1.5, 0);
+  for (const z of [-7, 0, 7]) {
+    b.box(0.7, 3.5, 0.7, mat.rust, 3.4, 1.75, z);
+  }
+  return b.bake(new THREE.Group());
+}
+
+/** A diner that closed: chrome shell, dead neon, chairs still stacked. */
+function buildDiner() {
+  const mat = materials();
+  const b = new Batch();
+  b.box(7.0, 3.2, 14, mat.alu, 0, 1.9, 0);
+  b.cyl(3.5, 3.5, 14, 18, mat.alu, 0, 3.5, 0, 0, Math.PI / 2);
+  b.box(7.2, 0.3, 14.2, mat.rust, 0, 3.55, 0);
+  // Window band down the road side, and the door.
+  for (let i = 0; i < 6; i++) {
+    b.box(0.2, 1.4, 1.7, mat.glass, -3.52, 2.3, -5.5 + i * 2.2);
+  }
+  b.box(0.24, 2.3, 1.3, mat.paint, -3.55, 1.15, 6.2);
+  // The sign on its pole, and the counter's stools inside are not visible,
+  // so the stack of chairs outside does the talking.
+  b.cyl(0.2, 0.24, 7.5, 10, mat.steel, -7, 3.75, -2);
+  b.box(0.4, 2.6, 4.6, mat.neon, -7, 8.4, -2);
+  b.box(0.6, 0.35, 5.0, mat.paint, -7, 9.9, -2);
+  for (let i = 0; i < 4; i++) {
+    b.cyl(0.28, 0.28, 0.1, 10, mat.rust, -5.5, 0.9 + i * 0.18, 8 + (i % 2) * 0.3);
+  }
+  b.box(6, 0.12, 3, mat.tin, -5, 0.06, -8);
+  return b.bake(new THREE.Group());
+}
+
+/** A row of buses nobody came back for. */
+function buildBuses() {
+  const mat = materials();
+  const b = new Batch();
+  for (let i = 0; i < 5; i++) {
+    const r = hashRand(i, 8221);
+    const x = 2 + i * 3.6 + r * 0.7;
+    const z = -6 + r * 12;
+    const ry = (r - 0.5) * 0.35;
+    b.box(2.6, 2.6, 11, mat.tin, x, 1.9, z, ry);
+    b.box(2.68, 0.9, 11.1, i % 2 ? mat.paint : mat.rust, x, 2.9, z, ry);
+    b.box(2.4, 1.1, 0.2, mat.glass, x, 2.6, z - 5.5, ry);
+    for (let w = 0; w < 4; w++) {
+      b.box(0.14, 0.9, 1.6, mat.glass, x - 1.35, 2.5, z - 3.6 + w * 2.4, ry);
+    }
+    for (const dz of [-3.6, 3.6]) {
+      b.cyl(0.55, 0.55, 0.3, 10, mat.rust, x - 1.2, 0.55, z + dz, 0, Math.PI / 2);
+    }
+  }
+  return b.bake(new THREE.Group());
+}
+
+/** The big neon arrow every dead motel on this road still has. */
+function buildArrow() {
+  const mat = materials();
+  const b = new Batch();
+  b.cyl(0.9, 1.2, 0.7, 14, mat.tin, 0, 0.35, 0);
+  b.cyl(0.34, 0.44, 13, 14, mat.steel, 0, 6.5, 0);
+  // The shaft of the arrow, leaning down at the road, with a head on it.
+  b.box(1.6, 0.8, 12, mat.paint, 0, 12.4, 1.6, 0, 0.18);
+  b.box(1.3, 0.4, 12, mat.neon, 0, 12.9, 1.6, 0, 0.18);
+  b.box(1.7, 3.4, 3.4, mat.paint, 0, 11.0, 7.4, Math.PI / 4, 0.18);
+  b.box(1.4, 2.4, 2.4, mat.neon, 0, 11.0, 7.4, Math.PI / 4, 0.18);
+  // Bulbs down the shaft, and the little sign hanging under it.
+  for (let i = 0; i < 9; i++) {
+    b.cyl(0.16, 0.16, 0.2, 8, mat.neon, 0.85, 13.4 - i * 0.22, -3.5 + i * 1.2, 0, Math.PI / 2);
+  }
+  b.box(0.3, 2.2, 4.4, mat.tin, 0, 4.6, 0);
+  return b.bake(new THREE.Group());
+}
+
+/** A trailer park with two left in it and the pads of a dozen more. */
+function buildTrailers() {
+  const mat = materials();
+  const b = new Batch();
+  const trailer = (x, z, ry, colour) => {
+    b.box(3.0, 2.6, 9.5, colour, x, 1.9, z, ry);
+    b.box(3.2, 0.24, 9.7, mat.alu, x, 3.3, z, ry);
+    for (let i = 0; i < 3; i++) {
+      b.box(0.14, 0.9, 1.2, mat.glass, x - 1.55, 2.2, z - 3 + i * 3, ry);
+    }
+    b.box(1.6, 0.12, 1.4, mat.rust, x - 2.2, 0.5, z + 2.4, ry);
+    b.box(0.1, 1.0, 1.4, mat.rust, x - 2.2, 1.0, z + 3.1, ry);
+    b.cyl(0.1, 0.1, 1.2, 6, mat.steel, x, 0.6, z - 4.6, ry);
+  };
+  trailer(3, -8, 0.06, mat.alu);
+  trailer(4.5, 6, -0.1, mat.paint);
+  for (let i = 0; i < 7; i++) {
+    const r = hashRand(i, 8231);
+    b.box(3.4, 0.14, 9, mat.tin, 3 + (i % 2) * 8, 0.07, -14 + i * 4.6 + r);
+    b.cyl(0.12, 0.14, 1.1, 6, mat.rust, 1 + (i % 2) * 8, 0.55, -14 + i * 4.6 + r);
+  }
+  b.box(0.16, 3.0, 0.16, mat.timber, -3, 1.5, -2);
+  b.box(0.2, 1.2, 2.8, mat.timberPale, -3, 3.2, -2);
+  return b.bake(new THREE.Group());
+}
+
 /**
  * Each sight, and how far out it wants to stand.
  *
@@ -352,6 +597,15 @@ const BUILDERS = {
   plane: { build: buildPlane, reach: 0.82, scale: 1.1 },
   dino: { build: buildDino, reach: 0.8, scale: 1.15 },
   tower: { build: buildTower, reach: 1.1, scale: 1 },
+  junkyard: { build: buildJunkyard, reach: 0.68, scale: 1.15 },
+  mine: { build: buildMine, reach: 0.95, scale: 1.1 },
+  dish: { build: buildDish, reach: 1.15, scale: 1 },
+  church: { build: buildChurch, reach: 0.72, scale: 1.2 },
+  silos: { build: buildSilos, reach: 1.0, scale: 1 },
+  diner: { build: buildDiner, reach: 0.6, scale: 1.15 },
+  buses: { build: buildBuses, reach: 0.72, scale: 1.1 },
+  arrow: { build: buildArrow, reach: 0.66, scale: 1.15 },
+  trailers: { build: buildTrailers, reach: 0.66, scale: 1.2 },
 };
 
 /* ------------------------------------------------------------------ */

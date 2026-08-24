@@ -439,6 +439,7 @@ export class Game {
     this.motels.update(v.s);
     this.buses.update(v.s, this.busWaiter);
     this.landmarks.update(v.s);
+    this.props.roadside.update(v.s);
     this.sideRoads.taken = new Set(run.cases || []);
     this.sideRoads.update(v.s);
     this.setWornEngine(!!run.worn);
@@ -589,6 +590,7 @@ export class Game {
     this.buses.update(v.s, this.busWaiter);
     this.sideRoads.update(v.s);
     this.landmarks.update(v.s);
+    this.props.roadside.update(v.s);
     this.traffic.update(dt, v.s);
     this.wildlife.update(dt, v.s, this.sky.light.lamps);
 

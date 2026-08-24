@@ -7,8 +7,8 @@
  */
 import * as THREE from 'three';
 import { mergeGeometries } from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
-import { roadPoint, EDGE } from '../track.js';
-import { hashRand } from '../rng.js';
+import { roadPoint, roadYaw, EDGE } from '../track.js';
+import { hashRand, onReseed } from '../rng.js';
 import { rockTexture } from '../textures.js';
 import { groundHeight, CHUNK_LEN } from './road.js';
 import { trackNear } from './sideroads.js';
@@ -33,6 +33,129 @@ function transformed(geo, { pos = [0, 0, 0], rot = [0, 0, 0], scale = null }) {
 /* ------------------------------------------------------------------ */
 /* Geometry builders                                                   */
 /* ------------------------------------------------------------------ */
+
+/** A box, as a geometry, ready to be merged. */
+const bx = (w, h, d, pos, rot = [0, 0, 0]) =>
+  transformed(new THREE.BoxGeometry(w, h, d), { pos, rot });
+/** A cylinder, likewise. */
+const cy = (rt, rb, h, seg, pos, rot = [0, 0, 0]) =>
+  transformed(new THREE.CylinderGeometry(rt, rb, h, seg), { pos, rot });
+
+/**
+ * An Aermotor windpump: lattice tower, fan, tail vane and a stock tank.
+ *
+ * The one structure that says "somebody once tried to keep animals alive
+ * here" without any other explanation, which is exactly the note the empty
+ * parts of this road want.
+ */
+function windpumpGeometry() {
+  const parts = [];
+  const H = 7.4;
+  for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    // Legs splay out at the base and meet under the platform.
+    parts.push(
+      bx(0.12, H, 0.12, [dx * 0.62, H / 2, dz * 0.62], [dz * 0.09, 0, -dx * 0.09])
+    );
+  }
+  for (const y of [1.9, 3.8, 5.7]) {
+    const w = 1.5 * (1 - y / (H * 1.7));
+    parts.push(bx(w * 2, 0.07, 0.07, [0, y, -w], [0, 0, 0]));
+    parts.push(bx(w * 2, 0.07, 0.07, [0, y, w], [0, 0, 0]));
+    parts.push(bx(0.07, 0.07, w * 2, [-w, y, 0], [0, 0, 0]));
+    parts.push(bx(0.07, 0.07, w * 2, [w, y, 0], [0, 0, 0]));
+  }
+  parts.push(bx(1.5, 0.1, 1.5, [0, H, 0]));
+  // Head, fan and vane. The fan is a ring of blades on a hub.
+  parts.push(cy(0.22, 0.28, 0.9, 8, [0, H + 0.55, 0], [Math.PI / 2, 0, 0]));
+  for (let i = 0; i < 14; i++) {
+    const a = (i / 14) * Math.PI * 2;
+    parts.push(
+      bx(0.34, 0.9, 0.03, [Math.cos(a) * 0.85, H + 0.55 + Math.sin(a) * 0.85, -0.5],
+        [0, 0, a + 0.35])
+    );
+  }
+  parts.push(cy(0.1, 0.1, 0.24, 8, [0, H + 0.55, -0.5], [Math.PI / 2, 0, 0]));
+  parts.push(bx(0.05, 0.7, 1.9, [0, H + 0.7, 1.5]));
+  parts.push(bx(0.07, 0.07, 1.6, [0, H + 0.55, 0.75]));
+  // Stock tank at the foot of it, half full of nothing.
+  parts.push(cy(1.5, 1.5, 0.8, 14, [2.6, 0.4, 1.2]));
+  parts.push(cy(1.35, 1.35, 0.1, 14, [2.6, 0.72, 1.2]));
+  return mergeGeometries(parts, false);
+}
+
+/** A run of stock fence: five posts and two wires, twelve metres of it. */
+function fenceGeometry() {
+  const parts = [];
+  for (let i = 0; i < 5; i++) {
+    const z = -6 + i * 3;
+    parts.push(bx(0.1, 1.35, 0.1, [0, 0.66, z], [0, 0, (hashRand(i, 401) - 0.5) * 0.16]));
+  }
+  for (const y of [0.55, 1.05]) parts.push(bx(0.035, 0.035, 12.2, [0, y, 0]));
+  return mergeGeometries(parts, false);
+}
+
+/** A shell somebody walked away from, on its rims, doors gone. */
+function wreckGeometry() {
+  const parts = [
+    bx(1.8, 0.75, 4.3, [0, 0.62, 0]),
+    bx(1.55, 0.62, 1.9, [0, 1.3, 0.25]),
+    bx(1.62, 0.1, 2.0, [0, 1.62, 0.25]),
+    // Sills where the doors were, and a bonnet peeled up at the front.
+    bx(1.9, 0.16, 2.0, [0, 0.9, 0.2]),
+    bx(1.5, 0.1, 1.1, [0, 1.05, -1.75], [0.5, 0, 0]),
+  ];
+  for (const [dx, dz] of [[-0.82, -1.4], [0.82, -1.4], [-0.82, 1.5], [0.82, 1.5]]) {
+    parts.push(cy(0.32, 0.32, 0.16, 10, [dx, 0.16, dz], [0, 0, Math.PI / 2]));
+  }
+  return mergeGeometries(parts, false);
+}
+
+/** A ranch gate: two posts, a crossbeam and nothing behind it any more. */
+function ranchGateGeometry() {
+  const parts = [
+    cy(0.16, 0.2, 4.2, 10, [-2.6, 2.1, 0]),
+    cy(0.16, 0.2, 4.2, 10, [2.6, 2.1, 0]),
+    bx(5.6, 0.24, 0.24, [0, 4.0, 0]),
+    bx(5.2, 0.1, 0.1, [0, 3.6, 0]),
+    bx(1.9, 0.7, 0.08, [0, 3.35, 0]),
+    // The gate itself, hanging open off one hinge.
+    bx(0.08, 1.5, 2.6, [-2.5, 1.5, 1.2], [0, 0.5, 0.07]),
+  ];
+  return mergeGeometries(parts, false);
+}
+
+/** A nodding donkey, stopped mid-stroke. */
+function pumpjackGeometry() {
+  const parts = [
+    bx(3.4, 0.4, 1.8, [0, 0.2, 0]),
+    // A-frame.
+    bx(0.22, 3.4, 0.22, [-0.2, 1.9, -0.62], [0.18, 0, 0.06]),
+    bx(0.22, 3.4, 0.22, [-0.2, 1.9, 0.62], [-0.18, 0, 0.06]),
+    bx(0.22, 0.22, 1.5, [-0.2, 3.6, 0]),
+    // Walking beam, tipped forward, with the horsehead on the end.
+    bx(6.4, 0.4, 0.5, [0.4, 3.75, 0], [0, 0, -0.16]),
+    bx(0.8, 1.5, 0.55, [3.5, 3.0, 0], [0, 0, -0.16]),
+    bx(0.16, 2.4, 0.16, [3.7, 1.3, 0]),
+    // Counterweight and crank at the back.
+    cy(0.9, 0.9, 0.35, 12, [-2.9, 2.5, 0.5], [0, 0, Math.PI / 2]),
+    cy(0.9, 0.9, 0.35, 12, [-2.9, 2.5, -0.5], [0, 0, Math.PI / 2]),
+    bx(1.2, 1.1, 1.4, [-2.9, 0.75, 0]),
+    // Wellhead.
+    cy(0.3, 0.34, 1.1, 10, [3.7, 0.55, 0]),
+  ];
+  return mergeGeometries(parts, false);
+}
+
+/** A white cross by the road, with a wreath on it. */
+function crossGeometry() {
+  const parts = [
+    bx(0.11, 1.25, 0.11, [0, 0.62, 0]),
+    bx(0.62, 0.11, 0.11, [0, 0.95, 0]),
+    cy(0.16, 0.16, 0.06, 10, [0, 0.72, 0.07], [Math.PI / 2, 0, 0]),
+    bx(0.5, 0.06, 0.5, [0, 0.03, 0]),
+  ];
+  return mergeGeometries(parts, false);
+}
 
 /**
  * A ribbed saguaro. Built as a lathe so the ribbing is real geometry rather
@@ -332,6 +455,99 @@ class InstancedProp {
   }
 }
 
+/**
+ * The scattered man-made things: windpumps, wrecks, gates, pumpjacks and
+ * roadside crosses.
+ *
+ * Each kind has its own spacing and a few copies that get walked up the road
+ * as you drive, exactly like the motels and the landmarks. That costs a
+ * handful of draw calls in total rather than one per kind per chunk slot,
+ * which is what putting them in the instanced field cost — and instancing
+ * buys nothing for a thing there are three of.
+ */
+const ROADSIDE_KINDS = {
+  //           first   gap     spread  near   far   yawWithRoad
+  windpump: [1400, 2600, 2600, 45, 165, false],
+  wreck: [2600, 3400, 3400, 5, 26, false],
+  gate: [3900, 5200, 5200, 9, 15, true],
+  pumpjack: [5200, 6800, 6800, 60, 205, false],
+  cross: [2100, 2900, 2900, 2.6, 4.2, true],
+};
+/** How many of each are kept built. Two in view and one being moved. */
+const ROADSIDE_SLOTS = 3;
+
+class Roadside {
+  constructor(scene, geometries) {
+    this.kinds = [];
+    for (const [name, [geo, mat]] of Object.entries(geometries)) {
+      const [first, gap, spread, near, far, alignRoad] = ROADSIDE_KINDS[name];
+      const slots = [];
+      for (let i = 0; i < ROADSIDE_SLOTS; i++) {
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        mesh.visible = false;
+        scene.add(mesh);
+        slots.push({ mesh, index: -1 });
+      }
+      this.kinds.push({ name, first, gap, spread, near, far, alignRoad, slots, at: [] });
+    }
+    this.tmp = { x: 0, y: 0, z: 0 };
+  }
+
+  reset() {
+    for (const kind of this.kinds) {
+      kind.at.length = 0;
+      for (const slot of kind.slots) {
+        slot.index = -1;
+        slot.mesh.visible = false;
+      }
+    }
+  }
+
+  /** Where the `i`th of this kind stands, memoised. */
+  place(kind, i, seedBase) {
+    while (kind.at.length <= i) {
+      const n = kind.at.length;
+      const prev = n === 0 ? kind.first : kind.at[n - 1].s + kind.gap;
+      const r = hashRand(n, seedBase);
+      const q = hashRand(n, seedBase + 11);
+      kind.at.push({
+        s: prev + Math.round(r * kind.spread),
+        side: q > 0.5 ? 1 : -1,
+        out: kind.near + q * (kind.far - kind.near),
+        spin: r * Math.PI * 2,
+        scale: 0.9 + q * 0.35,
+      });
+    }
+    return kind.at[i];
+  }
+
+  update(playerS) {
+    for (let k = 0; k < this.kinds.length; k++) {
+      const kind = this.kinds[k];
+      const seedBase = 9100 + k * 40;
+      let base = 0;
+      while (this.place(kind, base, seedBase).s < playerS - 220) base++;
+      for (let j = 0; j < ROADSIDE_SLOTS; j++) {
+        const slot = kind.slots[j];
+        const index = base + j;
+        if (slot.index === index) continue;
+        slot.index = index;
+        const at = this.place(kind, index, seedBase);
+        const lateral = at.side * at.out;
+        const p = roadPoint(at.s, lateral, this.tmp);
+        slot.mesh.position.set(p.x, groundHeight(at.s, lateral), p.z);
+        slot.mesh.rotation.y = kind.alignRoad
+          ? roadYaw(at.s) + (at.side > 0 ? 0 : Math.PI)
+          : at.spin;
+        slot.mesh.scale.setScalar(at.scale);
+        slot.mesh.visible = true;
+      }
+    }
+  }
+}
+
 export class PropField {
   constructor(scene, slots) {
     const cactusMat = new THREE.MeshStandardMaterial({
@@ -379,6 +595,26 @@ export class PropField {
     this.marker = new InstancedProp(scene, markerGeometry(), markerMat, 7, slots);
     this.mesa = new InstancedProp(scene, mesaGeometry(), mesaMat, 2, slots);
 
+    // Things people put here, as opposed to things that grew here. Sparse on
+    // purpose — one every few chunks — so that meeting one still registers.
+    const steelMat = new THREE.MeshStandardMaterial({
+      color: '#8a8b86',
+      metalness: 0.6,
+      roughness: 0.55,
+      flatShading: true,
+    });
+    const rustMat = new THREE.MeshStandardMaterial({
+      color: '#8a5a3c',
+      roughness: 0.95,
+      flatShading: true,
+    });
+    const whiteMat = new THREE.MeshStandardMaterial({
+      color: '#ddd8cb',
+      roughness: 0.9,
+    });
+    // Fences run in stretches and belong to the chunk that carries them.
+    this.fence = new InstancedProp(scene, fenceGeometry(), woodMat, 8, slots);
+
     this.all = [
       this.cactus,
       this.rockA,
@@ -387,7 +623,28 @@ export class PropField {
       this.pole,
       this.marker,
       this.mesa,
+      this.fence,
     ];
+
+    /**
+     * The one-off structures do not live per chunk.
+     *
+     * A prop type costs one draw call per chunk slot whether it draws
+     * anything or not, and with twenty slots a windpump that turns up in one
+     * chunk in twelve was costing twenty calls to draw, on average, less than
+     * two windpumps. They are on their own small pool instead: a handful of
+     * copies of each, walked along the road the way the motels are.
+     */
+    this.roadside = new Roadside(scene, {
+      windpump: [windpumpGeometry(), steelMat],
+      wreck: [wreckGeometry(), rustMat],
+      gate: [ranchGateGeometry(), woodMat],
+      pumpjack: [pumpjackGeometry(), rustMat],
+      cross: [crossGeometry(), whiteMat],
+    });
+    // A new seed moves every one of them. Registered after the pool exists:
+    // onReseed calls straight back the moment you hand it a listener.
+    onReseed(() => this.roadside.reset());
 
     // Power lines strung between the poles of successive chunks.
     this.wireSlots = [];
@@ -468,6 +725,19 @@ export class PropField {
       const s = s0 + i * 14 + 4;
       const side = i % 2 === 0 ? 1 : -1;
       place(this.marker, i, s, side * (EDGE - 0.5), 0, 1);
+    }
+
+    // Fence lines run in stretches rather than dotted about: either this
+    // chunk has a fence down one side of it or it does not.
+    const hasFence = hashRand(chunkIndex >> 2, 2600) < 0.34;
+    const fenceSide = hashRand(chunkIndex >> 2, 2610) > 0.5 ? 1 : -1;
+    const fenceLat = fenceSide * (EDGE + 12 + hashRand(chunkIndex >> 2, 2620) * 16);
+    for (let i = 0; i < this.fence.perChunk; i++) {
+      if (!hasFence) {
+        this.fence.set(slot, i, 0, 0, 0, 0, 0);
+        continue;
+      }
+      place(this.fence, i, s0 + 6 + i * 12, fenceLat, 0, 1);
     }
 
     // A butte on the horizon roughly every fifth chunk.
