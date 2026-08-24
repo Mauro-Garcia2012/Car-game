@@ -262,6 +262,20 @@ export function carTopSpeed(spec) {
 }
 
 /**
+ * How far a litre goes, on top of the per-car figures.
+ *
+ * The `burn` and `idleBurn` numbers below are the ones each car was designed
+ * around, and they stay that way: this is one dial over the top of the lot
+ * of them, so the whole garage keeps its relative thirst while the road as a
+ * whole gets a little kinder. At 1.2 every car goes a fifth further on the
+ * same tank.
+ *
+ * Anything that reads fuel has to go through here or the garage's range
+ * figures and the car's actual range stop agreeing.
+ */
+export const ECONOMY = 1.2;
+
+/**
  * Range in metres on a full tank at cruising throttle.
  *
  * The engine's idle draw is counted too, over the time the trip takes. It
@@ -271,6 +285,7 @@ export function carTopSpeed(spec) {
  */
 export function carRange(spec) {
   const cruise = carTopSpeed(spec) * 0.86;
-  const perMetre = spec.burn * (0.55 + 0.6 * 0.75) + spec.idleBurn / cruise;
+  const perMetre =
+    (spec.burn * (0.55 + 0.6 * 0.75) + spec.idleBurn / cruise) / ECONOMY;
   return spec.tank / perMetre;
 }

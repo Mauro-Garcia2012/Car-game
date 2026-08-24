@@ -174,10 +174,11 @@ again. Getting it wrong says `PIN INCORRECTO` and nothing else happens.
   I'd get a bigger tank at our workshop, unless you fancy the walk.* It stands
   where the margin is still comfortable rather than where the trouble starts:
   measured over eight seeds, the worst gap in the following sixty kilometres
-  is about 4.4 km against 6.0 km of range for the thirstiest car in the garage
-  with a passenger and a load aboard — 28% in hand. Past roughly kilometre 260
-  that margin is down to 16%, and past 1,400 there are gaps that car cannot
-  cross at all. **One jerry can, $340, closes every one of them.**
+  is about 4.4 km against 7.3 km of range for the thirstiest car in the garage
+  with a passenger and a load aboard. That is comfortable; by kilometre 260 it
+  is thinner, and the one thing that is genuinely out of reach on a standard
+  tank is a **seized engine past kilometre 1,164** — 18 gaps in 2,516. **One
+  jerry can, $340, closes every one of them.**
 - **The workshop.** Money used to have a ceiling: past the first few fares the
   tank was always full and a thousand dollars bought the same run as ten
   thousand. Stop on any forecourt and there is a price list — beat the panels
@@ -698,11 +699,12 @@ volver a meterlo. Si te equivocas dice `PIN INCORRECTO` y no pasa nada más.
   gasolineras se distancian — yo que tú ampliaría el depósito en nuestro
   taller, si no quieres quedarte tirado.* Está donde el margen todavía es
   cómodo, no donde empieza el problema: medido sobre ocho semillas, el peor
-  hueco de los sesenta kilómetros siguientes son unos 4,4 km contra los 6,0 km
-  de autonomía del coche más sediento del garaje con pasajero y carga — un
-  28 % de margen. Hacia el kilómetro 260 ese margen baja al 16 %, y pasado el
-  1.400 hay huecos que ese coche no puede cruzar. **Un solo bidón, 340 $, los
-  cierra todos.**
+  hueco de los sesenta kilómetros siguientes son unos 4,4 km contra los 7,3 km
+  de autonomía del coche más sediento del garaje con pasajero y carga. Eso es
+  cómodo; hacia el kilómetro 260 el margen se estrecha, y lo único que de
+  verdad queda fuera de alcance con el depósito de serie es **un motor gripado
+  pasado el kilómetro 1.164** — 18 huecos de 2.516. **Un solo bidón, 340 $,
+  los cierra todos.**
 - **El taller.** El dinero tenía techo: pasados los primeros viajes el depósito
   siempre estaba lleno y mil dólares compraban la misma partida que diez mil.
   Párate en cualquier gasolinera y hay una lista de precios: enderezar la

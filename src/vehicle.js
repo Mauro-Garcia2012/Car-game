@@ -14,6 +14,7 @@ import {
 import { terrainHeight } from './world/road.js';
 import { onTrack } from './world/sideroads.js';
 import { noise2 } from './rng.js';
+import { ECONOMY } from './cars/index.js';
 
 const WHEELBASE = 2.85;
 /** Rolling resistance on tarmac, m/s². Paired with dragK above. */
@@ -359,8 +360,8 @@ export class Vehicle {
     if (this.engineOn) {
       const penalty = surface === SURFACE.SAND ? 1.7 : surface === SURFACE.SHOULDER ? 1.25 : 1;
       const perMetre =
-        spec.burn * (0.55 + 0.6 * throttle) * penalty * this.load;
-      this.fuel -= perMetre * Math.abs(step) + spec.idleBurn * dt;
+        (spec.burn * (0.55 + 0.6 * throttle) * penalty * this.load) / ECONOMY;
+      this.fuel -= perMetre * Math.abs(step) + (spec.idleBurn * dt) / ECONOMY;
       if (this.fuel <= 0) {
         this.fuel = 0;
         this.engineOn = false;
