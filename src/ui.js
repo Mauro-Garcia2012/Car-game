@@ -2,6 +2,8 @@
 import { CARS, carRange, carTopSpeed } from './cars/index.js';
 import { isUnlocked, totalMetres } from './progress.js';
 import { isArmed, arm, codeList } from './cheats.js';
+import { AHEAD } from './routemap.js';
+import { glyphPath } from './textures.js';
 import {
   t,
   applyStaticTranslations,
@@ -125,6 +127,12 @@ export class UI {
       shopPanel: $('shop-panel'),
       shopRows: $('shop-rows'),
       mute: $('mute-btn'),
+      mapBtn: $('map-btn'),
+      mapPanel: $('map-panel'),
+      mapStrip: $('map-strip'),
+      mapSub: $('map-sub'),
+      mapLegend: $('map-legend'),
+      mapClose: $('map-close'),
       cheatBtn: $('cheat-btn'),
       cheatPanel: $('cheat-panel'),
       cheatForm: $('cheat-form'),
@@ -341,6 +349,8 @@ export class UI {
     // Tapping the offer is the touch equivalent of pressing E.
     this.el.fareAccept.addEventListener('click', () => this.h.onAcceptFare());
     this.el.mute.addEventListener('click', () => this.h.onToggleMute());
+    this.el.mapBtn.addEventListener('click', () => this.h.onToggleMap());
+    this.el.mapClose.addEventListener('click', () => this.h.onToggleMap());
     this.el.cheatBtn.addEventListener('click', () => this.openCheats());
     this.el.cheatClose.addEventListener('click', () => this.closeCheats());
     this.el.cheatUnlock.addEventListener('click', () => this.submitCheat('OPEN'));
@@ -356,6 +366,147 @@ export class UI {
   setMuted(muted) {
     this.el.mute.setAttribute('aria-pressed', muted ? 'true' : 'false');
     this.el.mute.title = t(muted ? 'controls.unmute' : 'controls.mute');
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Route map                                                         */
+  /* ---------------------------------------------------------------- */
+
+  /** True while the atlas is open. */
+  get mapOpen() {
+    return !this.el.mapPanel.classList.contains('hidden');
+  }
+
+  closeMap() {
+    this.el.mapPanel.classList.add('hidden');
+  }
+
+  /**
+   * Draws the strip.
+   *
+   * Distance runs left to right and everything is placed by the same
+   * percentage, markers and range bars alike, so a bar reaching past an icon
+   * on screen means the car reaches past it on the road. That is the whole
+   * point of the thing and it only works if nothing is nudged for looks.
+   *
+   * @param {ReturnType<import('./routemap.js').survey>} plan
+   */
+  showMap(plan) {
+    const e = this.el;
+    e.mapPanel.classList.remove('hidden');
+    const pct = (s) => ((s - plan.at) / AHEAD) * 100;
+
+    const icons = {
+      pump: glyphPath('pump'),
+      bed: glyphPath('bed'),
+      bus: glyphPath('bus'),
+    };
+    const svg = (name) => {
+      const g = icons[name];
+      return (
+        `<svg viewBox="0 0 ${g.w} ${g.h}" preserveAspectRatio="xMidYMid meet">` +
+        `<path d="${g.d}" fill-rule="evenodd"/></svg>`
+      );
+    };
+
+    let html = '<div class="map-road"></div>';
+
+    // Sand bands go down first, under everything else.
+    for (const st of plan.storms) {
+      const a = Math.max(0, pct(st.from));
+      const b = Math.min(100, pct(st.to));
+      if (b <= 0 || a >= 100) continue;
+      html += `<div class="map-storm" style="left:${a}%;width:${b - a}%"><span>${t('map.storm')}</span></div>`;
+    }
+
+    // The two ranges, as bars from the car outwards.
+    const fuelPct = Math.min(100, (plan.fuelReach / AHEAD) * 100);
+    const sleepPct = Math.min(100, (plan.sleepReach / AHEAD) * 100);
+    // The label goes inside the bar when there is room and outside it when
+    // there is not — a nearly empty tank makes a bar a few pixels wide, and
+    // that is exactly the moment the words matter most.
+    const reach = (cls, w, label, km) =>
+      `<div class="map-reach ${cls}${w < 22 ? ' short' : ''}" style="width:${w}%">` +
+      `<b>${label} · ${km.toFixed(1)} km</b></div>`;
+    html += reach('fuel', fuelPct, t('map.fuel'), plan.fuelReach / 1000);
+    html += reach('sleep', sleepPct, t('map.sleep'), plan.sleepReach / 1000);
+
+    // Every ten kilometres, a tick.
+    for (let km = 0; km <= AHEAD / 1000; km += 10) {
+      html += `<div class="map-tick" style="left:${(km / (AHEAD / 1000)) * 100}%"><i>${km}</i></div>`;
+    }
+
+    // Two rows of pins, alternating whenever the last one was close enough
+    // to collide. Fifty kilometres of road into twelve hundred pixels puts
+    // stations four hundred metres apart on top of each other otherwise, and
+    // the price is the whole reason they are on here.
+    let lastX = -99;
+    let row = 0;
+    for (const it of plan.items) {
+      const x = pct(it.s);
+      if (x < -6 || x > 100) continue;
+      row = x - lastX < 3.6 ? 1 - row : 0;
+      lastX = x;
+      const flags = [`row${row}`];
+      let inner = '';
+      if (it.kind === 'pump') {
+        inner = `${svg('pump')}<b>${it.price.toFixed(2)}</b>`;
+        if (it.best) flags.push('best');
+        if (it.done) flags.push('done');
+      } else if (it.kind === 'bed') {
+        inner = svg('bed');
+        if (it.done) flags.push('done');
+      } else if (it.kind === 'bus') {
+        inner = svg('bus');
+        if (it.waiting) flags.push('waiting');
+        if (it.drop) flags.push('mine');
+      } else if (it.kind === 'dirt') {
+        inner = '<em>&#10138;</em>';
+        if (it.taken) flags.push('done');
+      } else if (it.kind === 'sight') {
+        inner = '<em>&#9670;</em>';
+      } else {
+        inner = '<em>&#9873;</em>';
+      }
+      html +=
+        `<div class="map-pin ${it.kind} ${flags.join(' ')}" style="left:${x}%">` +
+        `${inner}</div>`;
+    }
+
+    // Where the load and the passenger are going.
+    for (const [s, cls, label] of [
+      [plan.freight, 'freight', t('map.delivery')],
+      [plan.fare, 'fare', t('map.dropoff')],
+    ]) {
+      if (s == null) continue;
+      const x = pct(s);
+      if (x < 0) continue;
+      // Beyond the edge it still has to be on here, pinned to the end with
+      // how much further it is: a delivery eighty kilometres out is the
+      // single most important thing on the map and it is off the paper.
+      const far = x > 99;
+      html +=
+        `<div class="map-goal ${cls}${far ? ' far' : ''}" style="left:${Math.min(x, 99)}%">` +
+        `<span>${label}${far ? ` +${((s - plan.at - AHEAD) / 1000).toFixed(0)} km` : ''}</span></div>`;
+    }
+
+    html += '<div class="map-you"></div>';
+    e.mapStrip.innerHTML = html;
+
+    e.mapSub.textContent = t('map.sub', {
+      car: plan.car,
+      km: `${(plan.at / 1000).toFixed(1)} km`,
+      price: `$${plan.market.toFixed(2)}`,
+    });
+    e.mapLegend.innerHTML = [
+      `<span class="k you"></span>${t('map.you')}`,
+      `<span class="k fuel"></span>${t('map.fuel')}`,
+      `<span class="k sleep"></span>${t('map.sleep')}`,
+      `<span class="k best"></span>${t('map.cheapest')}`,
+      `<span class="k waiting"></span>${t('map.waiting')}`,
+      `<span class="k storm"></span>${t('map.storm')}`,
+      `<span class="hint">${t('map.hint')}</span>`,
+    ].join('');
   }
 
   /* ---------------------------------------------------------------- */

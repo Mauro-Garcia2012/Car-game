@@ -448,6 +448,31 @@ function drawGlyph(ctx, glyph, x, y, width, fg) {
 const GLYPHS = { pump: PUMP, bed: BED, bus: BUS };
 
 /**
+ * The same pictograms again, as SVG.
+ *
+ * The route map wants the pump, the bed and the bus at sixteen pixels, and
+ * they have to be the ones off the signs — a map whose icons do not match
+ * the things they stand for is a map you have to learn twice. Rather than
+ * trace them again for the DOM, the loops are walked out into a path.
+ *
+ * @param {'pump'|'bed'|'bus'} name
+ * @returns {{d:string, w:number, h:number}}
+ */
+export function glyphPath(name) {
+  const art = GLYPHS[name];
+  const d = art.loops
+    .map((loop) => {
+      let out = '';
+      for (let i = 0; i < loop.length; i += 2) {
+        out += `${i ? 'L' : 'M'}${loop[i]} ${loop[i + 1]}`;
+      }
+      return `${out}Z`;
+    })
+    .join('');
+  return { d, w: art.w, h: art.h };
+}
+
+/**
  * A Spanish S-series service sign: white surround, blue field, a white
  * square panel near the top holding the black pictogram, and the distance
  * underneath it on the blue.

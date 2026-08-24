@@ -41,6 +41,7 @@ import { Wildlife } from './world/wildlife.js';
 import { Landmarks } from './world/landmarks.js';
 import { Police } from './world/police.js';
 import { Billboard } from './world/billboard.js';
+import { survey } from './routemap.js';
 import { counter, buy as buyUpgrade, emptyUpgrades, applyUpgrades } from './workshop.js';
 import { Freight, FREIGHT_BURN, loadAt } from './freight.js';
 import { RoadSigns, SpeedCameras, speedLimitAt, FINE } from './world/signs.js';
@@ -116,6 +117,8 @@ export class Game {
     this.chatLast = -1;
     /** Cheat-menu toggle. Never saved, never on unless you turned it on. */
     this.godMode = false;
+    /** True while the map is what paused the game. */
+    this.pausedForMap = false;
     this.refuelling = false;
     this.checkingIn = 0;
     this.cash = START_CASH;
@@ -226,6 +229,8 @@ export class Game {
       this.acceptOffer();
     } else if (action.startsWith('shop')) {
       this.ui.buyShopSlot(Number(action.slice(4)) - 1);
+    } else if (action === 'map') {
+      this.toggleMap();
     } else if (action === 'horn') {
       this.audio.horn();
       this.wildlife.spook(this.vehicle.s);
@@ -234,6 +239,26 @@ export class Game {
     } else if (action === 'enter' && this.state === 'menu') {
       this.start(this.ui.selected);
     }
+  }
+
+  /**
+   * Opens the atlas, or shuts it.
+   *
+   * It holds the game still while it is up. Reading a map at a hundred and
+   * twenty is not a thing anybody does, and the alternative — a strip you can
+   * glance at while driving — would have to be small enough to be useless.
+   */
+  toggleMap() {
+    if (this.ui.mapOpen) {
+      this.ui.closeMap();
+      if (this.pausedForMap) this.setPaused(false);
+      this.pausedForMap = false;
+      return;
+    }
+    if (this.state !== 'playing' && this.state !== 'paused') return;
+    this.pausedForMap = this.state === 'playing';
+    if (this.pausedForMap) this.setPaused(true);
+    this.ui.showMap(survey(this));
   }
 
   /** Silences everything, or brings it back. Button and `M` share this. */

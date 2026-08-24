@@ -299,6 +299,31 @@
       </div>
     </div>
 
+    <!-- Route map ------------------------------------------------------
+         The atlas out of the glovebox: the road ahead, and how far the fuel
+         and the daylight reach along it. -->
+    <button id="map-btn" type="button" title="Map">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M9 4.5 3 6.8v12.7l6-2.3 6 2.3 6-2.3V4.5l-6 2.3z" />
+        <path d="M9 4.5v12.7M15 6.8v12.7" />
+      </svg>
+      <span class="sr-only" data-i18n="map.open">Route map</span>
+    </button>
+
+    <div id="map-panel" class="screen overlay hidden">
+      <div class="map-inner">
+        <header>
+          <h2 data-i18n="map.title">THE ROAD AHEAD</h2>
+          <span id="map-sub"></span>
+        </header>
+        <div id="map-strip" class="map-strip"></div>
+        <div class="map-legend" id="map-legend"></div>
+        <button type="button" id="map-close" class="ghost" data-i18n="map.close">
+          CLOSE
+        </button>
+      </div>
+    </div>
+
     <!-- Cheats ---------------------------------------------------------
          A debug tool, behind a PIN that is not remembered between page
          loads, and nothing it grants is ever written to storage. -->

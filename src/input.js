@@ -47,6 +47,11 @@ export class Input {
       if (e.code === 'KeyP' || e.code === 'Escape') this.onAction('pause');
       if (e.code === 'KeyM') this.onAction('mute');
       if (e.code === 'KeyH') this.onAction('horn');
+      // Tab would otherwise walk the focus ring round the HUD buttons.
+      if (e.code === 'Tab') {
+        e.preventDefault();
+        this.onAction('map');
+      }
       // The workshop counter, one key per line.
       if (/^Digit[1-9]$/.test(e.code)) this.onAction('shop' + e.code.slice(5));
       if (e.code === 'Enter') this.onAction('enter');

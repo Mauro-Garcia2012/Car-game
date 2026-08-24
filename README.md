@@ -41,6 +41,7 @@ static host.
 | Camera (chase / bonnet / orbit) | `C` | |
 | Pause | `P` or `Esc` | |
 | Restart | `R` | |
+| Route map | `Tab`, or the map button top right | |
 | Horn | `H` | |
 | Buy line 1–8 at the workshop | `1`–`8` | |
 | Mute | `M`, or the speaker button top right | |
@@ -169,6 +170,18 @@ again. Getting it wrong says `PIN INCORRECTO` and nothing else happens.
   and the **storms come round twice as often**. It saturates rather than
   climbing forever, so the road is eventually as bad as it gets and no worse —
   and the answer to it is the counter at every station.
+- **The route map.** Everything this game asks you to plan was information
+  you only got by arriving at it: the HUD gives you the next station and
+  nothing about the one after, so there was no such thing as *choosing* a
+  station. `Tab` opens the atlas out of the glovebox — the next **50 km** as a
+  strip, with the pumps **and their prices** (the cheapest ahead marked), the
+  beds, the shelters and who is standing at them, the dirt spurs, the sand
+  bands, the landmarks, and where your passenger and your load are going.
+  Across the bottom are your **two ranges as bars on the same scale**: how far
+  the fuel goes and how far the daylight goes. That is the point of it —
+  fuel and sleep stop being numbers and become distances you can hold against
+  the things on the road. It does not show the patrol cars, deliberately:
+  knowing where they are would turn the one gamble on this road into a lookup.
 - **One billboard, at kilometre ninety.** Forty-eight metres of it, on the
   empty side of the road, saying *the pumps get further apart from here on —
   I'd get a bigger tank at our workshop, unless you fancy the walk.* It stands
@@ -411,6 +424,7 @@ src/
   difficulty.js     how hard the road is, as a function of how far out
   workshop.js       the counter at every station
   freight.js        loads: what is on the dock and what it is worth
+  routemap.js       the atlas: what is on the next fifty kilometres
   traffic.js        AI pickups and semis
   input.js          keyboard, touch and gamepad
   audio.js          synthesised engine, tyres and beeps (no audio files)
@@ -515,6 +529,7 @@ pausa.
 | Cámara (persecución / capó / órbita) | `C` | |
 | Pausa | `P` o `Esc` | |
 | Reiniciar | `R` | |
+| Mapa de ruta | `Tab`, o el botón del mapa arriba a la derecha | |
 | Claxon | `H` | |
 | Comprar la línea 1–8 del taller | `1`–`8` | |
 | Silencio | `M`, o el botón del altavoz arriba a la derecha | |
@@ -694,6 +709,19 @@ volver a meterlo. Si te equivocas dice `PIN INCORRECTO` y no pasa nada más.
   las **tormentas caen el doble de a menudo**. Se satura en vez de subir para
   siempre, así que la carretera llega a ser todo lo mala que va a ser y no
   más — y la respuesta está en el mostrador de cada gasolinera.
+- **El mapa de ruta.** Todo lo que este juego te pide planificar era
+  información que sólo tenías al llegar: el HUD te da la siguiente gasolinera
+  y nada de la de después, así que *elegir* gasolinera no existía. Con `Tab`
+  se abre el mapa de la guantera — los próximos **50 km** en tira, con los
+  surtidores **y sus precios** (marcado el más barato), las camas, las
+  marquesinas y quién está esperando en ellas, los caminos de tierra, las
+  franjas de arena, los monumentos, y adónde van tu pasajero y tu carga.
+  Abajo, **tus dos autonomías como barras a la misma escala**: hasta dónde
+  llega la gasolina y hasta dónde llega la luz del día. Eso es lo que importa:
+  la gasolina y el sueño dejan de ser números y pasan a ser distancias que
+  puedes comparar con lo que hay en la carretera. No enseña los coches de
+  policía, a propósito: saber dónde están convertiría la única apuesta de esta
+  carretera en una consulta.
 - **Una valla publicitaria, en el kilómetro noventa.** Cuarenta y ocho metros
   de valla, en el lado despejado de la carretera: *de aquí en adelante las
   gasolineras se distancian — yo que tú ampliaría el depósito en nuestro

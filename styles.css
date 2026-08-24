@@ -1096,7 +1096,8 @@ body.touch .touch-controls {
      the row stops short of the corner so no chip ends up under the mute
      button — clipped rather than merely overlapped, in case one still does. */
   .hud-top {
-    margin-right: 46px;
+    /* Three buttons live in that corner now: mute, map and debug. */
+    margin-right: 140px;
     overflow: hidden;
   }
   .hud-top .stat {
@@ -1480,4 +1481,356 @@ body.touch .touch-controls {
 /* The freight line pays instead of charging, and says so. */
 .shop-row b.pays {
   color: var(--amber);
+}
+
+/* ------------------------------------------------------------------ */
+/* Route map                                                           */
+/* ------------------------------------------------------------------ */
+
+#map-btn {
+  position: fixed;
+  top: 14px;
+  right: 110px;
+  /* Above its own panel, so the button that opens the map also closes it.
+     Under the overlay it was a one-way switch. */
+  z-index: 69;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(14, 16, 22, 0.62);
+  color: var(--sand);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+#map-btn:hover {
+  background: rgba(24, 28, 38, 0.86);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+#map-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+#map-panel {
+  z-index: 68;
+  background: rgba(8, 9, 13, 0.9);
+  backdrop-filter: blur(3px);
+}
+
+.map-inner {
+  width: min(1180px, 94vw);
+  padding: 20px 22px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #14161d;
+  font-family: var(--font);
+}
+
+.map-inner header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.map-inner h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 18px;
+  letter-spacing: 0.2em;
+  color: var(--sand);
+}
+
+#map-sub {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/*
+ * The strip. Distance is left to right and everything on it — pins, range
+ * bars, weather — is positioned by the same percentage of the same window,
+ * so what looks within reach is within reach.
+ */
+.map-strip {
+  position: relative;
+  height: 168px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  background: #0b0d12;
+  overflow: hidden;
+}
+
+.map-road {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 84px;
+  height: 8px;
+  background: linear-gradient(180deg, #3a3a3c, #2a2a2c);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.6);
+}
+
+.map-tick {
+  position: absolute;
+  top: 96px;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.map-tick i {
+  position: absolute;
+  top: 46px;
+  left: 4px;
+  font-style: normal;
+  font-size: 10px;
+  opacity: 0.4;
+}
+
+/* Sand, as a band across the whole strip. */
+.map-storm {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(194, 160, 106, 0.22) 0 8px,
+    rgba(194, 160, 106, 0.1) 8px 16px
+  );
+  border-left: 1px solid rgba(194, 160, 106, 0.5);
+  border-right: 1px solid rgba(194, 160, 106, 0.5);
+}
+
+.map-storm span {
+  position: absolute;
+  top: 4px;
+  left: 5px;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #d8b57e;
+}
+
+/* The two reaches, stacked under the road so they can be read against it. */
+.map-reach {
+  position: absolute;
+  left: 0;
+  height: 11px;
+  border-radius: 0 4px 4px 0;
+}
+
+.map-reach b {
+  position: absolute;
+  right: 6px;
+  top: -1px;
+  font-family: var(--display);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  color: #0d0f13;
+}
+
+.map-reach.fuel {
+  top: 100px;
+  background: linear-gradient(90deg, rgba(240, 176, 68, 0.35), var(--amber));
+}
+
+.map-reach.sleep {
+  top: 116px;
+  background: linear-gradient(90deg, rgba(96, 160, 220, 0.3), #74b6e8);
+}
+
+/* Pins sit on the road, icons above it. */
+.map-pin {
+  position: absolute;
+  top: 30px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 44px;
+}
+
+.map-pin::after {
+  content: '';
+  width: 2px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.map-pin svg {
+  width: 20px;
+  height: 20px;
+  fill: var(--sand);
+}
+
+.map-pin em {
+  font-style: normal;
+  font-size: 13px;
+  line-height: 1;
+  color: #9aa3ad;
+}
+
+.map-pin b {
+  font-family: var(--display);
+  font-size: 10px;
+  color: var(--green);
+}
+
+/* Already used: it is still there, it just is not a decision any more. */
+.map-pin.done {
+  opacity: 0.32;
+}
+
+.map-pin.best b {
+  color: #0d0f13;
+  background: var(--green);
+  border-radius: 3px;
+  padding: 0 3px;
+}
+
+.map-pin.waiting svg {
+  fill: var(--amber);
+}
+
+.map-pin.waiting::after {
+  background: var(--amber);
+}
+
+.map-pin.mine svg,
+.map-pin.dirt em {
+  fill: #74b6e8;
+  color: #d8a24a;
+}
+
+.map-pin.sight em {
+  color: #b07fd0;
+}
+
+/* Where the passenger and the load are going. */
+.map-goal {
+  position: absolute;
+  top: 96px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.map-goal::before {
+  content: '';
+  width: 2px;
+  height: 14px;
+  background: currentColor;
+}
+
+.map-goal span {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.map-goal.fare {
+  color: #74b6e8;
+}
+
+.map-goal.freight {
+  color: #d8a24a;
+  top: 124px;
+}
+
+/* You are at the left-hand edge, always. */
+.map-you {
+  position: absolute;
+  left: 0;
+  top: 70px;
+  width: 3px;
+  height: 36px;
+  background: #ff6a4d;
+  box-shadow: 0 0 10px rgba(255, 106, 77, 0.8);
+}
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.map-legend .k {
+  display: inline-block;
+  width: 12px;
+  height: 9px;
+  margin-right: 5px;
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+
+.map-legend .k.you { background: #ff6a4d; }
+.map-legend .k.fuel { background: var(--amber); }
+.map-legend .k.sleep { background: #74b6e8; }
+.map-legend .k.best { background: var(--green); }
+.map-legend .k.waiting { background: var(--amber); opacity: 0.6; }
+.map-legend .k.storm { background: #c2a06a; }
+.map-legend .hint { margin-left: auto; opacity: 0.6; }
+
+#map-close {
+  margin-top: 12px;
+  float: right;
+}
+
+@media (max-width: 720px) {
+  #map-btn {
+    top: 10px;
+    right: 98px;
+    width: 36px;
+    height: 36px;
+  }
+  .map-strip {
+    height: 150px;
+  }
+}
+
+/* Short bars put their label outside, or it would be clipped away. */
+.map-reach.short b {
+  right: auto;
+  left: calc(100% + 6px);
+  color: var(--sand);
+}
+
+/* Two rows of pins, so close neighbours do not sit on each other. */
+.map-pin.row1 {
+  top: 4px;
+}
+
+.map-pin.row1::after {
+  height: 48px;
+}
+
+/* A goal past the right-hand edge leans on the end of the strip. */
+.map-goal.far {
+  transform: translateX(-100%);
+  align-items: flex-end;
+}
+
+.map-goal.far::before {
+  align-self: flex-end;
+  opacity: 0.5;
 }
