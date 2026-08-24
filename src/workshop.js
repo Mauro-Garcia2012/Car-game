@@ -17,6 +17,8 @@
  * this road, and it dies with the car.
  */
 
+import { isBike } from './cars/index.js';
+
 /** The counter, in the order it is listed. */
 export const ITEMS = [
   {
@@ -81,6 +83,23 @@ export const ITEMS = [
     },
   },
   {
+    id: 'rack',
+    key: 'shop.rack',
+    max: 1,
+    /**
+     * Panniers and a rack, and the only thing on the counter that is not
+     * worth having: nobody with four wheels needs it and nobody with two can
+     * easily afford it. That is the point — a bike is cheap to run and
+     * cannot earn, and this is the several-thousand-dollar door out of that,
+     * which you either save for or find at the end of a dirt track.
+     */
+    price: () => 4800,
+    offered: (g) => isBike(g.spec),
+    buy: (g) => {
+      g.upgrades.rack = 1;
+    },
+  },
+  {
     id: 'tune',
     key: 'shop.tune',
     max: 3,
@@ -94,7 +113,7 @@ export const ITEMS = [
 
 /** A fresh set of counters. */
 export function emptyUpgrades() {
-  return { cans: 0, grip: 0, armour: 0, lamps: 0, tune: 0 };
+  return { cans: 0, grip: 0, armour: 0, lamps: 0, tune: 0, rack: 0 };
 }
 
 /** Puts a set of upgrades back onto the car, after a swap or a resume. */

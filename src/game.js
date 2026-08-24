@@ -1,6 +1,13 @@
 /** Wires the world, the car, the rules and the camera into a playable game. */
 import * as THREE from 'three';
-import { createCar, carById, carRange, CARS } from './cars/index.js';
+import {
+  createCar,
+  carById,
+  carRange,
+  isBike,
+  PILLION_PAY,
+  CARS,
+} from './cars/index.js';
 import { RoadSystem } from './world/road.js';
 import { PropField } from './world/props.js';
 import {
@@ -25,6 +32,7 @@ import {
   PRIZE_WORN,
   PRIZE_HATCH,
   PRIZE_SUPER,
+  PRIZE_RACK,
 } from './world/sideroads.js';
 import { Fatigue, AWAKE_TIME } from './fatigue.js';
 import {
@@ -459,7 +467,9 @@ export class Game {
     this.beds = new Set(run.beds);
     this.crates.opened = new Set(run.crates);
     this.fares.used = new Set(run.faresUsed);
-    this.fares.active = run.fare == null ? null : offerAt(run.fare);
+    this.fares.factor = isBike(this.spec) ? PILLION_PAY : 1;
+    this.fares.active =
+      run.fare == null ? null : offerAt(run.fare, this.fares.factor);
     v.load =
       (this.fares.active ? PASSENGER_BURN : 1) + FREIGHT_BURN * v.freight;
 
@@ -649,6 +659,7 @@ export class Game {
       this.handleMotel(dt);
       this.handleFares();
       this.handleChat();
+      this.sideRoads.wantsRack = isBike(this.spec) && !this.upgrades.rack;
       this.shopRows = this.atShop ? counter(this) : [];
       this.handleFreight();
       this.handleStationBookkeeping();
@@ -715,6 +726,13 @@ export class Game {
         return;
       }
       prize = PRIZE_CASH; // already in the garage
+    }
+
+    if (prize === PRIZE_RACK) {
+      this.upgrades.rack = 1;
+      this.audio.fanfare();
+      this.flash('msg.caseRack', 'good', 5);
+      return;
     }
 
     if (prize === PRIZE_WORN) {
@@ -972,6 +990,10 @@ export class Game {
    */
   handleFares() {
     const v = this.vehicle;
+    // What a passenger will pay to ride in this. Set here rather than when
+    // the car is chosen because the run reset runs after that and put it
+    // back to one — and from here it is right after a mid-run swap too.
+    this.fares.factor = isBike(this.spec) ? PILLION_PAY : 1;
     const index = this.buses.zoneAt(v.s, v.lateral);
     this.busZone = index;
     const stopped = Math.abs(v.speed) < REFUEL_SPEED_LIMIT;
@@ -1085,6 +1107,14 @@ export class Game {
    */
   handleFreight() {
     const v = this.vehicle;
+    // A bike has nowhere to put it until somebody bolts a rack on. Anything
+    // already aboard from a swap falls off the back here rather than riding
+    // along invisibly.
+    if (isBike(this.spec) && !this.upgrades.rack) {
+      if (this.freight.active) this.freight.clear();
+      v.freight = 0;
+      return;
+    }
     if (!this.atShop) {
       v.freight = this.freight.active ? 1 : 0;
       return;

@@ -73,6 +73,7 @@ export const CARS = [
   {
     id: 'moped',
     name: 'AVISPA 49',
+    twoWheels: true,
     taglineKey: 'car.moped.tagline',
     color: '#2e6f4e',
     build: buildMoped,
@@ -168,6 +169,7 @@ export const CARS = [
   {
     id: 'superbike',
     name: 'SAETA R',
+    twoWheels: true,
     taglineKey: 'car.superbike.tagline',
     color: '#101418',
     build: buildSuperbike,
@@ -274,6 +276,22 @@ export function carTopSpeed(spec) {
  * figures and the car's actual range stop agreeing.
  */
 export const ECONOMY = 1.2;
+
+/**
+ * What a two-wheeler can and cannot do for a living.
+ *
+ * There is nowhere to put a load on a bike, and nobody riding pillion for
+ * ninety minutes with a helmet on and their bag between their knees is paying
+ * what they would pay for a seat. Both of those are real, and between them
+ * they turn the two bikes from "the cars with better economy" into a
+ * different way to play: cheap to run, hopeless to earn on.
+ */
+export const PILLION_PAY = 0.5;
+
+/** True for anything you sit on rather than in. */
+export function isBike(spec) {
+  return !!spec.twoWheels;
+}
 
 /**
  * Range in metres on a full tank at cruising throttle.

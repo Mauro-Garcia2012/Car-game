@@ -1,5 +1,5 @@
 /** All DOM: menu, HUD, overlays. The 3D side never touches the document. */
-import { CARS, carRange, carTopSpeed } from './cars/index.js';
+import { CARS, carRange, carTopSpeed, isBike } from './cars/index.js';
 import { isUnlocked, totalMetres } from './progress.js';
 import { isArmed, arm, codeList } from './cheats.js';
 import { AHEAD } from './routemap.js';
@@ -264,6 +264,16 @@ export class UI {
         `${(carRange(car) / 1000).toFixed(1)} km`,
         'range'
       ),
+      // What a bike cannot do for a living. It belongs on the card and not
+      // in a message forty kilometres later, because it is the whole reason
+      // to pick one or not pick one.
+      isBike(car)
+        ? `<div class="spec-note">
+             <b>${t('spec.twoWheels')}</b>
+             <span>${t('spec.noFreight')}</span>
+             <span>${t('spec.halfFares')}</span>
+           </div>`
+        : '',
     ].join('');
     if (!silent) this.h.onSelectCar(id);
   }

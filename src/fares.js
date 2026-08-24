@@ -67,7 +67,7 @@ export const MISS_AFTER = 500;
  * @returns {{index:number, hops:number, from:number, destIndex:number,
  *            destS:number, distance:number, pay:number}|null}
  */
-export function offerAt(index) {
+export function offerAt(index, factor = 1) {
   if (index < 0 || !someoneWaitingAt(index)) return null;
 
   const seed = 3000 + index;
@@ -87,7 +87,11 @@ export function offerAt(index) {
     destIndex,
     destS,
     distance,
-    pay: Math.round((distance / 1000) * perKm * fuelFactor),
+    // `factor` is what the vehicle is worth to a passenger: a full seat is
+    // 1, the back of a bike is half. It goes in here rather than at the till
+    // so the quote on the panel and the money that changes hands are the
+    // same number, and so a resumed run rebuilds the same offer.
+    pay: Math.round((distance / 1000) * perKm * fuelFactor * factor),
   };
 }
 
@@ -106,12 +110,14 @@ export class Fares {
   reset() {
     this.active = null;
     this.used = new Set();
+    /** What this vehicle is worth to a passenger. Set from the spec. */
+    this.factor = 1;
   }
 
   /** The offer standing at this stop, or null if none or already taken. */
   offerFor(index) {
     if (this.active || index < 0 || this.used.has(index)) return null;
-    return offerAt(index);
+    return offerAt(index, this.factor);
   }
 
   /**

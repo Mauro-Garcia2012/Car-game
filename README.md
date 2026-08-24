@@ -208,6 +208,17 @@ again. Getting it wrong says `PIN INCORRECTO` and nothing else happens.
   out of a set; a driver who lives on the dirt spurs gets forty. Run it to
   nothing and one lets go — a bang, a swerve, a fifth of the grip gone and
   **60 km/h until you buy rubber**.
+- **Two wheels earn differently.** The moped and the superbike **cannot
+  carry freight** — there is nowhere to put it — and **passengers pay half**,
+  because nobody rides pillion for ninety minutes with a bag between their
+  knees at full fare. Both are on the card in the garage, before you pick.
+  It turns the bikes from "the ones with better economy" into a different way
+  to play: almost free to run, and almost impossible to earn on. The way out
+  is a **rack and panniers at $4,800** — by far the dearest thing on the
+  counter — or the same rack in a briefcase, which is **one dirt track in
+  ten** while you are on a bike without one. On four wheels that tenth of the
+  draw pays out in notes instead, so the case never hands you a part for a
+  vehicle you are not riding.
 - **Freight.** A fare is ten to twenty kilometres. A load is **forty to a
   hundred**, for money that dwarfs it, taken on at one station and handed over
   at another. It is also a car that will not pull away and will not stop:
@@ -749,6 +760,17 @@ volver a meterlo. Si te equivocas dice `PIN INCORRECTO` y no pasa nada más.
   conduce con cabeza saca unos cien kilómetros de un juego; quien vive en los
   caminos de tierra, cuarenta. Si la agotas, una revienta: un estallido, un
   bandazo, un quinto del agarre menos y **60 km/h hasta que compres goma**.
+- **Sobre dos ruedas se gana de otra manera.** La Vespino y la superbike **no
+  pueden llevar carga** —no hay dónde meterla— y **los pasajeros pagan la
+  mitad**, porque nadie va de paquete hora y media con la bolsa entre las
+  rodillas a precio entero. Las dos cosas están en la ficha del garaje, antes
+  de elegir. Eso convierte a las motos de «las que gastan menos» en otra forma
+  de jugar: casi gratis de mantener y casi imposibles de rentabilizar. La
+  salida es una **baca con alforjas por 4.800 $** —de lejos lo más caro del
+  mostrador— o esa misma baca en un maletín, que sale **un camino de tierra de
+  cada diez** mientras vayas en moto sin ella. En coche esa décima parte del
+  sorteo paga en billetes, así que el maletín nunca te da una pieza para un
+  vehículo que no llevas.
 - **Mercancía.** Un viaje son diez o veinte kilómetros. Una carga son **de
   cuarenta a cien**, por un dinero que no tiene comparación, que se coge en una
   gasolinera y se entrega en otra. Y es también un coche que no arranca y no

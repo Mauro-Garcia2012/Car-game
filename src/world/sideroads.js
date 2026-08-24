@@ -47,6 +47,14 @@ export const PRIZE_CASH = 'cash';
 export const PRIZE_WORN = 'worn';
 export const PRIZE_HATCH = 'hatch';
 export const PRIZE_SUPER = 'super';
+/**
+ * A luggage rack and panniers: the one thing that lets a bike carry freight.
+ *
+ * Only worth anything if you are on two wheels, so the draw is context
+ * sensitive — see `prizeAt`. Somebody left it out here; on four wheels it is
+ * scrap and the case pays out in notes instead.
+ */
+export const PRIZE_RACK = 'rack';
 
 export const CASE_CASH = 300;
 export const REPAIR_COST = 100;
@@ -91,11 +99,20 @@ export function trackAt(index) {
  * Which briefcase is out there. Deterministic from the track, so the same
  * spur always holds the same thing and looking one up twice cannot cheat.
  */
-export function prizeAt(index) {
+/**
+ * What is in the case at the end of spur `index`.
+ *
+ * @param {boolean} [wantsRack] true when a rack would actually be worth
+ *   something — on a bike, without one already. When it is not, that tenth of
+ *   the draw pays out in notes rather than handing you a part for a vehicle
+ *   you are not riding.
+ */
+export function prizeAt(index, wantsRack = false) {
   const r = hashRand(index, 617);
   if (r < 0.01) return PRIZE_SUPER;
   if (r < 0.11) return PRIZE_HATCH;
-  if (r < 0.61) return PRIZE_CASH;
+  if (r < 0.21) return wantsRack ? PRIZE_RACK : PRIZE_CASH;
+  if (r < 0.66) return PRIZE_CASH;
   return PRIZE_WORN;
 }
 
@@ -292,6 +309,8 @@ export class SideRoads {
 
     /** Cases already picked up this run, by track index. */
     this.taken = new Set();
+    /** Set by the game: is a luggage rack worth anything to us right now? */
+    this.wantsRack = false;
     this.tmp = { x: 0, y: 0, z: 0 };
     onReseed(() => {
       for (const slot of this.slots) slot.index = null;
@@ -412,7 +431,7 @@ export class SideRoads {
       slot.box.visible = false;
       return {
         index,
-        prize: prizeAt(index),
+        prize: prizeAt(index, this.wantsRack),
         x: slot.box.position.x,
         y: slot.box.position.y,
         z: slot.box.position.z,
