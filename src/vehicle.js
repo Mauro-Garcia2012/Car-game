@@ -23,6 +23,17 @@ const GEARS = [0.0, 0.16, 0.32, 0.5, 0.68, 0.85, 1.0];
 
 export const SURFACE = { ROAD: 'road', SHOULDER: 'shoulder', SAND: 'sand' };
 
+/**
+ * Tyre life spent per metre on clean tarmac at a sane speed.
+ *
+ * Set so a careful driver gets a little over three hundred kilometres out of
+ * a set and never thinks about it, and a driver who lives on the dirt spurs
+ * gets sixty and thinks about nothing else.
+ */
+const TYRE_WEAR = 0.00032;
+/** What a blown tyre leaves you with, in m/s. */
+const BLOWN_LIMIT = 16.7;
+
 /** Scratch for the crosswind's road axis; two per frame, never nested. */
 const WIND_A = { x: 0, y: 0, z: 0 };
 const WIND_B = { x: 0, y: 0, z: 0 };
@@ -56,6 +67,34 @@ export class Vehicle {
     /** Metres per second of sideways drift, set by the weather. */
     this.crosswind = 0;
     /**
+     * Tyre life, 100 down to 0.
+     *
+     * The one consumable the game did not have. Fuel is spent per metre and
+     * bought back at every pump; damage is spent in one lump and bought back
+     * at every pump. Rubber goes slowly, and it goes much faster for the
+     * things that were otherwise free — sand, sliding, and speed. That gives
+     * the dirt spurs a real price, gives the handbrake a cost, and puts one
+     * more thing on the list at the workshop.
+     */
+    this.tyre = 100;
+    /** True after a blowout, until somebody puts new rubber on it. */
+    this.blown = false;
+
+    // Everything the workshop can bolt on. They are on the vehicle rather
+    // than on the spec because the spec is shared: `CARS` is one array of
+    // objects that every run reads, and writing a bigger tank into it would
+    // leave the next run driving a car it never paid for.
+    /** Extra litres from jerry cans. */
+    this.tankBonus = 0;
+    /** Multiplier on grip from a softer compound. */
+    this.gripBonus = 1;
+    /** Multiplier on crash damage taken: below 1 once it is reinforced. */
+    this.armour = 1;
+    /** Steps of engine tune bought. */
+    this.tune = 0;
+    this.powerBonus = 1;
+    this.topBonus = 1;
+    /**
      * Which way a bent car pulls. Taken off the vehicle's own id, so it is
      * the same every time you drive it and you learn it rather than
      * rediscovering it.
@@ -78,6 +117,14 @@ export class Vehicle {
     this.surface = SURFACE.ROAD;
     /** Multiplier on fuel burn — above 1 when carrying a passenger. */
     this.load = 1;
+    /**
+     * 0 empty, 1 with a full load in the back.
+     *
+     * Weight is the whole character of freight: it is not a number that goes
+     * up when you deliver, it is a car that will not pull away from lights
+     * and will not stop for a deer.
+     */
+    this.freight = 0;
     this.engineOn = true;
     this.rpm = 0.15;
     this.gear = 1;
@@ -92,11 +139,46 @@ export class Vehicle {
     this.speed = 0;
     this.fuel = this.spec.tank;
     this.damage = 0;
+    this.tyre = 100;
+    this.blown = false;
+    this.freight = 0;
     this.distance = 0;
     this.engineOn = true;
     this.slip = 0;
     this.crashCooldown = 0;
     this.moveTo(this.s, this.lateral);
+  }
+
+  /**
+   * A tyre lets go: a bang, a swerve, and sixty kilometres an hour until
+   * somebody puts rubber on it. It does not end the run on its own, which
+   * matters — it is a long limp to the next pump, not a death.
+   */
+  /** How big the tank is, cans and all. */
+  get tankSize() {
+    return this.spec.tank + this.tankBonus;
+  }
+
+  /**
+   * Engine tune, in steps. Each is worth a little power and a little top
+   * end, and the drag coefficient has to be recomputed or the extra power
+   * would simply be swallowed by the same terminal velocity as before.
+   */
+  setTune(steps) {
+    this.tune = steps;
+    this.powerBonus = 1 + steps * 0.07;
+    this.topBonus = 1 + steps * 0.04;
+    const power = this.spec.power * this.powerBonus;
+    const top = this.spec.topSpeed * this.topBonus;
+    this.dragK = Math.max(1e-5, (power * 0.35 - ROLLING) / (top * top));
+  }
+
+  blowout() {
+    this.blown = true;
+    this.tyre = 0;
+    this.slip = Math.min(1, this.slip + 0.55);
+    this.yaw += (Math.random() < 0.5 ? -1 : 1) * 0.07;
+    this.speed *= 0.82;
   }
 
   /** Puts the car down on the road, pointing along it. */
@@ -142,13 +224,20 @@ export class Vehicle {
      * body shop is charging you for before the number reaches a hundred.
      */
     const wear = this.damage / 100;
+    // Bald rubber costs a fifth of the grip, and a blown one costs a third —
+    // the same order as a written-off body, so the two together are a car
+    // you should have stopped and seen to.
+    const bald = 1 - this.tyre / 100;
+    const rubber = 1 - 0.2 * bald - (this.blown ? 0.32 : 0);
     const grip =
       (surface === SURFACE.ROAD
         ? spec.grip
         : surface === SURFACE.SHOULDER
           ? spec.grip * 0.62 + spec.offroadGrip * 0.38
           : spec.offroadGrip) *
-      (1 - 0.2 * wear);
+      (1 - 0.2 * wear) *
+      rubber *
+      this.gripBonus;
     const surfaceDrag =
       surface === SURFACE.ROAD ? 0 : surface === SURFACE.SHOULDER ? spec.offroadDrag * 0.35 : spec.offroadDrag;
 
@@ -156,8 +245,9 @@ export class Vehicle {
     if (outOfFuel) this.engineOn = false;
 
     const throttle = this.engineOn ? input.throttle : 0;
+    const base = spec.topSpeed * this.topBonus;
     const topSpeed =
-      (onTarmac ? spec.topSpeed : spec.topSpeed * (0.32 + 0.55 * spec.offroadGrip)) *
+      (onTarmac ? base : base * (0.32 + 0.55 * spec.offroadGrip)) *
       (1 - 0.12 * wear);
 
     // Longitudinal forces.
@@ -165,13 +255,19 @@ export class Vehicle {
     const v = this.speed;
     if (throttle > 0) {
       const fade = Math.max(0, 1 - Math.abs(v) / topSpeed);
-      a += spec.power * (1 - 0.15 * wear) * throttle * (0.35 + 0.65 * fade);
+      a +=
+        spec.power *
+        this.powerBonus *
+        (1 - 0.15 * wear) *
+        (1 - 0.22 * this.freight) *
+        throttle *
+        (0.35 + 0.65 * fade);
     }
     a -= this.dragK * v * Math.abs(v); // aero drag
     a -= Math.sign(v) * (ROLLING + surfaceDrag); // rolling resistance
     if (input.brake > 0) {
       if (v > 0.4) {
-        a -= spec.brakePower * input.brake;
+        a -= spec.brakePower * (1 - 0.18 * this.freight) * input.brake;
       } else if (this.engineOn) {
         a -= spec.power * 0.5 * input.brake; // reverse
       }
@@ -191,6 +287,7 @@ export class Vehicle {
     let ceiling = topSpeed * 1.02;
     if (spec.speedLimit) ceiling = Math.min(ceiling, spec.speedLimit);
     if (this.limitOverride) ceiling = Math.min(ceiling, this.limitOverride);
+    if (this.blown) ceiling = Math.min(ceiling, BLOWN_LIMIT);
     this.speed = THREE.MathUtils.clamp(this.speed, -9, ceiling);
 
     // Steering: bicycle model, with the turn rate capped by available grip.
@@ -242,10 +339,27 @@ export class Vehicle {
     this.lateral = this.tmp.lateral;
     if (advanced > 0) this.distance += advanced;
 
+    // Rubber. Sand eats it, sliding eats it, and speed eats it squared:
+    // a hundred kilometres of tarmac at a sane pace is nothing much, and
+    // twenty minutes of sliding about on a dirt spur is most of a set.
+    if (this.tyre > 0) {
+      const rough =
+        surface === SURFACE.SAND ? 5.5 : surface === SURFACE.SHOULDER ? 2.2 : 1;
+      const fast = 1 + (speedAbs / 55) * (speedAbs / 55) * 1.8;
+      const scrub = 1 + this.slip * 7;
+      this.tyre = Math.max(
+        0,
+        this.tyre - TYRE_WEAR * Math.abs(step) * rough * fast * scrub
+      );
+      // Down to nothing and it lets go.
+      if (this.tyre <= 0 && !this.blown) this.blowout();
+    }
+
     // Fuel burn: distance based, plus idle drain and an off-road penalty.
     if (this.engineOn) {
       const penalty = surface === SURFACE.SAND ? 1.7 : surface === SURFACE.SHOULDER ? 1.25 : 1;
-      const perMetre = spec.burn * (0.55 + 0.6 * throttle) * penalty * this.load;
+      const perMetre =
+        spec.burn * (0.55 + 0.6 * throttle) * penalty * this.load;
       this.fuel -= perMetre * Math.abs(step) + spec.idleBurn * dt;
       if (this.fuel <= 0) {
         this.fuel = 0;
@@ -324,7 +438,7 @@ export class Vehicle {
     const scale = spec.crashScale ?? 1;
     this.crashCooldown = 1.2;
     const severity = THREE.MathUtils.clamp(closingSpeed / 55, 0.12, 1);
-    this.damage = Math.min(100, this.damage + severity * 48 * scale);
+    this.damage = Math.min(100, this.damage + severity * 48 * scale * this.armour);
     // Light things get stopped and spun harder by the same impact.
     this.speed *= 0.25 / Math.max(1, scale * 0.55);
     this.yaw += (Math.random() - 0.5) * severity * 1.1 * Math.min(2, scale * 0.6);

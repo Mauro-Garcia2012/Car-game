@@ -63,6 +63,9 @@ export class Headlights {
     this.rig = new THREE.Group();
     this.level = 0;
     this.active = 2;
+    /** 1 as they come, more once the workshop has been at them. */
+    this.reach = 1;
+    this.anchors = null;
 
     this.lamps = [];
     for (let i = 0; i < 2; i++) {
@@ -95,11 +98,32 @@ export class Headlights {
     model.add(this.rig);
 
     this.active = anchors.length;
-    anchors.forEach((p, i) => {
+    this.anchors = anchors;
+    this.aim();
+    this.setLevel(this.level);
+  }
+
+  /** Points the lamps, at whatever reach they have been given. */
+  aim() {
+    if (!this.anchors) return;
+    this.anchors.forEach((p, i) => {
       const { spot, target } = this.lamps[i];
       spot.position.copy(p);
-      target.position.set(p.x * 0.6, p.y - AIM_DROP, p.z - AIM_AHEAD);
+      // Reaching further is a longer, narrower, brighter cone: aim the target
+      // further down the road and the spot angle closes to follow it.
+      target.position.set(p.x * 0.6, p.y - AIM_DROP, p.z - AIM_AHEAD * this.reach);
+      spot.distance = BEAM_RANGE * this.reach;
+      spot.angle = BEAM_ANGLE / (0.55 + 0.45 * this.reach);
     });
+  }
+
+  /**
+   * Long-range lamps, off the workshop counter.
+   * @param {number} reach 1 as standard, more for the good ones
+   */
+  setReach(reach) {
+    this.reach = reach;
+    this.aim();
     this.setLevel(this.level);
   }
 
@@ -113,7 +137,8 @@ export class Headlights {
   setLevel(level) {
     this.level = level;
     this.lamps.forEach(({ spot }, i) => {
-      spot.intensity = i < this.active ? level * BEAM_INTENSITY : 0;
+      spot.intensity =
+        i < this.active ? level * BEAM_INTENSITY * (0.55 + 0.45 * this.reach) : 0;
     });
 
     // Every lamp and lens in the world, the player's and the traffic's.

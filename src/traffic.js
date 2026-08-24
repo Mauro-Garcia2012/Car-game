@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import { roadPoint, roadYaw } from './track.js';
 import { groundHeight } from './world/road.js';
 import { MAT, paint, part, profilePiece, makeWheel } from './cars/parts.js';
+import { scaled } from './difficulty.js';
 
 const LANE = 2.45;
 const MAX_ACTIVE = 3;
@@ -205,7 +206,12 @@ export class Traffic {
     this.spawnTimer -= dt;
     if (this.spawnTimer <= 0) {
       this.spawn(playerS);
-      this.spawnTimer = SPAWN_MIN + Math.random() * SPAWN_SPREAD;
+      // Thicker the further out you are: three on the road at once used to
+      // be the ceiling everywhere, and out past two hundred kilometres it is
+      // the normal state of things.
+      this.spawnTimer =
+        scaled(playerS, SPAWN_MIN, 0.4) +
+        Math.random() * scaled(playerS, SPAWN_SPREAD, 0.4);
     }
 
     for (const it of this.items) {

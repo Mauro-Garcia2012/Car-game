@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import { glowAtNight } from './nightlights.js';
 import { roadPoint, roadYaw, EDGE } from '../track.js';
 import { hashRand, onReseed } from '../rng.js';
+import { scaled } from '../difficulty.js';
 import {
   concreteTexture,
   pumpBoardTexture,
@@ -120,7 +121,11 @@ export function stationDistance(i) {
   while (distances.length <= i) {
     const k = distances.length - 1;
     distances.push(
-      distances[k] + MIN_GAP + Math.round(hashRand(k, 77) * GAP_SPREAD)
+      distances[k] +
+        Math.round(
+          scaled(distances[k], MIN_GAP, 2.6) +
+            hashRand(k, 77) * scaled(distances[k], GAP_SPREAD, 2.6)
+        )
     );
   }
   return distances[i];

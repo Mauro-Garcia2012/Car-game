@@ -39,6 +39,9 @@ import { BusStops } from './world/busStops.js';
 import { stormLevel, metresToStorm } from './weather.js';
 import { Wildlife } from './world/wildlife.js';
 import { Landmarks } from './world/landmarks.js';
+import { Police } from './world/police.js';
+import { counter, buy as buyUpgrade, emptyUpgrades, applyUpgrades } from './workshop.js';
+import { Freight, FREIGHT_BURN, loadAt } from './freight.js';
 import { RoadSigns, SpeedCameras, speedLimitAt, FINE } from './world/signs.js';
 import { createSky } from './world/sky.js';
 import { Headlights } from './world/headlights.js';
@@ -60,25 +63,6 @@ import { DustSystem } from './effects.js';
 import { roadPoint, roadYaw } from './track.js';
 import { onLanguageChange } from './i18n.js';
 import { terrainHeight } from './world/road.js';
-
-/**
- * What the body shop charges, per point of damage.
- *
- * Damage used to be a one-way trip: it went up, and at a hundred the run was
- * over, and nothing you did in between made any difference. Being able to
- * buy it back turns every crash into a bill instead of a countdown, and
- * gives the money somewhere to go once the tank is full — which, after a
- * couple of good fares, it always is.
- *
- * Nine dollars a point puts a bad shunt at the price of a decent fare.
- */
-const BODY_RATE = 9;
-/** Below this it is a scratch, and the shop will not get the hammer out. */
-const BODY_MIN = 4;
-
-/** Metres between the things a passenger says, and how many they can say. */
-const CHAT_EVERY = 2000;
-const CHAT_LINES = 12;
 
 /** How hard the wind pushes, in metres per second of drift, at full storm. */
 const WIND_DRIFT = 1.5;
@@ -115,7 +99,11 @@ export class Game {
     this.inZone = -1;
     this.motelZone = -1;
     this.busZone = -1;
-    this.canRepair = false;
+    this.atShop = false;
+    /** What the workshop counter is showing right now. */
+    this.shopRows = [];
+    /** Everything bought this run. Never saved to the garage. */
+    this.upgrades = emptyUpgrades();
     /** 0 clear, 1 the worst of a sandstorm. */
     this.storm = 0;
     this.stormWarned = false;
@@ -137,6 +125,7 @@ export class Game {
     this.nightOverrun = 0;
     this.fatigue = new Fatigue();
     this.fares = new Fares();
+    this.freight = new Freight();
     this.offer = null;
     /** Bound once: the shelters ask this every frame who is still waiting. */
     this.busWaiter = (index) => this.fares.hasWaiter(index);
@@ -183,6 +172,7 @@ export class Game {
     this.sideRoads = new SideRoads(this.scene);
     this.wildlife = new Wildlife(this.scene);
     this.landmarks = new Landmarks(this.scene);
+    this.police = new Police(this.scene);
     // Everything with words painted on it has to be repainted when the
     // language changes, roadside signage included.
     onLanguageChange(() => {
@@ -232,6 +222,8 @@ export class Game {
       this.start(this.spec.id);
     } else if (action === 'accept') {
       this.acceptOffer();
+    } else if (action.startsWith('shop')) {
+      this.ui.buyShopSlot(Number(action.slice(4)) - 1);
     } else if (action === 'horn') {
       this.audio.horn();
       this.wildlife.spook(this.vehicle.s);
@@ -298,6 +290,7 @@ export class Game {
     this.setWornEngine(false);
     this.dust.clear();
     this.wildlife.reset();
+    this.police.reset();
     this.stops.clear();
     this.skipped.clear();
     this.beds = new Set();
@@ -317,9 +310,15 @@ export class Game {
     this.cameras.reset(0);
     this.fatigue.reset();
     this.fares.reset();
+    this.freight.reset();
     this.offer = null;
     this.busZone = -1;
-    this.canRepair = false;
+    this.atShop = false;
+    this.shopRows = [];
+    this.upgrades = emptyUpgrades();
+    applyUpgrades(this);
+    this.blownWarned = false;
+    this.tyreWarned = false;
     this.topSpeed = 0;
     this.chatAt = 0;
     this.chatLast = -1;
@@ -382,6 +381,12 @@ export class Game {
       seed: worldSeed(),
       cases: [...this.sideRoads.taken],
       worn: this.wornEngine,
+      freight: this.freight.active ? this.freight.active.index : null,
+      freightHurt: this.freight.hurt,
+      freightTaken: [...this.freight.taken],
+      tyre: this.vehicle.tyre,
+      blown: this.vehicle.blown,
+      upgrades: { ...this.upgrades },
     });
     this.saveTick = RUN_SAVE_EVERY;
   }
@@ -428,7 +433,8 @@ export class Game {
     this.crates.opened = new Set(run.crates);
     this.fares.used = new Set(run.faresUsed);
     this.fares.active = run.fare == null ? null : offerAt(run.fare);
-    v.load = this.fares.active ? PASSENGER_BURN : 1;
+    v.load =
+      (this.fares.active ? PASSENGER_BURN : 1) + FREIGHT_BURN * v.freight;
 
     // Rebuild the world around wherever we came back to.
     this.road.update(v.s);
@@ -443,6 +449,15 @@ export class Game {
     this.sideRoads.taken = new Set(run.cases || []);
     this.sideRoads.update(v.s);
     this.setWornEngine(!!run.worn);
+    this.freight.taken = new Set(run.freightTaken || []);
+    this.freight.active =
+      run.freight == null ? null : loadAt(run.freight);
+    this.freight.hurt = run.freightHurt || 0;
+    v.freight = this.freight.active ? 1 : 0;
+    v.tyre = run.tyre ?? 100;
+    v.blown = !!run.blown;
+    this.upgrades = { ...emptyUpgrades(), ...(run.upgrades || {}) };
+    applyUpgrades(this);
     this.traffic.update(0, v.s);
     v.syncModel(0);
     this.advanceClock(0);
@@ -571,7 +586,7 @@ export class Game {
     v.update(dt, input);
     // Debug only, and never saved: the cheat menu's one toggle.
     if (this.godMode) {
-      v.fuel = this.spec.tank;
+      v.fuel = v.tankSize;
       v.damage = 0;
     }
     if (!frozen) {
@@ -595,6 +610,8 @@ export class Game {
     this.wildlife.update(dt, v.s, this.sky.light.lamps);
 
     if (!frozen) {
+      this.handleTyres();
+      this.handlePolice(dt);
       this.handleCollisions();
       this.handleSpeedCamera();
       this.handleCrates();
@@ -603,6 +620,8 @@ export class Game {
       this.handleMotel(dt);
       this.handleFares();
       this.handleChat();
+      this.shopRows = this.atShop ? counter(this) : [];
+      this.handleFreight();
       this.handleStationBookkeeping();
       this.checkGameOver();
 
@@ -719,6 +738,9 @@ export class Game {
     );
     if (closing > 0) {
       const severity = v.crash(closing);
+      if (severity > 0 && this.freight.active) {
+        this.freight.hurt = Math.min(1, this.freight.hurt + severity * 0.4);
+      }
       if (severity > 0) {
         this.audio.crash(severity);
         this.shake = Math.min(1.4, 0.5 + severity);
@@ -790,11 +812,11 @@ export class Game {
     this.inZone = index;
     const stopped = Math.abs(v.speed) < REFUEL_SPEED_LIMIT;
     const wasRefuelling = this.refuelling;
-    this.refuelling = index >= 0 && stopped && v.fuel < this.spec.tank - 0.05;
+    this.refuelling = index >= 0 && stopped && v.fuel < v.tankSize - 0.05;
 
-    // The pump is the body shop too: standing still on the forecourt with a
-    // dented car is the one place you can buy the dents back.
-    this.canRepair = index >= 0 && stopped && v.damage >= BODY_MIN;
+    // The pump is the workshop: standing still on a forecourt is the one
+    // place anything about the car can be changed.
+    this.atShop = index >= 0 && stopped;
 
     const price = index >= 0 ? fuelPricePerLitre(index) : 0;
     this.pumpPrice = price;
@@ -807,7 +829,7 @@ export class Game {
       this.broke = false;
       if (!wasRefuelling) this.audio.blip(520, 0.12, 'triangle', 0.14);
       // Buy as many litres as the tank and the wallet allow this frame.
-      const wanted = Math.min(REFUEL_RATE * dt, this.spec.tank - v.fuel);
+      const wanted = Math.min(REFUEL_RATE * dt, v.tankSize - v.fuel);
       const affordable = price > 0 ? this.cash / price : wanted;
       const litres = Math.min(wanted, affordable);
       v.fuel += litres;
@@ -819,7 +841,7 @@ export class Game {
         this.audio.refuelTick();
         this.refuelTick = 0.12;
       }
-      if (v.fuel >= this.spec.tank - 0.05 && !this.stops.has(index)) {
+      if (v.fuel >= v.tankSize - 0.05 && !this.stops.has(index)) {
         this.completeStop(index);
       }
     } else if (index >= 0 && stopped && !this.stops.has(index)) {
@@ -932,7 +954,7 @@ export class Game {
       this.cash += balance;
       this.earned += balance;
       this.fares.clear();
-      v.load = 1;
+      v.load = 1 + FREIGHT_BURN * v.freight;
       this.audio.fanfare();
       this.flash('msg.dropOff', 'good', 3.4, { pay: `$${balance}` });
       this.offer = null;
@@ -944,7 +966,7 @@ export class Game {
     if (this.fares.missed(v.s)) {
       const lost = balanceOf(this.fares.active);
       this.fares.clear();
-      v.load = 1;
+      v.load = 1 + FREIGHT_BURN * v.freight;
       this.audio.warn();
       this.flash('msg.fareLost', 'danger', 3.6, { lost: `$${lost}` });
     }
@@ -953,7 +975,8 @@ export class Game {
     this.offer =
       index >= 0 && Math.abs(v.speed) < 15 ? this.fares.offerFor(index) : null;
     this.canAccept = !!this.offer && stopped;
-    v.load = this.fares.active ? PASSENGER_BURN : 1;
+    v.load =
+      (this.fares.active ? PASSENGER_BURN : 1) + FREIGHT_BURN * v.freight;
   }
 
   /**
@@ -965,36 +988,34 @@ export class Game {
    */
   acceptOffer() {
     if (this.offer && this.canAccept) this.acceptFare();
-    else this.repairBody();
+    else this.buyFromShop(this.shopRows[0] && this.shopRows[0].id);
   }
 
   /**
-   * Knocks the dents out, for as much of it as the wallet covers.
+   * Buys one line off the workshop counter.
    *
-   * Part-paying is deliberate: arriving at the pump broke and battered and
-   * being told no would just be a slower version of dying, and buying what
-   * you can afford is how the fuel works two metres away.
+   * Everything it sells lives on the car for this run and nowhere else: the
+   * spec objects are shared between runs, so the upgrades are counters on
+   * the game and multipliers on the vehicle.
    */
-  repairBody() {
-    const v = this.vehicle;
-    if (this.state !== 'playing' || !this.canRepair) return;
-    const full = v.damage * BODY_RATE;
-    const paid = Math.min(full, this.cash);
-    if (paid < 1) {
-      this.audio.warn();
-      this.flash('msg.bodyBroke', 'danger', 3.2, { cost: `$${Math.round(full)}` });
+  buyFromShop(id) {
+    if (this.state === 'over' || !this.atShop || !id) return;
+    if (id === 'freight') {
+      this.toggleFreight();
       return;
     }
-    v.damage = Math.max(0, v.damage - paid / BODY_RATE);
-    this.cash -= paid;
-    this.spent += paid;
+    const result = buyUpgrade(this, id);
+    if (!result.ok) {
+      this.audio.warn();
+      this.flash('msg.cannotAfford', 'danger', 2.6, {
+        cost: `$${Math.round(result.price || 0)}`,
+      });
+      return;
+    }
     this.audio.fanfare();
-    this.flash(
-      v.damage > BODY_MIN ? 'msg.bodyPart' : 'msg.bodyFixed',
-      'good',
-      3.4,
-      { cost: `$${Math.round(paid)}`, left: `${Math.round(v.damage)}%` }
-    );
+    this.flash(`msg.bought.${result.id}`, 'good', 3.2, {
+      cost: `$${result.price}`,
+    });
   }
 
   /**
@@ -1024,6 +1045,123 @@ export class Game {
     if (line === this.chatLast) line = (line + 1) % CHAT_LINES;
     this.chatLast = line;
     this.flash(`chat.${line}`, 'chat', 5);
+  }
+
+  /**
+   * The dock, and the load in the back.
+   *
+   * It rides on the workshop counter rather than a panel of its own: it is
+   * the same forecourt, the same stop, and one list of things you can do
+   * while standing on it is easier to read than three.
+   */
+  handleFreight() {
+    const v = this.vehicle;
+    if (!this.atShop) {
+      v.freight = this.freight.active ? 1 : 0;
+      return;
+    }
+    const index = this.inZone;
+    if (this.freight.isDestination(index)) {
+      const paid = this.freight.worth();
+      this.shopRows.push({
+        id: 'freight',
+        key: this.freight.hurt > 0.02 ? 'shop.deliverHurt' : 'shop.deliver',
+        pay: paid,
+        price: 0,
+        owned: 0,
+        max: 0,
+        affordable: true,
+      });
+      return;
+    }
+    const load = this.freight.offerFor(index);
+    if (!load) return;
+    this.shopRows.push({
+      id: 'freight',
+      key: 'shop.takeLoad',
+      pay: load.pay,
+      km: (load.distance / 1000).toFixed(0),
+      price: 0,
+      owned: 0,
+      max: 0,
+      affordable: true,
+    });
+  }
+
+  /** Takes a load on, or hands one over. */
+  toggleFreight() {
+    const index = this.inZone;
+    if (this.freight.isDestination(index)) {
+      const paid = this.freight.worth();
+      this.cash += paid;
+      this.earned += paid;
+      const hurt = this.freight.hurt;
+      this.freight.clear();
+      this.vehicle.freight = 0;
+      this.audio.fanfare();
+      this.flash(hurt > 0.02 ? 'msg.freightHurt' : 'msg.freightPaid', 'good', 4, {
+        pay: `$${paid}`,
+        lost: `${Math.round(hurt * 100)}%`,
+      });
+      return;
+    }
+    const load = this.freight.offerFor(index);
+    if (!load) return;
+    this.freight.take(load);
+    this.vehicle.freight = 1;
+    this.audio.blip(420, 0.14, 'square', 0.16);
+    this.flash('msg.freightTaken', 'good', 4, {
+      km: `${(load.distance / 1000).toFixed(0)} km`,
+      pay: `$${load.pay}`,
+    });
+  }
+
+  /**
+   * The patrol car, and what it costs.
+   *
+   * The fine is bigger than the camera's by a distance, and it takes the
+   * time as well: you have to actually stop, which on a road where the sleep
+   * meter is the clock is most of what it costs you.
+   */
+  handlePolice(dt) {
+    const v = this.vehicle;
+    const limit = speedLimitAt(v.s) / 3.6;
+    const event = this.police.update(dt, v.s, Math.abs(v.speed), limit);
+    if (event.started) {
+      this.audio.warn();
+      this.flash('msg.copsOn', 'danger', 4.5);
+    }
+    if (event.fine) {
+      this.cash = Math.max(0, this.cash - event.fine);
+      this.spent += event.fine;
+      this.audio.fail();
+      this.flash('msg.copsFine', 'danger', 5, {
+        fine: `$${event.fine}`,
+        over: `${event.over}`,
+      });
+    }
+    if (event.lost) {
+      this.audio.blip(300, 0.2, 'sine', 0.12);
+      this.flash('msg.copsLost', 'good', 3.4);
+    }
+  }
+
+  /** Says something the two times the rubber matters. */
+  handleTyres() {
+    const v = this.vehicle;
+    if (v.blown && !this.blownWarned) {
+      this.blownWarned = true;
+      this.audio.crash(0.5);
+      this.shake = 0.7;
+      this.flash('msg.blowout', 'danger', 4.5);
+    }
+    if (!v.blown) this.blownWarned = false;
+    if (v.tyre < 18 && !v.blown && !this.tyreWarned) {
+      this.tyreWarned = true;
+      this.audio.warn();
+      this.flash('msg.tyresLow', 'danger', 3.4);
+    }
+    if (v.tyre > 30) this.tyreWarned = false;
   }
 
   /**
@@ -1208,14 +1346,14 @@ export class Game {
       gear: v.gear,
       engineOn: v.engineOn,
       fuel: v.fuel,
-      tank: spec.tank,
+      tank: v.tankSize,
       rangeLeft,
       toStation,
       distance: v.distance,
       stops: this.stops.size,
       damage: v.damage,
       refuelling: this.refuelling,
-      refuelProgress: v.fuel / spec.tank,
+      refuelProgress: v.fuel / v.tankSize,
       refuelLitres: v.fuel,
       refuelCost: this.spent,
       cash: this.cash,
@@ -1228,13 +1366,9 @@ export class Game {
       toMotel,
       checkingIn: this.checkingIn / CHECKIN_TIME,
       storm: this.storm,
-      body: this.canRepair
-        ? {
-            damage: v.damage,
-            cost: Math.round(v.damage * BODY_RATE),
-            affordable: this.cash >= v.damage * BODY_RATE,
-          }
-        : null,
+      tyre: v.tyre,
+      blown: v.blown,
+      shop: this.atShop ? this.shopRows : null,
       fare: this.fares.active
         ? {
             metres: Math.round(this.fares.remaining(v.s)),
@@ -1293,17 +1427,17 @@ export class Game {
       this.ui.message('msg.wornRunning', 'danger');
     } else if (this.fatigue.level < 0.2) {
       this.ui.message('msg.drowsy', 'warn');
-    } else if (v.fuel / spec.tank < 0.25) {
+    } else if (v.fuel / v.tankSize < 0.25) {
       this.ui.message('msg.lowFuel', 'warn');
     } else {
       this.ui.message('');
     }
 
-    if (v.fuel / spec.tank < 0.15 && !this.lowFuelWarned) {
+    if (v.fuel / v.tankSize < 0.15 && !this.lowFuelWarned) {
       this.lowFuelWarned = true;
       this.audio.warn();
     }
-    if (v.fuel / spec.tank > 0.3) this.lowFuelWarned = false;
+    if (v.fuel / v.tankSize > 0.3) this.lowFuelWarned = false;
 
     if (this.fatigue.level < 0.25 && !this.drowsyWarned) {
       this.drowsyWarned = true;

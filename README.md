@@ -42,6 +42,7 @@ static host.
 | Pause | `P` or `Esc` | |
 | Restart | `R` | |
 | Horn | `H` | |
+| Buy line 1–8 at the workshop | `1`–`8` | |
 | Mute | `M`, or the speaker button top right | |
 
 The speaker button is always there — in the garage, mid-drive and on the
@@ -161,6 +162,42 @@ again. Getting it wrong says `PIN INCORRECTO` and nothing else happens.
 - **The passenger talks.** Every couple of kilometres somebody riding with you
   says something. Twelve lines, never the same one twice in a row, and quiet
   enough that they are company rather than commentary.
+- **The road gets harder the further you go.** Kilometre five hundred used to
+  play exactly like kilometre five. Now the desert thins out: by the time you
+  are three hundred kilometres out the **pumps are twice as far apart** (2.4 km
+  → 5.2), the **beds two thirds further** (8.3 → 13.8), the traffic is thicker
+  and the **storms come round twice as often**. It saturates rather than
+  climbing forever, so the road is eventually as bad as it gets and no worse —
+  and the answer to it is the counter at every station.
+- **The workshop.** Money used to have a ceiling: past the first few fares the
+  tank was always full and a thousand dollars bought the same run as ten
+  thousand. Stop on any forecourt and there is a price list — beat the panels
+  straight, a new set of tyres, **jerry cans** (+18 L, up to three), **soft
+  compound** (+14% grip), a **reinforced body** (−32% damage taken),
+  **long-range lamps** (70% more beam), and an **engine tune** (+7% power and
+  +4% top speed a step, up to three). Press the number or click the line.
+  Nothing survives the run: it is bought with the money you found on this road
+  and it dies with the car.
+- **Tyres wear out, and then they let go.** The one consumable the game did
+  not have. Rubber goes slowly on clean tarmac and much faster for the things
+  that were free before: **sand eats it five times over**, sliding eats it,
+  and speed eats it squared. A careful driver gets a hundred kilometres or so
+  out of a set; a driver who lives on the dirt spurs gets forty. Run it to
+  nothing and one lets go — a bang, a swerve, a fifth of the grip gone and
+  **60 km/h until you buy rubber**.
+- **Freight.** A fare is ten to twenty kilometres. A load is **forty to a
+  hundred**, for money that dwarfs it, taken on at one station and handed over
+  at another. It is also a car that will not pull away and will not stop:
+  **−22% power, −18% braking, 30% more fuel** — and every crash on the way
+  breaks some of it, off the price you get paid at the far end.
+- **Highway patrol.** The speed limit was a fifty-dollar toll collected by a
+  camera you could see coming. There is a car sitting in the shade every six
+  to fifteen kilometres now, and come past it more than **23 km/h over** and
+  it pulls out with the bar going. Stop and it is **$120 plus $7 for every
+  km/h you were doing over** — and the two minutes, which on a road where the
+  sleep meter is the clock is most of what it costs. Or run: it does about
+  **200 km/h** and gives up after forty seconds or a kilometre, so two cars in
+  the garage can simply leave it behind and the rest cannot.
 - **Crates in the sand.** Every 300 m or so a crate sits about **10 m off the
   tarmac**, fallen off somebody's truck. Three out of four hold nothing at all,
   roughly one in five is worth **$10**, and about **3%** are worth **$100**.
@@ -361,6 +398,9 @@ src/
   daynight.js       the clock: one sleep meter is one day, dawn to dark
   fares.js          passengers: who is waiting where, and what they pay
   weather.js        sandstorms: which stretches of road they own
+  difficulty.js     how hard the road is, as a function of how far out
+  workshop.js       the counter at every station
+  freight.js        loads: what is on the dock and what it is worth
   traffic.js        AI pickups and semis
   input.js          keyboard, touch and gamepad
   audio.js          synthesised engine, tyres and beeps (no audio files)
@@ -372,7 +412,8 @@ src/
   world/            sky and the day/night rig, road, terrain, scenery,
                     stations, motels, bus stops, signs, cameras, headlamps,
                     crates, dirt spurs, the briefcases at the end of them,
-                    the deer that walk out after dark, and the landmarks
+                    the deer that walk out after dark, the landmarks and
+                    the patrol car in the shade
 vendor/three/       three.js r169 (MIT), vendored so the game runs offline
 ```
 
@@ -465,6 +506,7 @@ pausa.
 | Pausa | `P` o `Esc` | |
 | Reiniciar | `R` | |
 | Claxon | `H` | |
+| Comprar la línea 1–8 del taller | `1`–`8` | |
 | Silencio | `M`, o el botón del altavoz arriba a la derecha | |
 
 El botón del altavoz está siempre ahí —en el garaje, conduciendo y en la
@@ -635,6 +677,42 @@ volver a meterlo. Si te equivocas dice `PIN INCORRECTO` y no pasa nada más.
 - **El pasajero habla.** Cada par de kilómetros, quien va contigo dice algo.
   Doce frases, nunca la misma dos veces seguidas, y lo bastante bajito como
   para ser compañía y no comentario.
+- **La carretera se endurece según avanzas.** El kilómetro quinientos se
+  jugaba exactamente igual que el cinco. Ahora el desierto se despuebla: a
+  trescientos kilómetros los **surtidores están al doble de distancia** (2,4 km
+  → 5,2), las **camas dos tercios más lejos** (8,3 → 13,8), hay más tráfico y
+  las **tormentas caen el doble de a menudo**. Se satura en vez de subir para
+  siempre, así que la carretera llega a ser todo lo mala que va a ser y no
+  más — y la respuesta está en el mostrador de cada gasolinera.
+- **El taller.** El dinero tenía techo: pasados los primeros viajes el depósito
+  siempre estaba lleno y mil dólares compraban la misma partida que diez mil.
+  Párate en cualquier gasolinera y hay una lista de precios: enderezar la
+  chapa, neumáticos nuevos, **bidones** (+18 L, hasta tres), **compuesto
+  blando** (+14 % de agarre), **carrocería reforzada** (−32 % de daños),
+  **faros de largo alcance** (70 % más de haz) y **puesta a punto** (+7 % de
+  potencia y +4 % de punta por paso, hasta tres). Pulsa el número o pincha la
+  línea. Nada sobrevive a la partida: se compra con el dinero que encontraste
+  en esta carretera y muere con el coche.
+- **Los neumáticos se gastan, y luego revientan.** El consumible que le
+  faltaba al juego. La goma se va despacio en asfalto limpio y mucho más
+  rápido con lo que antes salía gratis: **la arena se la come cinco veces más
+  deprisa**, derrapar se la come, y la velocidad se la come al cuadrado. Quien
+  conduce con cabeza saca unos cien kilómetros de un juego; quien vive en los
+  caminos de tierra, cuarenta. Si la agotas, una revienta: un estallido, un
+  bandazo, un quinto del agarre menos y **60 km/h hasta que compres goma**.
+- **Mercancía.** Un viaje son diez o veinte kilómetros. Una carga son **de
+  cuarenta a cien**, por un dinero que no tiene comparación, que se coge en una
+  gasolinera y se entrega en otra. Y es también un coche que no arranca y no
+  frena: **−22 % de potencia, −18 % de freno, 30 % más de gasolina** — y cada
+  golpe por el camino rompe una parte, que te descuentan al entregar.
+- **Patrulla de carretera.** El límite era un peaje de cincuenta dólares que
+  cobraba un radar que veías venir. Ahora hay un coche a la sombra cada seis o
+  quince kilómetros, y si pasas a más de **23 km/h por encima** sale con la
+  barra encendida. Si te paras son **120 $ más 7 $ por cada km/h de más** — y
+  los dos minutos, que en una carretera donde la barra de sueño es el reloj
+  son casi todo lo que cuesta. O huyes: hace unos **200 km/h** y se rinde a los
+  cuarenta segundos o al kilómetro, así que dos coches del garaje se le van y
+  el resto no.
 - **Cajas en la arena.** Cada 300 m más o menos hay una caja a unos **10 m de
   la carretera**, caída del camión de alguien. Tres de cada cuatro no llevan
   nada, alrededor de una de cada cinco lleva **$10** y un **3%** lleva **$100**.

@@ -13,6 +13,7 @@
  * has to be written into the save.
  */
 import { hashRand, onReseed } from './rng.js';
+import { scaled } from './difficulty.js';
 
 /**
  * Where the first one can be, and how far apart they run after that.
@@ -47,8 +48,10 @@ function computeStorm(i) {
       ? FIRST_STORM + Math.round(hashRand(0, 5501) * FIRST_SPREAD)
       : storms[i - 1].s +
         storms[i - 1].length +
-        GAP_MIN +
-        Math.round(hashRand(i, 5501) * GAP_SPREAD);
+        Math.round(
+          scaled(storms[i - 1].s, GAP_MIN, 0.45) +
+            hashRand(i, 5501) * scaled(storms[i - 1].s, GAP_SPREAD, 0.45)
+        );
   const length = LEN_MIN + Math.round(hashRand(i, 5507) * LEN_SPREAD);
   return { s, length };
 }

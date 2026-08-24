@@ -149,19 +149,10 @@
         <button id="fare-accept" type="button">TAKE IT</button>
       </div>
 
-      <div id="body-panel" class="refuel-panel fare-panel hidden">
-        <label data-i18n="hud.bodyshop">BODY SHOP</label>
-        <div class="fare-rows">
-          <div>
-            <span data-i18n="hud.bodyDamage">Damage</span
-            ><strong id="body-damage">—</strong>
-          </div>
-          <div>
-            <span data-i18n="hud.bodyCost">Beating it out</span
-            ><strong id="body-cost" class="burn">—</strong>
-          </div>
-        </div>
-        <button id="body-fix" type="button">FIX IT</button>
+      <div id="shop-panel" class="refuel-panel shop-panel hidden">
+        <label data-i18n="hud.workshop">WORKSHOP</label>
+        <div id="shop-rows" class="shop-rows"></div>
+        <em data-i18n="hud.shopHint">number keys, or click</em>
       </div>
 
       <div id="checkin-panel" class="refuel-panel hidden">
@@ -217,6 +208,10 @@
           <div class="damage">
             <label data-i18n="hud.damage">DAMAGE</label>
             <div class="damage-bar"><i id="damage-fill"></i></div>
+          </div>
+          <div class="damage">
+            <label data-i18n="hud.tyres">TYRES</label>
+            <div class="damage-bar"><i id="tyre-fill"></i></div>
           </div>
           <div class="damage sleep">
             <label data-i18n="hud.sleep">SLEEP</label>

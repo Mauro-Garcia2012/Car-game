@@ -92,6 +92,7 @@ export class UI {
       stops: $('hud-stops'),
       best: $('hud-best'),
       damage: $('damage-fill'),
+      tyre: $('tyre-fill'),
       refuelPanel: $('refuel-panel'),
       refuelFill: $('refuel-fill'),
       refuelLitres: $('refuel-litres'),
@@ -121,10 +122,8 @@ export class UI {
       fareAdvance: $('fare-advance'),
       fareFuel: $('fare-fuel'),
       fareAccept: $('fare-accept'),
-      bodyPanel: $('body-panel'),
-      bodyDamage: $('body-damage'),
-      bodyCost: $('body-cost'),
-      bodyFix: $('body-fix'),
+      shopPanel: $('shop-panel'),
+      shopRows: $('shop-rows'),
       mute: $('mute-btn'),
       cheatBtn: $('cheat-btn'),
       cheatPanel: $('cheat-panel'),
@@ -341,7 +340,6 @@ export class UI {
     $('garage-btn').addEventListener('click', () => this.h.onQuit());
     // Tapping the offer is the touch equivalent of pressing E.
     this.el.fareAccept.addEventListener('click', () => this.h.onAcceptFare());
-    this.el.bodyFix.addEventListener('click', () => this.h.onRepairBody());
     this.el.mute.addEventListener('click', () => this.h.onToggleMute());
     this.el.cheatBtn.addEventListener('click', () => this.openCheats());
     this.el.cheatClose.addEventListener('click', () => this.closeCheats());
@@ -481,6 +479,52 @@ export class UI {
     this.el.gameover.classList.remove('hidden');
   }
 
+  /**
+   * The workshop counter.
+   *
+   * Rebuilt only when the list of things on offer actually changes, because
+   * it is repainted every frame you are standing on a forecourt and the
+   * prices move as you buy — but throwing the rows away each frame would
+   * kill the hover state under the cursor.
+   */
+  paintShop(rows) {
+    const e = this.el;
+    e.shopPanel.classList.toggle('hidden', !rows || !rows.length);
+    if (!rows || !rows.length) {
+      this.shopKey_ = '';
+      return;
+    }
+    const key = rows
+      .map((r) => `${r.id}:${r.price}:${r.pay || 0}:${r.affordable}`)
+      .join('|');
+    if (key === this.shopKey_) return;
+    this.shopKey_ = key;
+    e.shopRows.innerHTML = '';
+    rows.forEach((row, i) => {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = `shop-row${row.affordable ? '' : ' broke'}`;
+      const owned = row.max > 1 ? ` <i>${row.owned}/${row.max}</i>` : '';
+      // Freight is the one line that pays you rather than charging you, and
+      // it has to look it or somebody will skip past the best money on the
+      // forecourt thinking it is another bill.
+      const money = row.pay
+        ? `<b class="pays">+$${row.pay.toLocaleString('en-US')}</b>`
+        : `<b>$${row.price.toLocaleString('en-US')}</b>`;
+      el.innerHTML =
+        `<kbd>${i + 1}</kbd><span>${t(row.key, { km: row.km })}${owned}</span>` +
+        money;
+      el.addEventListener('click', () => this.h.onShopBuy(row.id));
+      e.shopRows.appendChild(el);
+    });
+  }
+
+  /** Buys the nth line on the counter, for the number keys. */
+  buyShopSlot(n) {
+    const row = this.el.shopRows.children[n];
+    if (row) row.click();
+  }
+
   /** Blows out the screen for a moment, the way a camera flash does. */
   cameraFlash() {
     const el = this.el.cameraFlash;
@@ -555,6 +599,11 @@ export class UI {
     e.distance.textContent = km(s.distance);
     e.stops.textContent = String(s.stops);
     e.damage.style.width = `${s.damage}%`;
+    // Tyres read the other way round: the bar is what is left, not what is
+    // gone, and it goes red on the canvas so it cannot be mistaken for the
+    // damage bar next to it.
+    e.tyre.style.width = `${Math.max(0, s.tyre)}%`;
+    e.tyre.classList.toggle('low', s.tyre < 22 || s.blown);
 
     e.day.textContent = String(s.day);
     e.cash.textContent = `$${s.cash.toFixed(0)}`;
@@ -591,17 +640,7 @@ export class UI {
     // Standing offer: distance, fare and what the extra weight will drink.
     // Both panels live in the same corner. Checking in wins — you are
     // already stopped, and the offer is still there when you wake up.
-    // The body shop takes the fare panel's slot, below the refuelling one.
-    // It can never clash with a fare — the shelters are kept clear of the
-    // station plots — and it sits under the pump readout on purpose, so you
-    // watch the bill while the tank fills.
-    e.bodyPanel.classList.toggle('hidden', !s.body);
-    if (s.body) {
-      e.bodyDamage.textContent = `${Math.round(s.body.damage)}%`;
-      e.bodyCost.textContent = `−$${s.body.cost}`;
-      e.bodyFix.textContent = t(s.body.affordable ? 'hud.bodyFix' : 'hud.bodyPart');
-      e.bodyFix.classList.add('ready');
-    }
+    this.paintShop(s.shop);
 
     e.farePanel.classList.toggle('hidden', !s.offer || s.checkingIn > 0);
     if (s.offer) {

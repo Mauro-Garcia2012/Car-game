@@ -12,6 +12,7 @@ import * as THREE from 'three';
 import { glowAtNight } from './nightlights.js';
 import { roadPoint, roadYaw, EDGE } from '../track.js';
 import { hashRand, onReseed } from '../rng.js';
+import { scaled } from '../difficulty.js';
 import { t } from '../i18n.js';
 import {
   concreteTexture,
@@ -58,7 +59,11 @@ function computeMotel(i) {
   let s =
     i === 0
       ? firstMotel()
-      : motels[i - 1].s + MOTEL_GAP + Math.round(hashRand(i, 313) * MOTEL_SPREAD);
+      : motels[i - 1].s +
+        Math.round(
+          scaled(motels[i - 1].s, MOTEL_GAP, 1.9) +
+            hashRand(i, 313) * scaled(motels[i - 1].s, MOTEL_SPREAD, 1.9)
+        );
   let attached = false;
   const n = nextStationIndex(s);
   for (const k of [n - 1, n, n + 1]) {

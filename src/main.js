@@ -23,7 +23,7 @@ const ui = new UI({
   onRetry: () => game.start(game.spec.id),
   onResumeRun: () => game.resumeRun(),
   onAcceptFare: () => game && game.acceptOffer(),
-  onRepairBody: () => game && game.repairBody(),
+  onShopBuy: (id) => game && game.buyFromShop(id),
   // The debug menu holds the game still while it is open, so a code typed at
   // speed does not arrive three hundred metres later. It only resumes what it
   // paused: opening it on an already-paused game leaves it paused.
