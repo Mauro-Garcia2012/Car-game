@@ -613,6 +613,61 @@ export function dangerBoardTexture(text, side) {
 }
 
 /**
+ * The face of the big billboard.
+ *
+ * Four lines, and they are not four equal lines: an advert has a hook you
+ * read at four hundred metres, a headline you read at two hundred, and the
+ * small print you only get if you are already slowing down. Setting them all
+ * the same size gives you a wall of text nobody finishes at any distance.
+ *
+ * Three to one, matching the board it goes on, so nothing is stretched.
+ *
+ * @param {string[]} lines [hook, headline, offer, threat]
+ */
+export function billboardTexture(lines) {
+  return memo(`bill:${lines.join('|')}`, () =>
+    canvas(
+      1536,
+      (ctx, w, h) => {
+        ctx.fillStyle = '#f0eade';
+        ctx.fillRect(0, 0, w, h);
+        // Sun and dust on it, so it does not read as printed yesterday.
+        ctx.globalAlpha = 0.09;
+        for (let i = 0; i < 90; i++) {
+          ctx.fillStyle = Math.random() > 0.5 ? '#c4b79c' : '#fffdf6';
+          ctx.fillRect(
+            Math.random() * w,
+            Math.random() * h,
+            30 + Math.random() * 300,
+            8 + Math.random() * 46
+          );
+        }
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#b8332a';
+        ctx.fillRect(0, 0, w, 26);
+        ctx.fillRect(0, h - 26, w, 26);
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const rows = [
+          { y: 0.2, size: 62, colour: '#b8332a', face: 'Arial, sans-serif', bold: true },
+          { y: 0.43, size: 118, colour: '#171310', face: '"Arial Black", Impact, sans-serif', bold: true },
+          { y: 0.66, size: 58, colour: '#171310', face: 'Arial, sans-serif', bold: true },
+          { y: 0.83, size: 50, colour: '#8a2c22', face: 'Arial, sans-serif', bold: false },
+        ];
+        lines.slice(0, 4).forEach((line, i) => {
+          const r = rows[i];
+          ctx.fillStyle = r.colour;
+          ctx.font = `${r.bold ? 'bold ' : ''}${r.size}px ${r.face}`;
+          ctx.fillText(line, w / 2, h * r.y, w - 90);
+        });
+      },
+      { height: 512 }
+    )
+  );
+}
+
+/**
  * MUTCD R2-1 speed limit sign, the white 36x48" rectangle you see all over
  * rural Nevada. Black legend on white, rounded black border.
  */

@@ -40,6 +40,7 @@ import { stormLevel, metresToStorm } from './weather.js';
 import { Wildlife } from './world/wildlife.js';
 import { Landmarks } from './world/landmarks.js';
 import { Police } from './world/police.js';
+import { Billboard } from './world/billboard.js';
 import { counter, buy as buyUpgrade, emptyUpgrades, applyUpgrades } from './workshop.js';
 import { Freight, FREIGHT_BURN, loadAt } from './freight.js';
 import { RoadSigns, SpeedCameras, speedLimitAt, FINE } from './world/signs.js';
@@ -173,6 +174,7 @@ export class Game {
     this.wildlife = new Wildlife(this.scene);
     this.landmarks = new Landmarks(this.scene);
     this.police = new Police(this.scene);
+    this.billboard = new Billboard(this.scene);
     // Everything with words painted on it has to be repainted when the
     // language changes, roadside signage included.
     onLanguageChange(() => {
@@ -446,6 +448,7 @@ export class Game {
     this.buses.update(v.s, this.busWaiter);
     this.landmarks.update(v.s);
     this.props.roadside.update(v.s);
+    this.billboard.update(v.s);
     this.sideRoads.taken = new Set(run.cases || []);
     this.sideRoads.update(v.s);
     this.setWornEngine(!!run.worn);
@@ -606,6 +609,7 @@ export class Game {
     this.sideRoads.update(v.s);
     this.landmarks.update(v.s);
     this.props.roadside.update(v.s);
+    this.billboard.update(v.s);
     this.traffic.update(dt, v.s);
     this.wildlife.update(dt, v.s, this.sky.light.lamps);
 

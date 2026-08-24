@@ -203,6 +203,10 @@ const STRINGS = {
     'over.retry': 'DRIVE AGAIN',
     'over.changeCar': 'CHANGE CAR',
 
+    'sign.tank1': 'FROM HERE ON',
+    'sign.tank2': 'THE PUMPS GET FURTHER APART',
+    'sign.tank3': "I'D GET A BIGGER TANK AT OUR WORKSHOP",
+    'sign.tank4': 'unless you fancy the walk',
     'sign.totemStop': 'STOP',
     'sign.advanceSub': '500 M',
     'sign.danger': 'DANGEROUS\nROAD',
@@ -399,6 +403,10 @@ const STRINGS = {
     'over.retry': 'CONDUCIR OTRA VEZ',
     'over.changeCar': 'CAMBIAR DE COCHE',
 
+    'sign.tank1': 'DE AQUÍ EN ADELANTE',
+    'sign.tank2': 'LAS GASOLINERAS SE DISTANCIAN',
+    'sign.tank3': 'YO QUE TÚ AMPLIARÍA EL DEPÓSITO EN NUESTRO TALLER',
+    'sign.tank4': 'si no quieres quedarte tirado',
     'sign.totemStop': 'PARADA',
     'sign.advanceSub': '500 M',
     'sign.danger': 'CARRETERA\nPELIGROSA',

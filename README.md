@@ -169,6 +169,15 @@ again. Getting it wrong says `PIN INCORRECTO` and nothing else happens.
   and the **storms come round twice as often**. It saturates rather than
   climbing forever, so the road is eventually as bad as it gets and no worse —
   and the answer to it is the counter at every station.
+- **One billboard, at kilometre ninety.** Forty-eight metres of it, on the
+  empty side of the road, saying *the pumps get further apart from here on —
+  I'd get a bigger tank at our workshop, unless you fancy the walk.* It stands
+  where the margin is still comfortable rather than where the trouble starts:
+  measured over eight seeds, the worst gap in the following sixty kilometres
+  is about 4.4 km against 6.0 km of range for the thirstiest car in the garage
+  with a passenger and a load aboard — 28% in hand. Past roughly kilometre 260
+  that margin is down to 16%, and past 1,400 there are gaps that car cannot
+  cross at all. **One jerry can, $340, closes every one of them.**
 - **The workshop.** Money used to have a ceiling: past the first few fares the
   tank was always full and a thousand dollars bought the same run as ten
   thousand. Stop on any forecourt and there is a price list — beat the panels
@@ -413,7 +422,7 @@ src/
                     stations, motels, bus stops, signs, cameras, headlamps,
                     crates, dirt spurs, the briefcases at the end of them,
                     the deer that walk out after dark, the landmarks and
-                    the patrol car in the shade
+                    the patrol car in the shade, and the one billboard
 vendor/three/       three.js r169 (MIT), vendored so the game runs offline
 ```
 
@@ -684,6 +693,16 @@ volver a meterlo. Si te equivocas dice `PIN INCORRECTO` y no pasa nada más.
   las **tormentas caen el doble de a menudo**. Se satura en vez de subir para
   siempre, así que la carretera llega a ser todo lo mala que va a ser y no
   más — y la respuesta está en el mostrador de cada gasolinera.
+- **Una valla publicitaria, en el kilómetro noventa.** Cuarenta y ocho metros
+  de valla, en el lado despejado de la carretera: *de aquí en adelante las
+  gasolineras se distancian — yo que tú ampliaría el depósito en nuestro
+  taller, si no quieres quedarte tirado.* Está donde el margen todavía es
+  cómodo, no donde empieza el problema: medido sobre ocho semillas, el peor
+  hueco de los sesenta kilómetros siguientes son unos 4,4 km contra los 6,0 km
+  de autonomía del coche más sediento del garaje con pasajero y carga — un
+  28 % de margen. Hacia el kilómetro 260 ese margen baja al 16 %, y pasado el
+  1.400 hay huecos que ese coche no puede cruzar. **Un solo bidón, 340 $, los
+  cierra todos.**
 - **El taller.** El dinero tenía techo: pasados los primeros viajes el depósito
   siempre estaba lleno y mil dólares compraban la misma partida que diez mil.
   Párate en cualquier gasolinera y hay una lista de precios: enderezar la

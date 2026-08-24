@@ -23,6 +23,7 @@ import { stopDistance, nextStopIndex } from './world/busStops.js';
 import { trackAt, nextTrackIndex } from './world/sideroads.js';
 import { stormAt, nextStormIndex } from './weather.js';
 import { sightAt, nextSightIndex } from './world/landmarks.js';
+import { BILLBOARD_S } from './world/billboard.js';
 
 /** The way in. Four digits, same shape as the codes. */
 const PIN = '5214';
@@ -57,6 +58,7 @@ function teleport(game, s) {
   game.buses.update(v.s, game.busWaiter);
   game.sideRoads.update(v.s);
   game.landmarks.update(v.s);
+  game.billboard.update(v.s);
   game.traffic.reset();
   game.wildlife.reset();
   game.snapCamera();
@@ -166,6 +168,10 @@ const CODES = {
     },
   },
 
+  SIGN: {
+    what: 'to the big billboard',
+    run: (g) => (teleport(g, BILLBOARD_S - 700), 'km 90'),
+  },
   SEEE: {
     what: 'to the next landmark',
     run: (g) => {
