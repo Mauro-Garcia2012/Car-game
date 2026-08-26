@@ -8,7 +8,9 @@
  * tumblehome instead of looking like slabs.
  */
 import * as THREE from 'three';
+import { Q } from '../quality.js';
 import {
+  compactVehicle,
   spotLamp,
   brakeDisc,
   chainDrive,
@@ -52,6 +54,62 @@ function mountWheels(car, layout) {
 }
 
 /**
+ * Hang a motorcycle's front end off a real steering head.
+ *
+ * A car turns its front wheels about kingpins buried in the wheel arches, so
+ * spinning the hub is close enough — nothing visible moves except the tyre.
+ * A bike steers about the headstock, a point up by the top yoke and well
+ * behind the axle, and everything ahead of the rider turns with it: fork,
+ * mudguard, bars, lamps, clocks, mirrors and the rider's hands. Turning the
+ * hub instead swings the whole front of the motorcycle out sideways and
+ * leaves the arms pointing at where the grips used to be, which is exactly
+ * what it looked like coming off the road into a lay-by.
+ *
+ * Three nested groups because a steering axis is raked: tilt back, turn
+ * about the tilted axis, tilt forward again so children can be positioned in
+ * ordinary car space. The group handed back has its origin on the front hub,
+ * so everything that used to be parented to the wheel keeps its coordinates.
+ */
+function bikeSteering(car, { hubY, hubZ, headY, headZ, rake, limit = 0.3 }) {
+  const rig = new THREE.Group();
+  rig.position.set(0, headY, headZ);
+  rig.rotation.x = rake;
+  car.add(rig);
+
+  const turn = new THREE.Group();
+  rig.add(turn);
+
+  const hub = new THREE.Group();
+  hub.rotation.x = -rake;
+  turn.add(hub);
+  // Back down to the axle, so callers keep working in front-hub space.
+  hub.position.set(0, 0, 0);
+  const back = new THREE.Vector3(0, hubY - headY, hubZ - headZ).applyAxisAngle(
+    new THREE.Vector3(1, 0, 0),
+    -rake
+  );
+  hub.position.copy(back);
+
+  // The front wheel belongs inside the rig too, or the tyre stays pointing
+  // down the road while the fork it is bolted into turns.
+  const front = car.userData.wheels.find((w) => w.front);
+  car.remove(front.root);
+  front.root.position.set(0, 0, 0);
+  hub.add(front.root);
+
+  car.userData.steer = { turn, limit };
+  return hub;
+}
+
+/** Move a mesh built in car space into the steering rig, unmoved. */
+function intoSteering(hub, mesh, hubY, hubZ) {
+  mesh.position.y -= hubY;
+  mesh.position.z -= hubZ;
+  hub.add(mesh);
+  return mesh;
+}
+
+/**
  * The detail pass every four-wheeled car gets.
  *
  * Seats and a wheel behind the glass, the gaps where the doors open, wipers,
@@ -60,25 +118,27 @@ function mountWheels(car, layout) {
  * metres, and its absence is why a model looks moulded rather than built.
  */
 function dressCabin(car, layout, o) {
-  car.add(
-    cabinInterior({
-      width: o.width,
-      floorY: o.floorY,
-      seatZ: o.seatZ,
-      wheelZ: o.wheelZ,
-      dashZ: o.dashZ,
-      seats: o.seats ?? 2,
-      seatH: o.seatH ?? 0.5,
-    })
-  );
-  if (o.shut) {
+  if (Q.interiors) {
+    car.add(
+      cabinInterior({
+        width: o.width,
+        floorY: o.floorY,
+        seatZ: o.seatZ,
+        wheelZ: o.wheelZ,
+        dashZ: o.dashZ,
+        seats: o.seats ?? 2,
+        seatH: o.seatH ?? 0.5,
+      })
+    );
+  }
+  if (Q.shutLines && o.shut) {
     for (const side of [-1, 1]) {
       for (const z of o.shut) {
         car.add(shutLine(o.sculpt, o.bodyWidth, o.shutY[0], o.shutY[1], z, { lateral: side }));
       }
     }
   }
-  if (o.wipers !== false) {
+  if (Q.wipers && o.wipers !== false) {
     for (const side of [-1, 1]) {
       car.add(
         wiper(side * (o.wiperX ?? 0.3), o.wiperY, o.wiperZ, {
@@ -89,7 +149,7 @@ function dressCabin(car, layout, o) {
       );
     }
   }
-  if (o.suspension !== false) {
+  if (Q.suspension && o.suspension !== false) {
     for (const w of layout) {
       car.add(
         suspension(w.x, w.radius, w.z, {
@@ -317,7 +377,7 @@ export function buildSportCar(color = '#d81f2a') {
   for (const side of [-1, 1]) {
     car.add(lampCluster(0.5, 0.15, { x: side * 0.46, y: 0.62, z: -2.19, pods: 2 }));
   }
-  return car;
+  return compactVehicle(car);
 }
 
 /* ------------------------------------------------------------------ */
@@ -458,8 +518,8 @@ export function buildLandYacht(color = '#5d2733') {
   for (const side of [-1, 1]) {
     car.add(lampCluster(0.3, 0.42, { x: side * 0.72, y: 1.02, z: -2.88, pods: 2, depth: 0.1 }));
   }
-  car.add(aerial(0.86, 1.02, -1.0, { len: 0.72, lean: 0.42 }));
-  return car;
+  if (Q.aerials) car.add(aerial(0.86, 1.02, -1.0, { len: 0.72, lean: 0.42 }));
+  return compactVehicle(car);
 }
 
 /* ------------------------------------------------------------------ */
@@ -610,7 +670,7 @@ export function buildTrophyTruck(color = '#d9d2c4') {
     suspension: false,
   });
   car.add(grille(1.1, 0.3, 0.16, { y: 1.06, z: -2.06, bars: 4, frame: MAT.matteBlack }));
-  return car;
+  return compactVehicle(car);
 }
 
 /* ------------------------------------------------------------------ */
@@ -683,7 +743,9 @@ export function buildSuperbike(color = '#101418') {
     car.add(tube(0.02, 0.12, MAT.chrome, side * 0.28, 0.42, 0.2, [0, 0, Math.PI / 2], 6));
   }
   // Radiator wedged in the nose, where the air actually goes.
-  car.add(radiator(0, 0.52, -0.52, { w: 0.4, h: 0.34, d: 0.06, fins: 20, tilt: 0.22 }));
+  if (Q.bikeDetail) {
+    car.add(radiator(0, 0.52, -0.52, { w: 0.4, h: 0.34, d: 0.06, fins: 20, tilt: 0.22 }));
+  }
   // Inline four: four barrels leaning forward out of the cases.
   for (let i = 0; i < 4; i++) {
     car.add(
@@ -696,7 +758,9 @@ export function buildSuperbike(color = '#101418') {
     );
   }
   // Final drive down the left, and the swingarm it hangs off.
-  car.add(chainDrive(0.1, REAR_Z, 0.4, { side: -1, rFront: 0.06, rRear: 0.16, teethRear: 42 }));
+  if (Q.bikeDetail) {
+    car.add(chainDrive(0.1, REAR_Z, 0.4, { side: -1, rFront: 0.06, rRear: 0.16, teethRear: 42 }));
+  }
   for (const side of [-1, 1]) {
     car.add(slab(0.07, 0.11, 0.66, MAT.darkMetal, side * 0.15, 0.42, 0.42, [0.08, 0, 0], 0.03));
   }
@@ -781,6 +845,7 @@ export function buildSuperbike(color = '#101418') {
   car.add(fenderArch(RADIUS + 0.1, 0.3, 0, RADIUS, REAR_Z, black, 0.04));
 
   // ---- rider, folded over the tank ---------------------------------------
+  const hands = [];
   const hip = new THREE.Vector3(0, 0.96, 0.32);
   const neck = new THREE.Vector3(0, 1.18, -0.22);
   car.add(bone(hip, neck, 0.15, leather));
@@ -798,8 +863,11 @@ export function buildSuperbike(color = '#101418') {
       .lerp(grip, 0.5)
       .add(new THREE.Vector3(side * 0.07, 0.03, 0.03));
     car.add(bone(shoulder, elbow, 0.05, leather));
-    car.add(bone(elbow, grip, 0.042, leather));
-    car.add(part(0.07, 0.07, 0.09, black, grip.x, grip.y, grip.z));
+    // Forearm and fist ride with the bars. The upper arm stays on the
+    // shoulder — at this lock the elbow moves a couple of centimetres and
+    // the alternative is hands that let go every time you turn in.
+    hands.push(bone(elbow, grip, 0.042, leather));
+    hands.push(part(0.07, 0.07, 0.09, black, grip.x, grip.y, grip.z));
     // Knee up against the tank, boot back on the peg.
     const knee = new THREE.Vector3(side * 0.22, 0.82, -0.04);
     const foot = new THREE.Vector3(side * 0.26, 0.46, 0.24);
@@ -815,18 +883,25 @@ export function buildSuperbike(color = '#101418') {
   ];
   mountWheels(car, wheels);
 
-  // ---- steering, hung off the front hub -----------------------------------
-  const front = car.userData.wheels.find((w) => w.front).root;
-  const steer = new THREE.Group();
-  front.add(steer);
+  // ---- steering, hung off the headstock -----------------------------------
   const RAKE = 0.42;
+  const steer = bikeSteering(car, {
+    hubY: RADIUS,
+    hubZ: FRONT_Z,
+    headY: RADIUS + 0.62,
+    headZ: FRONT_Z + 0.28,
+    rake: RAKE,
+    limit: 0.3,
+  });
   for (const side of [-1, 1]) {
     // Upside-down fork: black slider low, gold stanchion above it.
     steer.add(tube(0.046, 0.34, black, side * 0.1, 0.13, 0.06, [RAKE, 0, 0], 10));
     steer.add(tube(0.034, 0.4, gold, side * 0.1, 0.44, 0.2, [RAKE, 0, 0], 10));
     steer.add(tube(0.026, 0.15, black, side * GRIP_X, BAR_Y, BAR_Z, [0, 0, Math.PI / 2 - 0.12], 8));
     steer.add(part(0.11, 0.02, 0.03, MAT.chrome, side * 0.22, BAR_Y - 0.03, BAR_Z - 0.09));
-    steer.add(brakeDisc(side * 0.052, 0, 0, { radius: 0.24, side, holes: 22 }));
+    if (Q.bikeDetail) {
+      steer.add(brakeDisc(side * 0.052, 0, 0, { radius: 0.24, side, holes: 22 }));
+    }
   }
   steer.add(tube(0.038, 0.2, black, 0, 0.62, 0.28, [RAKE, 0, 0], 10));
   for (const side of [-1, 1]) {
@@ -843,10 +918,13 @@ export function buildSuperbike(color = '#101418') {
       vertical: true,
     })
   );
-  steer.add(clocks(0, 0.66, -0.16, { dials: 2, radius: 0.05, tilt: 0.75, spread: 0.055 }));
+  if (Q.bikeDetail) {
+    steer.add(clocks(0, 0.66, -0.16, { dials: 2, radius: 0.05, tilt: 0.75, spread: 0.055 }));
+  }
   steer.add(fenderArch(RADIUS + 0.06, 0.2, 0, 0, 0, body, 0.035));
+  for (const m of hands) intoSteering(steer, m, RADIUS, FRONT_Z);
 
-  return car;
+  return compactVehicle(car);
 }
 
 /* ------------------------------------------------------------------ */
@@ -969,8 +1047,8 @@ export function buildHotHatch(color = '#dcdfe4') {
   for (const side of [-1, 1]) {
     car.add(lampCluster(0.42, 0.18, { x: side * 0.52, y: 0.94, z: -2.01, pods: 2 }));
   }
-  car.add(aerial(0, 1.42, 1.12, { len: 0.4, lean: 0.5 }));
-  return car;
+  if (Q.aerials) car.add(aerial(0, 1.42, 1.12, { len: 0.4, lean: 0.5 }));
+  return compactVehicle(car);
 }
 
 /* ------------------------------------------------------------------ */
@@ -1100,7 +1178,7 @@ export function buildHypercar(color = '#c8a800') {
   for (const side of [-1, 1]) {
     car.add(lampCluster(0.48, 0.12, { x: side * 0.62, y: 0.56, z: -2.32, pods: 3, depth: 0.1 }));
   }
-  return car;
+  return compactVehicle(car);
 }
 
 /* ------------------------------------------------------------------ */
@@ -1175,7 +1253,9 @@ export function buildMoped(color = '#2e6f4e') {
   car.add(slab(0.26, 0.24, 0.34, black, 0.08, 0.34, 0.28, [0, 0, 0], 0.05));
   car.add(finnedBarrel(0, 0.44, 0.16, { radius: 0.07, len: 0.2, fins: 7, finRadius: 0.105 }));
   // Pedal chain to the back wheel, exactly the sad little thing it is.
-  car.add(chainDrive(0.24, REAR_Z, 0.26, { side: -1, rFront: 0.055, rRear: 0.115, teethFront: 11, teethRear: 34 }));
+  if (Q.bikeDetail) {
+    car.add(chainDrive(0.24, REAR_Z, 0.26, { side: -1, rFront: 0.055, rRear: 0.115, teethFront: 11, teethRear: 34 }));
+  }
   for (const side of [-1, 1]) {
     const spring = coilSpring(0.3, 0.036, 6, MAT.chrome, { wire: 0.009 });
     spring.position.set(side * 0.11, 0.52, 0.5);
@@ -1214,6 +1294,7 @@ export function buildMoped(color = '#2e6f4e') {
   const jacket = paint('#2b3550', { metalness: 0.05, roughness: 0.85 });
   const jeans = paint('#3d4a63', { metalness: 0.02, roughness: 0.95 });
   const skin = paint('#c69a72', { metalness: 0, roughness: 0.8 });
+  const hands = [];
   const rider = new THREE.Group();
   rider.position.set(0, 0, 0.06);
   car.add(rider);
@@ -1237,24 +1318,26 @@ export function buildMoped(color = '#2e6f4e') {
       .clone()
       .lerp(grip, 0.48)
       .add(new THREE.Vector3(side * 0.04, -0.07, 0.04));
-    for (const [from, to, r, mat] of [
-      [shoulder, elbow, 0.048, jacket],
-      [elbow, grip, 0.04, skin],
+    for (const [from, to, r, mat, steers] of [
+      [shoulder, elbow, 0.048, jacket, false],
+      [elbow, grip, 0.04, skin, true],
     ]) {
       const dir = to.clone().sub(from);
-      const seg = tube(r, dir.length(), mat, 0, 0, 0, [0, 0, 0], 8);
-      seg.position
+      const limb = tube(r, dir.length(), mat, 0, 0, 0, [0, 0, 0], 8);
+      limb.position
         .copy(from)
         .add(to)
         .multiplyScalar(0.5)
         .sub(rider.position);
-      seg.quaternion.setFromUnitVectors(
+      limb.quaternion.setFromUnitVectors(
         new THREE.Vector3(0, 1, 0),
         dir.normalize()
       );
-      rider.add(seg);
+      // The forearm goes with the bars; the upper arm stays on the shoulder.
+      if (steers) hands.push(limb);
+      else rider.add(limb);
     }
-    rider.add(
+    hands.push(
       part(0.07, 0.07, 0.09, black, grip.x, grip.y, grip.z - rider.position.z)
     );
     // Thigh along the saddle, shin down to the footboard.
@@ -1270,18 +1353,24 @@ export function buildMoped(color = '#2e6f4e') {
   ];
   mountWheels(car, wheels);
 
-  // ---- steering assembly, hung off the front hub -------------------------
-  const front = car.userData.wheels.find((w) => w.front).root;
-  const steer = new THREE.Group();
-  front.add(steer);
-
-  // Fork legs from the hub up to the head, with the usual rake back.
+  // ---- steering assembly, hung off the headstock -------------------------
   const RAKE = 0.24;
+  const steer = bikeSteering(car, {
+    hubY: RADIUS,
+    hubZ: FRONT_Z,
+    headY: RADIUS + 0.6,
+    headZ: FRONT_Z + 0.15,
+    rake: RAKE,
+    limit: 0.34,
+  });
+
   for (const side of [-1, 1]) {
     steer.add(tube(0.026, 0.64, MAT.chrome, side * 0.085, 0.31, 0.075, [RAKE, 0, 0], 8));
   }
   // One small disc on the left, drum on the back: a moped's whole brake budget.
-  steer.add(brakeDisc(-0.048, 0, 0, { radius: 0.155, side: -1, holes: 14 }));
+  if (Q.bikeDetail) {
+    steer.add(brakeDisc(-0.048, 0, 0, { radius: 0.155, side: -1, holes: 14 }));
+  }
   steer.add(tube(0.036, 0.2, MAT.chrome, 0, 0.6, 0.15, [RAKE, 0, 0], 8));
 
   // Handlebars, grips, levers and mirrors.
@@ -1318,8 +1407,13 @@ export function buildMoped(color = '#2e6f4e') {
 
   // Front mudguard, wrapped round the hub.
   steer.add(fenderArch(RADIUS + 0.07, 0.17, 0, 0, 0, body, 0.04));
+  for (const m of hands) {
+    // The rider group is offset down the bike; undo that before re-homing.
+    m.position.z += rider.position.z;
+    intoSteering(steer, m, RADIUS, FRONT_Z);
+  }
 
-  return car;
+  return compactVehicle(car);
 }
 
 /* ------------------------------------------------------------------ */
@@ -1532,7 +1626,7 @@ export function buildRaceCar(color = '#1c6fd8') {
   for (const side of [-1, 1]) {
     car.add(lampCluster(0.5, 0.16, { x: side * 0.6, y: 0.61, z: -2.3, pods: 2, depth: 0.11 }));
   }
-  return car;
+  return compactVehicle(car);
 }
 
 /* ------------------------------------------------------------------ */
@@ -1743,6 +1837,6 @@ export function build4x4(color = '#c8791f') {
     springColor: '#8a5a1e',
   });
   car.add(grille(1.24, 0.36, 0.16, { y: 1.32, z: -2.08, bars: 6, dir: 'v', frame: MAT.chrome }));
-  car.add(aerial(0.92, 1.5, -1.2, { len: 0.85, lean: 0.3 }));
-  return car;
+  if (Q.aerials) car.add(aerial(0.92, 1.5, -1.2, { len: 0.85, lean: 0.3 }));
+  return compactVehicle(car);
 }

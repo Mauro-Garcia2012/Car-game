@@ -39,6 +39,7 @@ const ui = new UI({
   onCheat: (code) =>
     game ? runCheat(code, game) : { ok: false, text: 'not running' },
   onToggleMute: () => (game ? game.toggleMute() : audio.setMuted(!audio.muted)),
+  onQuality: () => game && game.applyQuality(),
 });
 
 input.bindTouch(document.getElementById('touch-controls'));

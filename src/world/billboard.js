@@ -26,6 +26,7 @@ import { signBoard, setBoardFace, behindBoard } from './boards.js';
 import { t, onLanguageChange } from '../i18n.js';
 import { glowAtNight } from './nightlights.js';
 import { onReseed } from '../rng.js';
+import { compactInPlace } from '../merge.js';
 
 /** Where it stands. See the note above for why it is here and not further on. */
 export const BILLBOARD_S = 90000;
@@ -132,7 +133,7 @@ function buildBillboard() {
   box(0.36, 26, 0.36, steel, BOARD_W * 0.26, 11.5, legZ - 7.5, 0);
   box(0.36, 26, 0.36, steel, -BOARD_W * 0.26, 11.5, legZ - 7.5, 0);
 
-  return g;
+  return compactInPlace(g);
 }
 
 export class Billboard {

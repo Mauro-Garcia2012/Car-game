@@ -299,6 +299,57 @@ again. Getting it wrong says `PIN INCORRECTO` and nothing else happens.
 The HUD's green bar is your remaining range and the white tick on it is the
 next station. **When the tick turns red, you are already out of road.**
 
+## Graphics
+
+Four presets, in the garage and on the pause screen: **Low**, **Medium**,
+**High** and **Ultra**. Ultra is not a new maximum invented for the menu — it
+is exactly what the game rendered before the menu existed, value for value, so
+choosing it gets you the same frame it always drew.
+
+Because every model here is built in code rather than loaded from a file, the
+detail *is* a set of numbers, and the presets turn those numbers down: how
+finely a body profile is sampled, how many sides a tyre has, whether there are
+seats behind the glass, whether headlamps are chrome bowls or a lit recess,
+whether the paint has clearcoat, whether the lens refracts, how big the shadow
+map is and whether there is one, and how much of the scatter — cacti,
+boulders, brush, fence posts — the desert is dressed with. Nothing that
+matters is scattered: stations, shelters, signs, spurs and landmarks are
+placed deliberately and are never thinned, so a lower setting costs you
+scenery and never a checkpoint.
+
+The default is picked for the device. Desktops start at Ultra. Phones start at
+Medium, because the same frame at a device pixel ratio of three is nine times
+the fill, and soft shadows and a transmission pass on top of that is a lot to
+ask of a handset. Whatever you pick is remembered. Everything applies live
+except antialiasing, which lives in the GL context and needs a reload.
+
+### Draw calls, not triangles
+
+The models got about eight times heavier than they used to be, and the game
+got roughly twice as fast, which is not a contradiction: a phone will draw a
+million triangles without complaining and will not issue three thousand draw
+calls sixty times a second.
+
+So `src/merge.js` merges each finished model down to one buffer per material —
+every triangle kept, every material kept, one submission instead of one per
+bolt. A gas station was 104 meshes drawing 11,000 triangles and is now 11. A
+car was 143 and is now 40. What must stay separate stays separate, and the
+rule is mechanical rather than a list somebody has to maintain: anything
+reachable from a `userData` field is left alone, because a part a module keeps
+a handle on is a part it intends to move, hide or repaint.
+
+The roadside scatter got the other half. Every prop chunk used to draw its
+full instance count with frustum culling switched off, including the chunks
+behind you and the ones past the fog; now a chunk's count is however many
+props it really has and its bounds let the frustum throw the whole thing away
+in one test.
+
+Measured on the same seed, same pose, same Ultra settings: **1,331 draw calls
+and 1.24 M triangles before, 692 and 1.00 M after**. The picture is unchanged
+— the pixel difference between before and after is no larger than between two
+runs of the identical build, because the canvas textures are regenerated with
+fresh noise each boot.
+
 ## Language
 
 Every string lives in `src/i18n.js`, keyed by id. The language is detected from
@@ -456,6 +507,8 @@ src/
                     crates, dirt spurs, the briefcases at the end of them,
                     the deer that walk out after dark, the landmarks and
                     the patrol car in the shade, and the one billboard
+  quality.js        the four graphics presets and the one dial each reads
+  merge.js          collapses a finished model to one buffer per material
 vendor/three/       three.js r169 (MIT), vendored so the game runs offline
 ```
 
@@ -806,6 +859,38 @@ volver a meterlo. Si te equivocas dice `PIN INCORRECTO` y no pasa nada más.
 - La barra verde del HUD es tu autonomía y la marca blanca es la próxima
   gasolinera. **Cuando la marca se pone roja, ya no llegas.** La barra azul es
   el sueño, y a su derecha tienes los kilómetros hasta el próximo motel.
+
+### Gráficos
+
+Cuatro ajustes, en el garaje y en la pausa: **Bajo**, **Medio**, **Alto** y
+**Ultra**. Ultra no es un máximo nuevo inventado para el menú: es exactamente
+lo que el juego dibujaba antes de que el menú existiera, valor por valor.
+
+Como aquí los modelos se construyen en código y no se cargan de un fichero, el
+detalle *es* un puñado de números, y los ajustes los bajan: cada cuánto se
+muestrea el perfil de una carrocería, cuántas caras tiene un neumático, si hay
+asientos detrás del cristal, si los faros son cazoletas cromadas o un hueco
+iluminado, si la pintura lleva barniz, si la lente refracta, cómo de grande es
+el mapa de sombras —y si lo hay—, y con cuánta maleza se viste el desierto.
+Nada de lo que importa está sembrado al azar: gasolineras, marquesinas,
+señales, pistas y monumentos se colocan a propósito y no se tocan nunca, así
+que un ajuste más bajo te cuesta paisaje y jamás un punto de control.
+
+El valor por defecto lo elige el dispositivo. En escritorio arranca en Ultra;
+en móvil, en Medio, porque el mismo fotograma con una densidad de píxel de
+tres es nueve veces el relleno. Lo que elijas se recuerda. Todo se aplica en
+caliente menos el antialias, que vive en el contexto de WebGL y necesita
+recargar.
+
+Los modelos pesan unas ocho veces más que antes y el juego va aproximadamente
+el doble de rápido, lo cual no es contradictorio: un móvil dibuja un millón de
+triángulos sin quejarse, pero no lanza tres mil llamadas de dibujo sesenta
+veces por segundo. `src/merge.js` funde cada modelo en un búfer por material
+—todos los triángulos, todos los materiales, una entrega en vez de una por
+tornillo— y la maleza del arcén ya sólo dibuja las instancias que existen de
+verdad y se descarta por trozos cuando no la miras. Con la misma semilla y la
+misma pose en Ultra: **1.331 llamadas y 1,24 M de triángulos antes, 692 y
+1,00 M después**, con la misma imagen.
 
 ### Los coches
 

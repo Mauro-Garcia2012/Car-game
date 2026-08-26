@@ -21,6 +21,7 @@ import {
 import { t } from '../i18n.js';
 import { groundHeight } from './road.js';
 import { signBoard, setBoardFace, behindBoard } from './boards.js';
+import { compactInPlace } from '../merge.js';
 
 const FIRST_STATION = 1500;
 const MIN_GAP = 1950;
@@ -484,6 +485,7 @@ function buildStationModel(index) {
 
   // Kept so the signage can be repainted when the language or price changes.
   root.userData.signs = { totemFaces, price };
+  compactInPlace(root);
 
   root.traverse((o) => {
     if (o.isMesh) {
@@ -532,7 +534,7 @@ function buildAdvanceSign() {
   board.position.set(0, SIGN_Y, 0);
   g.add(board);
   g.userData.board = board;
-  return g;
+  return compactInPlace(g);
 }
 
 /* ------------------------------------------------------------------ */

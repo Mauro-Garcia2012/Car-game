@@ -418,9 +418,13 @@ export class Vehicle {
     this.model.rotateZ(this.bodyRoll);
     this.position.y = groundY;
 
+    // A bike turns its whole front end about the headstock; a car turns each
+    // front hub in place. Which one this is comes off the model.
+    const head = this.model.userData.steer;
+    if (head) head.turn.rotation.y = -this.steer * head.limit;
     for (const w of this.model.userData.wheels || []) {
       w.spin.rotation.x = this.wheelSpin * (0.36 / w.radius);
-      if (w.front) w.root.rotation.y = -this.steer * 0.9;
+      if (w.front && !head) w.root.rotation.y = -this.steer * 0.9;
     }
   }
 

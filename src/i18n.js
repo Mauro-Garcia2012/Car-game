@@ -24,6 +24,21 @@ const STRINGS = {
     'menu.strap':
       'Route 66, dawn to dark, no cell service. The pumps are a long way apart — <b>skip one too many and you die out there.</b>',
     'menu.start': 'START ENGINE',
+
+    'quality.label': 'GRAPHICS',
+    'quality.low': 'LOW',
+    'quality.medium': 'MED',
+    'quality.high': 'HIGH',
+    'quality.ultra': 'ULTRA',
+    'quality.note.low':
+      'Flat panels, no interiors, no shadows, no reflections. For anything struggling.',
+    'quality.note.medium':
+      'Interiors and lamps back, softer bodywork. Hard shadows, dulled reflections.',
+    'quality.note.high':
+      'Nearly everything, at two thirds the detail. Clearcoat paint, soft shadows.',
+    'quality.note.ultra':
+      'Everything, at full detail. This is how the game looked before this setting existed.',
+    'quality.reload': 'Antialiasing changes on reload.',
     'menu.resume': 'BACK ON THE ROAD',
     'menu.resumeAt': 'Day {day} · {km} · {cash} · {car}',
     'menu.startFresh': 'START A NEW RUN',
@@ -243,6 +258,21 @@ const STRINGS = {
     'menu.strap':
       'Ruta 66, del amanecer a la noche cerrada, sin cobertura. Los surtidores están muy lejos unos de otros: <b>sáltate uno de más y te quedas tirado.</b>',
     'menu.start': 'ARRANCAR MOTOR',
+
+    'quality.label': 'GRÁFICOS',
+    'quality.low': 'BAJO',
+    'quality.medium': 'MEDIO',
+    'quality.high': 'ALTO',
+    'quality.ultra': 'ULTRA',
+    'quality.note.low':
+      'Chapa plana, sin interiores, sin sombras y sin reflejos. Para lo que vaya justo.',
+    'quality.note.medium':
+      'Vuelven interiores y ópticas, carrocería menos curva. Sombras duras y reflejos apagados.',
+    'quality.note.high':
+      'Casi todo, a dos tercios de detalle. Pintura con barniz y sombras suaves.',
+    'quality.note.ultra':
+      'Todo, a detalle completo. Así se veía el juego antes de que existiera este ajuste.',
+    'quality.reload': 'El antialias cambia al recargar.',
     'menu.resume': 'VOLVER A LA CARRETERA',
     'menu.resumeAt': 'Día {day} · {km} · {cash} · {car}',
     'menu.startFresh': 'EMPEZAR UNA PARTIDA NUEVA',

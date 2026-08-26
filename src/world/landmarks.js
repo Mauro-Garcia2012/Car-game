@@ -22,6 +22,7 @@ import { hashRand, onReseed } from '../rng.js';
 import { groundHeight } from './road.js';
 import { glowAtNight } from './nightlights.js';
 import { mergeGeometries } from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
+import { compactInPlace } from '../merge.js';
 
 /** Where the first one can be, and how far apart they run after that. */
 const FIRST = 10000;
@@ -619,7 +620,7 @@ export class Landmarks {
     // kilometres.
     this.models = {};
     for (const kind of KINDS) {
-      const model = BUILDERS[kind].build();
+      const model = compactInPlace(BUILDERS[kind].build());
       model.scale.setScalar(BUILDERS[kind].scale);
       model.visible = false;
       scene.add(model);

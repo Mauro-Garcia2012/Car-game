@@ -34,6 +34,8 @@ import {
   PRIZE_SUPER,
   PRIZE_ATLAS,
 } from './world/sideroads.js';
+import { Q } from './quality.js';
+import { applyQualityToMaterials } from './cars/parts.js';
 import { Fatigue, AWAKE_TIME } from './fatigue.js';
 import {
   Fares,
@@ -144,15 +146,12 @@ export class Game {
 
     this.renderer = new THREE.WebGLRenderer({
       canvas,
-      antialias: true,
+      antialias: Q.antialias,
       powerPreference: 'high-performance',
     });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(
@@ -165,10 +164,12 @@ export class Game {
 
     this.sky = createSky(this.scene);
 
-    // Reflections for the car paint, baked once from the sky alone.
+    // Reflections for the car paint, baked once from the sky alone. Kept on
+    // hand rather than only hung on the scene, so Low can unhook it and any
+    // level above can put it back without baking it again.
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     pmrem.compileEquirectangularShader();
-    this.scene.environment = pmrem.fromScene(this.scene, 0, 0.5, 5000).texture;
+    this.envMap = pmrem.fromScene(this.scene, 0, 0.5, 5000).texture;
     pmrem.dispose();
 
     this.road = new RoadSystem(this.scene);
@@ -199,6 +200,10 @@ export class Game {
     this.scene.add(this.carGroup);
     this.headlights = new Headlights();
     this.setCar(carById('sport').id);
+
+    // Everything the preset touches, in force before the first frame. No
+    // rebuild: the car and the traffic were just built under this preset.
+    this.applyQuality({ rebuild: false });
 
     this.camPos = new THREE.Vector3();
     this.camLook = new THREE.Vector3();
@@ -278,6 +283,78 @@ export class Game {
   toggleMute() {
     this.audio.setMuted(!this.audio.muted);
     this.ui.setMuted(this.audio.muted);
+  }
+
+  /**
+   * Push the current graphics preset through the renderer, the lights, the
+   * shared materials and — when asked — the models built from it.
+   *
+   * Only geometry needs rebuilding. Reflections, shadows and resolution are
+   * all live, so switching level mid-run costs one frame rather than a
+   * loading screen. Antialiasing is the exception and is noted in the menu:
+   * it lives in the GL context and only changes on reload.
+   */
+  applyQuality({ rebuild = true } = {}) {
+    applyQualityToMaterials();
+
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.pixelRatio));
+    this.renderer.shadowMap.enabled = Q.shadows;
+    this.renderer.shadowMap.type = Q.shadowSoft
+      ? THREE.PCFSoftShadowMap
+      : THREE.PCFShadowMap;
+    this.renderer.shadowMap.needsUpdate = true;
+
+    const sun = this.sky && this.sky.sun;
+    if (sun && Q.shadowMap) {
+      sun.shadow.mapSize.set(Q.shadowMap, Q.shadowMap);
+      // The map is allocated at the old size; drop it and three.js remakes
+      // it on the next frame.
+      if (sun.shadow.map) {
+        sun.shadow.map.dispose();
+        sun.shadow.map = null;
+      }
+    }
+
+    this.scene.environment = Q.envMap ? this.envMap : null;
+    // Materials cache whether they had an environment, so every one of them
+    // needs recompiling when it appears or disappears.
+    this.scene.traverse((o) => {
+      if (o.isMesh && o.material) {
+        for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+          m.needsUpdate = true;
+        }
+      }
+    });
+
+    if (!rebuild) return;
+    if (this.spec) this.rebuildCarModel();
+    if (this.traffic) this.traffic.rebuild(this.scene);
+  }
+
+  /**
+   * Swap in a freshly built body without touching the run.
+   *
+   * `setCar` makes a new Vehicle, which is right when the player picks a
+   * different car and catastrophic halfway to a gas station. The physics
+   * only ever reads the model to place it, so the model can be replaced
+   * underneath it.
+   */
+  rebuildCarModel() {
+    const old = this.carModel;
+    const { model } = createCar(this.spec.id);
+    this.headlights.detach();
+    this.carGroup.remove(old);
+    old.traverse((o) => {
+      if (o.isMesh) o.geometry.dispose();
+    });
+    // Inherit the old body's pose: the physics only rewrites it on a
+    // simulated frame, and the menu and the pause screen do not have one.
+    model.position.copy(old.position);
+    model.quaternion.copy(old.quaternion);
+    this.carModel = model;
+    this.carGroup.add(model);
+    this.headlights.attach(model);
+    if (this.vehicle) this.vehicle.model = model;
   }
 
   setCar(id) {
@@ -609,8 +686,14 @@ export class Game {
 
   menuIdle(dt) {
     this.orbitAngle += dt * 0.24;
+    const wave = Math.sin(this.orbitAngle * 0.7) * 0.22;
+    const head = this.carModel.userData.steer;
+    if (head) {
+      head.turn.rotation.y = wave * (head.limit / 0.9);
+      return;
+    }
     for (const w of this.carModel.userData.wheels || []) {
-      if (w.front) w.root.rotation.y = Math.sin(this.orbitAngle * 0.7) * 0.22;
+      if (w.front) w.root.rotation.y = wave;
     }
   }
 

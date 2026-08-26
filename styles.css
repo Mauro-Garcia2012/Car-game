@@ -1865,3 +1865,69 @@ body.touch .touch-controls {
   opacity: 0.38;
   border-style: dashed;
 }
+
+/* Graphics quality picker — menu and pause card ---------------------- */
+.quality-switch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 14px auto 4px;
+}
+
+.quality-switch > label {
+  font-family: var(--display);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--sand);
+  opacity: 0.5;
+}
+
+.quality-switch .pills {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+}
+
+.quality-switch .pills button {
+  min-width: 34px;
+  padding: 6px 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--sand);
+  font-family: var(--display);
+  font-size: 10px;
+  letter-spacing: 0.09em;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.quality-switch .pills button:hover {
+  opacity: 1;
+}
+
+.quality-switch .pills button.active {
+  background: linear-gradient(180deg, var(--amber), var(--amber-hot));
+  color: #2a1405;
+  opacity: 1;
+}
+
+.quality-switch em {
+  font-style: normal;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+  max-width: 42ch;
+  color: var(--sand);
+  opacity: 0.5;
+}
+
+/* In the pause card there is no room for the explanation. */
+.quality-switch.centred em {
+  display: none;
+}

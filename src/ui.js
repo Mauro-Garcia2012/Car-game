@@ -10,6 +10,7 @@ import {
   bindLanguageButtons,
   onLanguageChange,
 } from './i18n.js';
+import { setQuality, qualityLevel } from './quality.js';
 
 const $ = (id) => document.getElementById(id);
 const BEST_KEY = 'desert-run.best';
@@ -164,10 +165,44 @@ export class UI {
     onLanguageChange(() => this.retranslate());
     this.buildPicker();
     this.bindButtons();
+    this.bindQuality();
 
     if (window.matchMedia('(pointer: coarse)').matches) {
       document.body.classList.add('touch');
     }
+  }
+
+  /**
+   * Wire the graphics pills, in the menu and in the pause card at once.
+   *
+   * Both rows are the same control, so they are bound together and synced
+   * together: change it mid-run and the menu you go back to already agrees.
+   */
+  bindQuality() {
+    const buttons = [...document.querySelectorAll('[data-quality]')];
+    const note = document.getElementById('quality-note');
+    const sync = () => {
+      const level = qualityLevel();
+      for (const b of buttons) {
+        b.classList.toggle('active', b.dataset.quality === level);
+      }
+      if (note) {
+        const key = `quality.note.${level}`;
+        note.dataset.i18n = key;
+        // Antialiasing is the one thing a live switch cannot deliver, so the
+        // note says so rather than letting it look broken.
+        note.textContent =
+          level === 'low' ? `${t(key)} ${t('quality.reload')}` : t(key);
+      }
+    };
+    for (const b of buttons) {
+      b.addEventListener('click', () => {
+        if (setQuality(b.dataset.quality)) this.h.onQuality();
+        sync();
+      });
+    }
+    onLanguageChange(sync);
+    sync();
   }
 
   buildPicker() {

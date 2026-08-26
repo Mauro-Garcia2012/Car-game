@@ -9,7 +9,14 @@
 import * as THREE from 'three';
 import { roadPoint, roadYaw } from './track.js';
 import { groundHeight } from './world/road.js';
-import { MAT, paint, part, profilePiece, makeWheel } from './cars/parts.js';
+import {
+  MAT,
+  paint,
+  part,
+  profilePiece,
+  makeWheel,
+  compactVehicle,
+} from './cars/parts.js';
 import { scaled } from './difficulty.js';
 
 const LANE = 2.45;
@@ -28,6 +35,7 @@ function simpleWheels(group, layout) {
       width: w.w,
       spokes: 5,
       rimMaterial: MAT.darkMetal,
+      brakes: false,
     });
     wheel.position.set(w.x, w.r, w.z);
     group.add(wheel);
@@ -146,18 +154,26 @@ function buildSemi(color) {
 const PICKUP_COLORS = ['#7e8b96', '#8f5a34', '#3f5d45', '#b8b2a4', '#5a6472'];
 const SEMI_COLORS = ['#b6352c', '#2f5d9e', '#3c3f46', '#c9a227'];
 
+function trafficModel(i, semi) {
+  const model = semi
+    ? buildSemi(SEMI_COLORS[i % SEMI_COLORS.length])
+    : buildPickup(PICKUP_COLORS[i % PICKUP_COLORS.length]);
+  model.traverse((o) => {
+    if (o.isMesh) o.castShadow = true;
+  });
+  // Same treatment as the player's car: one buffer per material. There are
+  // three of these on the road at once and they are pure scenery.
+  compactVehicle(model);
+  model.visible = false;
+  return model;
+}
+
 export class Traffic {
   constructor(scene) {
     this.items = [];
     for (let i = 0; i < MAX_ACTIVE; i++) {
       const semi = i % 3 === 0;
-      const model = semi
-        ? buildSemi(SEMI_COLORS[i % SEMI_COLORS.length])
-        : buildPickup(PICKUP_COLORS[i % PICKUP_COLORS.length]);
-      model.traverse((o) => {
-        if (o.isMesh) o.castShadow = true;
-      });
-      model.visible = false;
+      const model = trafficModel(i, semi);
       scene.add(model);
       this.items.push({
         model,
@@ -173,6 +189,31 @@ export class Traffic {
     }
     this.spawnTimer = FIRST_SPAWN_MIN;
     this.tmp = { x: 0, y: 0, z: 0 };
+  }
+
+  /**
+   * Rebuild every body at the current graphics preset.
+   *
+   * The oncoming traffic is built from the same parts bin as the player's
+   * car, so a quality change that skipped it would leave the road full of
+   * pickups at a detail level nobody chose. Only the meshes are replaced —
+   * where each one is and what it is doing carries straight over.
+   */
+  rebuild(scene) {
+    for (let i = 0; i < this.items.length; i++) {
+      const it = this.items[i];
+      const old = it.model;
+      const model = trafficModel(i, it.semi);
+      model.position.copy(old.position);
+      model.rotation.copy(old.rotation);
+      model.visible = old.visible;
+      scene.remove(old);
+      old.traverse((o) => {
+        if (o.isMesh) o.geometry.dispose();
+      });
+      scene.add(model);
+      it.model = model;
+    }
   }
 
   reset() {

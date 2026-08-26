@@ -7,19 +7,32 @@
  */
 import * as THREE from 'three';
 import { glowAtNight } from '../world/nightlights.js';
+import { Q, seg } from '../quality.js';
+import { compactInPlace } from '../merge.js';
 import {
   mergeGeometries,
   toCreasedNormals,
 } from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
 
 export function paint(color, { metalness = 0.25, roughness = 0.42 } = {}) {
+  // Below High the paint drops to a standard material: clearcoat is a second
+  // specular lobe evaluated per pixel, and on a car that fills a third of
+  // the screen that is not a rounding error.
+  if (!Q.clearcoat) {
+    return new THREE.MeshStandardMaterial({
+      color,
+      metalness,
+      roughness: roughness + 0.06,
+      envMapIntensity: 0.45 * Q.envIntensity,
+    });
+  }
   return new THREE.MeshPhysicalMaterial({
     color,
     metalness,
     roughness,
     clearcoat: 0.45,
     clearcoatRoughness: 0.2,
-    envMapIntensity: 0.45,
+    envMapIntensity: 0.45 * Q.envIntensity,
   });
 }
 
@@ -167,7 +180,7 @@ export function bodySculpt({
  * you could count them. At 0.042 the same panel gets two and a half times
  * the points and the squeeze turns into an actual curve.
  */
-const PROFILE_STEP = 0.042;
+const PROFILE_STEP = 0.042; // the Ultra value; see quality.js for the rest
 
 /**
  * Half-width of a sculpted body at a point on its flank.
@@ -190,7 +203,7 @@ export function flankX(width, sculpt, y, z) {
  * squeeze is applied per vertex, so on a bare four-point panel it can only
  * produce a flat chamfer, while on a dense one it produces a curve.
  */
-function densify(pts, step = PROFILE_STEP) {
+function densify(pts, step = Q.profileStep || PROFILE_STEP) {
   const out = [];
   for (let i = 0; i < pts.length; i++) {
     const [ax, ay] = pts[i];
@@ -234,8 +247,8 @@ export function profilePiece(
     // sun along it, and at four segments that highlight was a visible strip
     // of flats. Ten is where it stops reading as a chamfer and starts
     // reading as a radius.
-    bevelSegments: 10,
-    curveSegments: 30,
+    bevelSegments: seg(10, 1),
+    curveSegments: seg(30, 4),
   });
   geo.translate(0, 0, -depth / 2);
   geo.rotateY(Math.PI / 2); // profile +x -> world -z (car nose)
@@ -283,8 +296,8 @@ export function slab(w, h, d, material, x, y, z, rot = [0, 0, 0], radius = 0.04)
     bevelEnabled: true,
     bevelThickness: 0.02,
     bevelSize: 0.02,
-    bevelSegments: 6,
-    curveSegments: 20,
+    bevelSegments: seg(6, 1),
+    curveSegments: seg(20, 3),
   });
   geo.translate(0, 0, -d / 2);
   const m = new THREE.Mesh(geo, material);
@@ -471,6 +484,16 @@ export function lampCluster(
   const glass = lens || MAT.lens;
   const g = new THREE.Group();
   g.position.set(x, y, z);
+
+  // Low drops the pods entirely: a dark recess with a lit face in it. It is
+  // what the cars had before any of this existed, and from ten metres in
+  // motion it is most of what a headlamp ever was.
+  if (!Q.lampPods) {
+    g.add(part(w + 0.05, h + 0.05, depth * 0.5, MAT.matteBlack, 0, 0, depth * 0.4));
+    g.add(part(w * 0.86, h * 0.7, depth * 0.24, MAT.headlight, 0, 0, depth * 0.1));
+    return compact(g);
+  }
+
   g.add(part(w + 0.05, h + 0.05, depth * 0.5, MAT.matteBlack, 0, 0, depth * 0.4));
   const along = vertical ? h : w;
   const across = vertical ? w : h;
@@ -480,7 +503,7 @@ export function lampCluster(
     const t = vertical ? 0 : u;
     const v = vertical ? u : 0;
     const bowl = new THREE.Mesh(
-      new THREE.SphereGeometry(r, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+      new THREE.SphereGeometry(r, seg(18, 7), seg(12, 5), 0, Math.PI * 2, 0, Math.PI / 2),
       ring
     );
     bowl.rotation.x = Math.PI / 2;
@@ -488,13 +511,13 @@ export function lampCluster(
     bowl.position.set(t, v, depth * 0.34);
     g.add(bowl);
     const bulb = new THREE.Mesh(
-      new THREE.SphereGeometry(r * 0.3, 12, 10),
+      new THREE.SphereGeometry(r * 0.3, seg(12, 5), seg(10, 4)),
       MAT.headlight
     );
     bulb.position.set(t, v, depth * 0.16);
     g.add(bulb);
     // A chrome ring round each pod, which is most of what reads as a lamp.
-    const trim = new THREE.Mesh(new THREE.TorusGeometry(r * 0.94, r * 0.08, 8, 24), ring);
+    const trim = new THREE.Mesh(new THREE.TorusGeometry(r * 0.94, r * 0.08, seg(8, 4), seg(24, 8)), ring);
     trim.position.set(t, v, depth * 0.02);
     g.add(trim);
   }
@@ -522,7 +545,7 @@ export function lampCluster(
  */
 export function shutLine(sculpt, width, y0, y1, z, { lateral = 1, w = 0.013 } = {}) {
   const g = new THREE.Group();
-  const steps = 14;
+  const steps = seg(14, 5);
   for (let i = 0; i < steps; i++) {
     const t = (i + 0.5) / steps;
     const y = y0 + (y1 - y0) * t;
@@ -746,14 +769,14 @@ function tireGeometry(radius, width, { knobby = false, shoulder = 0.14 } = {}) {
     new THREE.Vector2(radius * 0.9, hw),
     new THREE.Vector2(inner, hw),
   ];
-  const geo = new THREE.LatheGeometry(profile, 64);
+  const geo = new THREE.LatheGeometry(profile, seg(64, 12));
   geo.rotateZ(Math.PI / 2); // spin axis along X
 
   if (!knobby) return geo;
 
   // Chunky mud-terrain tread: staggered blocks around the carcass.
   const parts = [geo];
-  const blocks = 30;
+  const blocks = seg(30, 8);
   for (let i = 0; i < blocks; i++) {
     const a = (i / blocks) * Math.PI * 2;
     for (const side of [-1, 1]) {
@@ -772,7 +795,8 @@ function tireGeometry(radius, width, { knobby = false, shoulder = 0.14 } = {}) {
 
 function rimGeometry(radius, width, spokes, { dish = 0.42 } = {}) {
   const parts = [];
-  const barrel = new THREE.CylinderGeometry(radius, radius, width * 0.86, 48, 1, true);
+  const round = seg(48, 10);
+  const barrel = new THREE.CylinderGeometry(radius, radius, width * 0.86, round, 1, true);
   barrel.rotateZ(Math.PI / 2);
   parts.push(barrel);
 
@@ -781,21 +805,21 @@ function rimGeometry(radius, width, spokes, { dish = 0.42 } = {}) {
     [radius * 1.02, width * 0.06, width * 0.45],
     [radius * 1.01, width * 0.05, -width * 0.42],
   ]) {
-    const lip = new THREE.CylinderGeometry(r, r, w, 48);
+    const lip = new THREE.CylinderGeometry(r, r, w, round);
     lip.rotateZ(Math.PI / 2);
     lip.translate(at, 0, 0);
     parts.push(lip);
   }
 
-  const face = new THREE.CylinderGeometry(radius * 0.99, radius * 0.99, 0.05, 48);
+  const face = new THREE.CylinderGeometry(radius * 0.99, radius * 0.99, 0.05, round);
   face.rotateZ(Math.PI / 2);
   face.translate(width * dish * 0.5, 0, 0);
   parts.push(face);
 
-  const hub = new THREE.CylinderGeometry(radius * 0.3, radius * 0.34, width * 0.55, 24);
+  const hub = new THREE.CylinderGeometry(radius * 0.3, radius * 0.34, width * 0.55, seg(24, 8));
   hub.rotateZ(Math.PI / 2);
   parts.push(hub);
-  const cap = new THREE.SphereGeometry(radius * 0.2, 16, 10);
+  const cap = new THREE.SphereGeometry(radius * 0.2, seg(16, 6), seg(10, 4));
   cap.scale(0.55, 1, 1);
   cap.translate(width * 0.42, 0, 0);
   parts.push(cap);
@@ -813,7 +837,7 @@ function rimGeometry(radius, width, spokes, { dish = 0.42 } = {}) {
   // Tapered spokes rather than flat bars, each with a web behind it.
   for (let i = 0; i < spokes; i++) {
     const a = (i / spokes) * Math.PI * 2;
-    const s = new THREE.CylinderGeometry(radius * 0.09, radius * 0.15, radius * 0.94, 12);
+    const s = new THREE.CylinderGeometry(radius * 0.09, radius * 0.15, radius * 0.94, seg(12, 5));
     s.translate(0, radius * 0.48, 0);
     s.rotateX(a);
     s.translate(width * 0.22, 0, 0);
@@ -839,6 +863,9 @@ export function makeWheel({
   knobby = false,
   rimMaterial = MAT.chrome,
   caliperColor = '#c0392b',
+  // Oncoming traffic never shows the inside of a wheel, and a semi has
+  // eight of them. Two meshes each that nobody will ever see.
+  brakes = true,
 } = {}) {
   const group = new THREE.Group();
 
@@ -856,19 +883,26 @@ export function makeWheel({
   rim.castShadow = true;
   group.add(rim);
 
-  // Vented disc: two faces with vanes between them, and a bell in the middle.
+  // Vented disc, vanes and a multi-part caliper: the most detail on the car
+  // that spends most of its life hidden behind a spoke. First thing to go.
+  if (!Q.brakeDetail || !brakes) {
+    group.userData.radius = radius;
+    return group;
+  }
+
   const discParts = [];
   for (const at of [-0.025, 0.025]) {
-    const face = new THREE.CylinderGeometry(radius * 0.55, radius * 0.55, 0.018, 40);
+    const face = new THREE.CylinderGeometry(radius * 0.55, radius * 0.55, 0.018, seg(40, 10));
     face.rotateZ(Math.PI / 2);
     face.translate(at, 0, 0);
     discParts.push(face);
   }
-  const bell = new THREE.CylinderGeometry(radius * 0.25, radius * 0.25, 0.1, 24);
+  const bell = new THREE.CylinderGeometry(radius * 0.25, radius * 0.25, 0.1, seg(24, 8));
   bell.rotateZ(Math.PI / 2);
   discParts.push(bell);
-  for (let i = 0; i < 18; i++) {
-    const a = (i / 18) * Math.PI * 2;
+  const vanes = seg(18, 6);
+  for (let i = 0; i < vanes; i++) {
+    const a = (i / vanes) * Math.PI * 2;
     const vane = new THREE.BoxGeometry(0.03, radius * 0.28, radius * 0.05);
     vane.translate(0, radius * 0.4, 0);
     vane.rotateX(a);
@@ -880,7 +914,7 @@ export function makeWheel({
   const caliperParts = [new THREE.BoxGeometry(width * 0.3, radius * 0.44, radius * 0.22)];
   // Pistons down the inside face and a bridge over the disc.
   for (const dy of [-radius * 0.12, radius * 0.12]) {
-    const pin = new THREE.CylinderGeometry(radius * 0.06, radius * 0.06, width * 0.34, 12);
+    const pin = new THREE.CylinderGeometry(radius * 0.06, radius * 0.06, width * 0.34, seg(12, 5));
     pin.rotateZ(Math.PI / 2);
     pin.translate(0, dy, radius * 0.02);
     caliperParts.push(pin);
@@ -911,7 +945,7 @@ const WELL_MAT = new THREE.MeshStandardMaterial({
 
 /** Dark cavity behind a wheel so the arch does not look like a solid panel. */
 export function wheelWell(radius, width, x, y, z) {
-  const geo = new THREE.CylinderGeometry(radius, radius, width, 40, 1, true, 0, Math.PI);
+  const geo = new THREE.CylinderGeometry(radius, radius, width, seg(40, 8), 1, true, 0, Math.PI);
   geo.rotateZ(Math.PI / 2); // open half-tube arching over the wheel
   const m = new THREE.Mesh(geo, WELL_MAT);
   m.position.set(x, y, z);
@@ -923,7 +957,7 @@ export function wheelWell(radius, width, x, y, z) {
  * round tube becomes a wide, shallow arch instead of a donut.
  */
 export function fenderArch(radius, width, x, y, z, material, thickness = 0.07) {
-  const geo = new THREE.TorusGeometry(radius, thickness, 16, 48, Math.PI);
+  const geo = new THREE.TorusGeometry(radius, thickness, seg(16, 5), seg(48, 10), Math.PI);
   geo.rotateY(Math.PI / 2);
   const m = new THREE.Mesh(geo, material);
   m.scale.x = width / (2 * thickness);
@@ -945,7 +979,7 @@ export function fenderArch(radius, width, x, y, z, material, thickness = 0.07) {
  */
 export function coilSpring(len, radius, coils, material, { wire = 0.014 } = {}) {
   const pts = [];
-  const steps = Math.max(24, Math.round(coils * 16));
+  const steps = Math.max(12, Math.round(coils * seg(16, 6)));
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;
     const a = t * coils * Math.PI * 2;
@@ -953,7 +987,7 @@ export function coilSpring(len, radius, coils, material, { wire = 0.014 } = {}) 
   }
   const curve = new THREE.CatmullRomCurve3(pts);
   const m = new THREE.Mesh(
-    new THREE.TubeGeometry(curve, steps, wire, 8, false),
+    new THREE.TubeGeometry(curve, steps, wire, seg(8, 4), false),
     material
   );
   m.castShadow = true;
@@ -978,23 +1012,24 @@ export function finnedBarrel(x, y, z, {
   g.rotation.y = tilt;
 
   const barrel = new THREE.Mesh(
-    new THREE.CylinderGeometry(radius, radius * 1.06, len, 20),
+    new THREE.CylinderGeometry(radius, radius * 1.06, len, seg(20, 8)),
     material
   );
   barrel.castShadow = true;
   g.add(barrel);
 
-  for (let i = 0; i < fins; i++) {
-    const t = fins === 1 ? 0.5 : i / (fins - 1);
+  const nFins = seg(fins, 3);
+  for (let i = 0; i < nFins; i++) {
+    const t = nFins === 1 ? 0.5 : i / (nFins - 1);
     const r = finRadius * (0.86 + 0.14 * Math.sin(t * Math.PI));
-    const fin = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.012, 24), material);
+    const fin = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.012, seg(24, 8)), material);
     fin.position.y = -len * 0.44 + len * 0.88 * t;
     g.add(fin);
   }
 
   // Head: a squarer casting on top, four bolts and the plug screwed in.
   const head = new THREE.Mesh(
-    new THREE.CylinderGeometry(radius * 1.15, radius * 1.15, 0.07, 16),
+    new THREE.CylinderGeometry(radius * 1.15, radius * 1.15, 0.07, seg(16, 6)),
     material
   );
   head.position.y = len * 0.55;
@@ -1032,20 +1067,21 @@ export function brakeDisc(x, y, z, {
 
   const inner = radius * 0.66;
   const rotor = new THREE.Mesh(
-    new THREE.CylinderGeometry(radius, radius, 0.012, 44, 1, false),
+    new THREE.CylinderGeometry(radius, radius, 0.012, seg(44, 10), 1, false),
     MAT.chrome
   );
   g.add(rotor);
   // Machined swept band, so the rotor is not one flat coin.
   const band = new THREE.Mesh(
-    new THREE.TorusGeometry(radius * 0.84, 0.006, 8, 44),
+    new THREE.TorusGeometry(radius * 0.84, 0.006, seg(8, 4), seg(44, 10)),
     MAT.darkMetal
   );
   band.rotation.x = Math.PI / 2;
   g.add(band);
 
-  for (let i = 0; i < holes; i++) {
-    const a = (i / holes) * Math.PI * 2;
+  const nHoles = seg(holes, 5);
+  for (let i = 0; i < nHoles; i++) {
+    const a = (i / nHoles) * Math.PI * 2;
     const r = radius * 0.84;
     const hole = new THREE.Mesh(
       new THREE.CylinderGeometry(0.014, 0.014, 0.02, 8),
@@ -1057,7 +1093,7 @@ export function brakeDisc(x, y, z, {
 
   // Carrier: five arms out to the bobbins that let the rotor float.
   const hub = new THREE.Mesh(
-    new THREE.CylinderGeometry(inner * 0.5, inner * 0.5, 0.03, 18),
+    new THREE.CylinderGeometry(inner * 0.5, inner * 0.5, 0.03, seg(18, 7)),
     carrierMaterial
   );
   g.add(hub);
@@ -1109,10 +1145,11 @@ export function chainDrive(zFront, zRear, y, {
     const s = new THREE.Group();
     s.position.set(side * 0.11, y, z);
     s.rotation.z = Math.PI / 2;
-    const plate = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.9, r * 0.9, 0.016, 30), MAT.darkMetal);
+    const plate = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.9, r * 0.9, 0.016, seg(30, 9)), MAT.darkMetal);
     s.add(plate);
-    for (let i = 0; i < teeth; i++) {
-      const a = (i / teeth) * Math.PI * 2;
+    const nTeeth = seg(teeth, 6);
+    for (let i = 0; i < nTeeth; i++) {
+      const a = (i / nTeeth) * Math.PI * 2;
       const t = new THREE.Mesh(new THREE.BoxGeometry(r * 0.13, 0.014, r * 0.1), MAT.darkMetal);
       t.position.set(Math.cos(a) * r * 0.95, 0, Math.sin(a) * r * 0.95);
       t.rotation.y = -a;
@@ -1121,7 +1158,7 @@ export function chainDrive(zFront, zRear, y, {
     // Lightening holes, five of them, like every sprocket ever pressed.
     for (let i = 0; i < 5; i++) {
       const a = (i / 5) * Math.PI * 2;
-      const h = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.16, r * 0.16, 0.024, 10), MAT.matteBlack);
+      const h = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.16, r * 0.16, 0.024, seg(10, 5)), MAT.matteBlack);
       h.position.set(Math.cos(a) * r * 0.52, 0, Math.sin(a) * r * 0.52);
       s.add(h);
     }
@@ -1138,7 +1175,7 @@ export function chainDrive(zFront, zRear, y, {
     const y0 = y + dir * rFront;
     const y1 = y + dir * rRear;
     const len = Math.hypot(span, y1 - y0);
-    const links = Math.max(10, Math.round(len / 0.05));
+    const links = Math.max(6, Math.round((len / 0.05) * Q.radial));
     for (let i = 0; i < links; i++) {
       const t = (i + 0.5) / links;
       const link = new THREE.Mesh(
@@ -1166,8 +1203,9 @@ export function radiator(x, y, z, { w = 0.34, h = 0.3, d = 0.05, fins = 18, tilt
   g.add(core);
   // Vertical slats across the core, angled so the light catches every other
   // one and the stack shimmers instead of resolving into a grey panel.
-  for (let i = 0; i < fins; i++) {
-    const t = (i + 0.5) / fins;
+  const nFins = seg(fins, 5);
+  for (let i = 0; i < nFins; i++) {
+    const t = (i + 0.5) / nFins;
     const fin = new THREE.Mesh(new THREE.BoxGeometry(0.008, h * 0.9, d * 0.8), MAT.darkMetal);
     fin.position.x = -w * 0.47 + w * 0.94 * t;
     fin.rotation.y = 0.42;
@@ -1196,20 +1234,20 @@ export function clocks(x, y, z, { dials = 2, radius = 0.055, tilt = 0.55, spread
   for (let i = 0; i < dials; i++) {
     const off = dials === 1 ? 0 : (i - (dials - 1) / 2) * spread * 2;
     const shell = new THREE.Mesh(
-      new THREE.CylinderGeometry(radius, radius * 0.9, 0.055, 20),
+      new THREE.CylinderGeometry(radius, radius * 0.9, 0.055, seg(20, 8)),
       MAT.matteBlack
     );
     shell.rotation.x = Math.PI / 2;
     shell.position.set(off, 0, 0);
     g.add(shell);
     const face = new THREE.Mesh(
-      new THREE.CylinderGeometry(radius * 0.86, radius * 0.86, 0.008, 20),
+      new THREE.CylinderGeometry(radius * 0.86, radius * 0.86, 0.008, seg(20, 8)),
       MAT.white
     );
     face.rotation.x = Math.PI / 2;
     face.position.set(off, 0, -0.03);
     g.add(face);
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.006, 8, 22), MAT.chrome);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.006, seg(8, 4), seg(22, 8)), MAT.chrome);
     rim.position.set(off, 0, -0.028);
     g.add(rim);
     const needle = new THREE.Mesh(new THREE.BoxGeometry(0.005, radius * 0.7, 0.005), MAT.tail);
@@ -1234,55 +1272,7 @@ export function clocks(x, y, z, { dials = 2, radius = 0.055, tilt = 0.55, spread
  * steering group — is left alone by simply not being passed through here.
  */
 export function compact(group) {
-  group.updateMatrixWorld(true);
-  const buckets = new Map();
-  const keep = [];
-  group.traverse((o) => {
-    if (!o.isMesh || !o.geometry || !o.geometry.isBufferGeometry) return;
-    if (o.geometry.index === null && !o.geometry.attributes.position) return;
-    let bucket = buckets.get(o.material);
-    if (!bucket) buckets.set(o.material, (bucket = []));
-    bucket.push(o);
-  });
-  const out = new THREE.Group();
-  out.position.copy(group.position);
-  out.rotation.copy(group.rotation);
-  out.scale.copy(group.scale);
-  const inverse = new THREE.Matrix4().copy(group.matrixWorld).invert();
-
-  for (const [material, meshes] of buckets) {
-    const geos = [];
-    for (const m of meshes) {
-      const g = m.geometry.clone();
-      g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inverse, m.matrixWorld));
-      // Merging needs every buffer to carry the same attributes.
-      for (const name of Object.keys(g.attributes)) {
-        if (name !== 'position' && name !== 'normal' && name !== 'uv') {
-          g.deleteAttribute(name);
-        }
-      }
-      if (!g.attributes.normal) g.computeVertexNormals();
-      if (!g.attributes.uv) {
-        const n = g.attributes.position.count;
-        g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(n * 2), 2));
-      }
-      if (g.index === null) geos.push(g.toNonIndexed());
-      else geos.push(g.toNonIndexed());
-    }
-    const merged = geos.length === 1 ? geos[0] : mergeGeometries(geos, false);
-    if (!merged) {
-      // Nothing sane to merge; fall back to the loose meshes rather than
-      // silently dropping the part.
-      for (const m of meshes) keep.push(m);
-      continue;
-    }
-    const mesh = new THREE.Mesh(merged, material);
-    mesh.castShadow = meshes.some((m) => m.castShadow);
-    mesh.receiveShadow = meshes.some((m) => m.receiveShadow);
-    out.add(mesh);
-  }
-  for (const m of keep) out.add(m);
-  return out;
+  return compactInPlace(group);
 }
 
 /**
@@ -1296,8 +1286,18 @@ export function spotLamp(x, y, z, { radius = 0.17, depth = 0.11, ring = MAT.chro
   const g = new THREE.Group();
   g.position.set(x, y, z);
 
+  if (!Q.lampPods) {
+    const flat = new THREE.Mesh(
+      new THREE.CylinderGeometry(radius, radius, depth * 0.5, seg(18, 8)),
+      MAT.headlight
+    );
+    flat.rotation.x = Math.PI / 2;
+    g.add(flat);
+    return compact(g);
+  }
+
   const bowl = new THREE.Mesh(
-    new THREE.SphereGeometry(radius, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.SphereGeometry(radius, seg(20, 8), seg(12, 5), 0, Math.PI * 2, 0, Math.PI / 2),
     ring
   );
   bowl.rotation.x = Math.PI / 2;
@@ -1305,15 +1305,15 @@ export function spotLamp(x, y, z, { radius = 0.17, depth = 0.11, ring = MAT.chro
   bowl.position.z = depth * 0.4;
   g.add(bowl);
 
-  const bulb = new THREE.Mesh(new THREE.SphereGeometry(radius * 0.32, 12, 10), MAT.headlight);
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(radius * 0.32, seg(12, 5), seg(10, 4)), MAT.headlight);
   bulb.position.z = depth * 0.12;
   g.add(bulb);
 
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(radius * 0.96, radius * 0.1, 8, 26), ring);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(radius * 0.96, radius * 0.1, seg(8, 4), seg(26, 9)), ring);
   g.add(rim);
 
   const lens = new THREE.Mesh(
-    new THREE.CylinderGeometry(radius * 0.9, radius * 0.9, depth * 0.12, 22),
+    new THREE.CylinderGeometry(radius * 0.9, radius * 0.9, depth * 0.12, seg(22, 8)),
     MAT.lens
   );
   lens.rotation.x = Math.PI / 2;
@@ -1329,4 +1329,76 @@ export function spotLamp(x, y, z, { radius = 0.17, depth = 0.11, ring = MAT.chro
   stem.position.z = depth * 0.75;
   g.add(stem);
   return compact(g);
+}
+
+/**
+ * Push the current quality level into the shared materials.
+ *
+ * These are module singletons — every car in the game points at the same
+ * chrome, the same glass, the same rubber — so reflections and clearcoat can
+ * be turned down without rebuilding a single mesh. Only geometry needs a
+ * rebuild.
+ *
+ * `transmission` is the one that matters most: three.js renders the scene a
+ * second time into a buffer for anything transmissive to refract, so a lens
+ * with transmission above zero costs a whole extra pass no matter how small
+ * it is on screen. At zero the pass does not run.
+ */
+export function applyQualityToMaterials() {
+  const env = Q.envIntensity;
+
+  MAT.glass.clearcoat = Q.clearcoat ? 1 : 0;
+  MAT.glass.envMapIntensity = 1.6 * env;
+  MAT.glass.roughness = Q.clearcoat ? 0.06 : 0.14;
+
+  MAT.lens.transmission = Q.transmission ? 0.72 : 0;
+  MAT.lens.clearcoat = Q.clearcoat ? 1 : 0;
+  MAT.lens.envMapIntensity = 1.8 * env;
+  // With no refraction behind it the lens has to carry itself on opacity
+  // alone, or it turns into a pane of flat grey over the reflector.
+  MAT.lens.opacity = Q.transmission ? 0.55 : 0.34;
+
+  MAT.chrome.envMapIntensity = 1.5 * env;
+  MAT.chrome.roughness = env > 0 ? 0.12 : 0.3;
+  MAT.darkMetal.envMapIntensity = env;
+  MAT.carbon.envMapIntensity = env;
+  MAT.matteBlack.envMapIntensity = env;
+
+  for (const m of [
+    MAT.glass,
+    MAT.lens,
+    MAT.chrome,
+    MAT.darkMetal,
+    MAT.carbon,
+    MAT.matteBlack,
+  ]) {
+    m.needsUpdate = true;
+  }
+}
+
+/**
+ * Merge a finished vehicle down to a handful of draw calls.
+ *
+ * A car built out of a hundred and forty little meshes costs a hundred and
+ * forty submissions to the GPU — and then another hundred and forty into the
+ * shadow map. The triangles are not the problem: a phone will happily draw a
+ * million of them. What it will not do is issue three thousand draw calls
+ * sixty times a second.
+ *
+ * Nothing is thrown away here. Same triangles, same materials, same silhouette
+ * — one buffer per material instead of one per bolt. Three things are left
+ * loose because they have to be:
+ *
+ *  - the wheels and the steering rig, which move under their own transforms;
+ *  - the headlamp bulbs, whose *positions* are read to place the beams, and
+ *    which would collapse to a single point at the car's origin;
+ *  - anything a builder has explicitly marked `userData.loose`.
+ */
+export function compactVehicle(car) {
+  // `compactInPlace` already protects everything a builder kept a handle on —
+  // the wheels and the steering rig arrive through `userData`. The one thing
+  // it cannot know about is the headlamp bulbs: their world *positions* are
+  // read to place the beams, and merged into one buffer they would collapse
+  // to a single point at the car's origin and light the road down the middle.
+  return compactInPlace(car, { keep: (m) => m.material === MAT.headlight });
 }

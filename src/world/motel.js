@@ -30,6 +30,7 @@ import {
   SIGN_H,
   SIGN_Y,
 } from './gasStation.js';
+import { compactInPlace } from '../merge.js';
 
 const FIRST_MOTEL = 7200;
 const MOTEL_GAP = 7400;
@@ -325,7 +326,7 @@ function buildMotelModel() {
   root.traverse((o) => {
     if (o.isMesh) o.receiveShadow = true;
   });
-  return root;
+  return compactInPlace(root);
 }
 
 function advanceTexture() {
@@ -350,7 +351,7 @@ function buildAdvanceSign() {
   board.position.set(0, SIGN_Y, 0);
   g.add(board);
   g.userData.board = board;
-  return g;
+  return compactInPlace(g);
 }
 
 /* ------------------------------------------------------------------ */

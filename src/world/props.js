@@ -13,6 +13,7 @@ import { rockTexture } from '../textures.js';
 import { groundHeight, CHUNK_LEN } from './road.js';
 import { trackNear } from './sideroads.js';
 import { sightNear } from './landmarks.js';
+import { Q as QUALITY } from '../quality.js';
 
 const M = new THREE.Matrix4();
 const Q = new THREE.Quaternion();
@@ -402,21 +403,36 @@ function lowestGround(s, lat, radiusS, radiusLat) {
 /* Prop field                                                          */
 /* ------------------------------------------------------------------ */
 
+/**
+ * One InstancedMesh per chunk slot, per prop type.
+ *
+ * Two things used to make this cost far more than it needed to. Every mesh
+ * drew its full instance count whether or not the chunk had that many —
+ * skipped props were written as zero-scale matrices, which still go through
+ * the vertex shader. And `frustumCulled` was off, so all twenty-odd chunks
+ * of every type were submitted every frame, including the ones behind you
+ * and the ones a kilometre past the fog.
+ *
+ * Now a chunk is filled between `begin` and `finish`: skipped props are
+ * simply not written, `count` ends up at however many there really are, and
+ * the bounding sphere `finish` computes lets the frustum throw away the
+ * chunks you are not looking at. Same props, same positions, a fraction of
+ * the submissions.
+ */
 class InstancedProp {
   constructor(scene, geometry, material, perChunk, slots, { shadows = false } = {}) {
     this.perChunk = perChunk;
     this.meshes = [];
+    this.used = new Array(slots).fill(0);
     for (let i = 0; i < slots; i++) {
       const mesh = new THREE.InstancedMesh(geometry, material, perChunk);
-      mesh.frustumCulled = false;
       mesh.castShadow = shadows;
       mesh.receiveShadow = false;
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-      mesh.count = perChunk;
+      mesh.count = 0;
       scene.add(mesh);
       this.meshes.push(mesh);
     }
-    this.clearAll();
   }
 
   clearAll() {
@@ -424,34 +440,45 @@ class InstancedProp {
   }
 
   clear(slot) {
-    const mesh = this.meshes[slot];
-    for (let i = 0; i < this.perChunk; i++) {
-      M.makeScale(0, 0, 0);
-      mesh.setMatrixAt(i, M);
-    }
-    mesh.instanceMatrix.needsUpdate = true;
+    this.used[slot] = 0;
+    this.meshes[slot].count = 0;
+  }
+
+  begin(slot) {
+    this.used[slot] = 0;
   }
 
   set(slot, i, x, y, z, yaw, scale, tilt = 0) {
+    const n = this.used[slot];
+    if (n >= this.perChunk) return;
     E.set(tilt, yaw, 0);
     Q.setFromEuler(E);
     V.set(x, y, z);
     S.set(scale, scale, scale);
     M.compose(V, Q, S);
-    this.meshes[slot].setMatrixAt(i, M);
+    this.meshes[slot].setMatrixAt(n, M);
+    this.used[slot] = n + 1;
   }
 
   setNonUniform(slot, i, x, y, z, yaw, sx, sy, sz) {
+    const n = this.used[slot];
+    if (n >= this.perChunk) return;
     E.set(0, yaw, 0);
     Q.setFromEuler(E);
     V.set(x, y, z);
     S.set(sx, sy, sz);
     M.compose(V, Q, S);
-    this.meshes[slot].setMatrixAt(i, M);
+    this.meshes[slot].setMatrixAt(n, M);
+    this.used[slot] = n + 1;
   }
 
   flush(slot) {
-    this.meshes[slot].instanceMatrix.needsUpdate = true;
+    const mesh = this.meshes[slot];
+    mesh.count = this.used[slot];
+    mesh.instanceMatrix.needsUpdate = true;
+    // Bounds over the instances actually written, so the frustum can drop
+    // the whole chunk in one test.
+    if (mesh.count > 0) mesh.computeBoundingSphere();
   }
 }
 
@@ -665,19 +692,23 @@ export class PropField {
 
   /** Called by RoadSystem when a chunk slot takes on a new stretch of road. */
   assign(chunkIndex, s0, slot) {
+    for (const prop of this.all) prop.begin(slot);
     const p = { x: 0, y: 0, z: 0 };
+    // How much of the scatter this quality level asks for. Taken off the top
+    // of each kind's count rather than at random, so thinning the desert is
+    // deterministic and a chunk looks the same every time you drive past it.
+    const share = (prop) => Math.max(1, Math.round(prop.perChunk * QUALITY.propDensity));
     const place = (prop, i, s, lat, yaw, scale, tilt = 0) => {
       roadPoint(s, lat, p);
       prop.set(slot, i, p.x, groundHeight(s, lat) - 0.05, p.z, yaw, scale, tilt);
     };
 
     // Cacti and boulders keep clear of the shoulder; brush creeps closer.
-    for (let i = 0; i < this.cactus.perChunk; i++) {
+    for (let i = 0, n = share(this.cactus); i < n; i++) {
       const r = hashRand(chunkIndex, i * 3 + 1);
       const side = hashRand(chunkIndex, i * 3 + 2) > 0.5 ? 1 : -1;
       const lat = side * (EDGE + 6 + hashRand(chunkIndex, i * 3 + 3) * 90);
       if (r > 0.62) {
-        this.cactus.set(slot, i, 0, 0, 0, 0, 0);
         continue;
       }
       place(
@@ -691,19 +722,19 @@ export class PropField {
       );
     }
 
-    for (let i = 0; i < this.rockA.perChunk; i++) {
+    for (let i = 0, n = share(this.rockA); i < n; i++) {
       const r = hashRand(chunkIndex, 100 + i);
       const side = hashRand(chunkIndex, 200 + i) > 0.5 ? 1 : -1;
       const lat = side * (EDGE + 3 + hashRand(chunkIndex, 300 + i) * 120);
       place(this.rockA, i, s0 + r * CHUNK_LEN, lat, r * 6, 0.5 + r * 2.4);
     }
-    for (let i = 0; i < this.rockB.perChunk; i++) {
+    for (let i = 0, n = share(this.rockB); i < n; i++) {
       const r = hashRand(chunkIndex, 400 + i);
       const side = hashRand(chunkIndex, 500 + i) > 0.5 ? 1 : -1;
       const lat = side * (EDGE + 1 + hashRand(chunkIndex, 600 + i) * 40);
       place(this.rockB, i, s0 + r * CHUNK_LEN, lat, r * 6, 0.18 + r * 0.5);
     }
-    for (let i = 0; i < this.bush.perChunk; i++) {
+    for (let i = 0, n = share(this.bush); i < n; i++) {
       const r = hashRand(chunkIndex, 700 + i);
       const side = hashRand(chunkIndex, 800 + i) > 0.5 ? 1 : -1;
       const lat = side * (EDGE + 0.5 + hashRand(chunkIndex, 900 + i) * 150);
@@ -721,7 +752,7 @@ export class PropField {
     }
     this.updateWires(slot, wirePts, s0);
 
-    for (let i = 0; i < this.marker.perChunk; i++) {
+    for (let i = 0, n = share(this.marker); i < n; i++) {
       const s = s0 + i * 14 + 4;
       const side = i % 2 === 0 ? 1 : -1;
       place(this.marker, i, s, side * (EDGE - 0.5), 0, 1);
@@ -732,19 +763,17 @@ export class PropField {
     const hasFence = hashRand(chunkIndex >> 2, 2600) < 0.34;
     const fenceSide = hashRand(chunkIndex >> 2, 2610) > 0.5 ? 1 : -1;
     const fenceLat = fenceSide * (EDGE + 12 + hashRand(chunkIndex >> 2, 2620) * 16);
-    for (let i = 0; i < this.fence.perChunk; i++) {
+    for (let i = 0, n = share(this.fence); i < n; i++) {
       if (!hasFence) {
-        this.fence.set(slot, i, 0, 0, 0, 0, 0);
         continue;
       }
       place(this.fence, i, s0 + 6 + i * 12, fenceLat, 0, 1);
     }
 
     // A butte on the horizon roughly every fifth chunk.
-    for (let i = 0; i < this.mesa.perChunk; i++) {
+    for (let i = 0, n = share(this.mesa); i < n; i++) {
       const r = hashRand(chunkIndex, 1300 + i);
       if (r > 0.22) {
-        this.mesa.set(slot, i, 0, 0, 0, 0, 0);
         continue;
       }
       const side = hashRand(chunkIndex, 1400 + i) > 0.5 ? 1 : -1;
@@ -764,18 +793,12 @@ export class PropField {
       // dropped on one swallows the track and the briefcase at the end of
       // it, so anything sharing that corridor stands down.
       const spur = trackNear(s, reach * stretch + 260);
-      if (spur && spur.side === side) {
-        this.mesa.set(slot, i, 0, 0, 0, 0, 0);
-        continue;
-      }
+      if (spur && spur.side === side) continue;
       // Same for the landmarks, and for the same reason: a butte on top of
       // the dinosaur is a butte, and the whole point of the dinosaur is that
       // it is not another butte.
       const sight = sightNear(s, reach * stretch + 300);
-      if (sight && sight.side === side) {
-        this.mesa.set(slot, i, 0, 0, 0, 0, 0);
-        continue;
-      }
+      if (sight && sight.side === side) continue;
 
       roadPoint(s, lat, p);
       this.mesa.setNonUniform(
