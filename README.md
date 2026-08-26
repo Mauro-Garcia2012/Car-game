@@ -446,7 +446,11 @@ src/
   ui.js             all DOM updates
   textures.js       every texture, painted on a <canvas>
   rng.js            deterministic hash noise
-  cars/             the three player cars, built from extruded side profiles
+  cars/             the nine vehicles, built from extruded side profiles and
+                    a shared detail kit — cabins, grilles, lamp clusters,
+                    shut lines, brake discs, chains, finned barrels — merged
+                    down to one mesh per material so the polygons cost
+                    triangles rather than draw calls
   world/            sky and the day/night rig, road, terrain, scenery,
                     stations, motels, bus stops, signs, cameras, headlamps,
                     crates, dirt spurs, the briefcases at the end of them,

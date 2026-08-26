@@ -9,6 +9,13 @@
  */
 import * as THREE from 'three';
 import {
+  spotLamp,
+  brakeDisc,
+  chainDrive,
+  clocks,
+  coilSpring,
+  finnedBarrel,
+  radiator,
   MAT,
   paint,
   part,
@@ -22,6 +29,13 @@ import {
   exhaustTip,
   doorFurniture,
   flankX,
+  cabinInterior,
+  grille,
+  lampCluster,
+  shutLine,
+  wiper,
+  aerial,
+  suspension,
 } from './parts.js';
 import { signTexture } from '../textures.js';
 
@@ -34,6 +48,56 @@ function mountWheels(car, layout) {
     root.add(spin);
     car.add(root);
     car.userData.wheels.push({ root, spin, front: w.front, radius: w.radius });
+  }
+}
+
+/**
+ * The detail pass every four-wheeled car gets.
+ *
+ * Seats and a wheel behind the glass, the gaps where the doors open, wipers,
+ * and something mechanical in the black hole behind each tyre. None of it
+ * changes the shape of the car; all of it is what the eye reads at three
+ * metres, and its absence is why a model looks moulded rather than built.
+ */
+function dressCabin(car, layout, o) {
+  car.add(
+    cabinInterior({
+      width: o.width,
+      floorY: o.floorY,
+      seatZ: o.seatZ,
+      wheelZ: o.wheelZ,
+      dashZ: o.dashZ,
+      seats: o.seats ?? 2,
+      seatH: o.seatH ?? 0.5,
+    })
+  );
+  if (o.shut) {
+    for (const side of [-1, 1]) {
+      for (const z of o.shut) {
+        car.add(shutLine(o.sculpt, o.bodyWidth, o.shutY[0], o.shutY[1], z, { lateral: side }));
+      }
+    }
+  }
+  if (o.wipers !== false) {
+    for (const side of [-1, 1]) {
+      car.add(
+        wiper(side * (o.wiperX ?? 0.3), o.wiperY, o.wiperZ, {
+          len: o.wiperLen ?? 0.5,
+          side,
+          tilt: o.wiperTilt ?? -0.9,
+        })
+      );
+    }
+  }
+  if (o.suspension !== false) {
+    for (const w of layout) {
+      car.add(
+        suspension(w.x, w.radius, w.z, {
+          reach: Math.abs(w.x) * 0.6,
+          springColor: o.springColor ?? '#c0392b',
+        })
+      );
+    }
   }
 }
 
@@ -172,7 +236,7 @@ export function buildSportCar(color = '#d81f2a') {
     // Lamp unit: a dark socket with the lens standing out of it.
     car.add(part(0.5, 0.14, 0.1, MAT.matteBlack, side * 0.46, 0.6, -2.13, [0.35, 0, 0]));
     car.add(
-      part(0.46, 0.09, 0.1, MAT.headlight, side * 0.46, 0.605, -2.17, [0.35, 0, 0])
+      part(0.34, 0.07, 0.06, MAT.headlight, side * 0.46, 0.605, -2.14, [0.35, 0, 0])
     );
     car.add(part(0.13, 0.05, 0.07, MAT.amber, side * 0.73, 0.52, -2.06));
     // Bonnet vent and its shut line.
@@ -234,6 +298,25 @@ export function buildSportCar(color = '#d81f2a') {
   ];
   mountWheels(car, wheels);
   dressArches(car, wheels, body, { grow: 0.07, thickness: 0.075 });
+  dressCabin(car, wheels, {
+    sculpt,
+    bodyWidth: 1.94,
+    width: 1.5,
+    floorY: 0.44,
+    dashZ: -0.62,
+    wheelZ: -0.36,
+    seatZ: 0.24,
+    shut: [-0.55, 0.62],
+    shutY: [0.34, 1.0],
+    wiperX: 0.34,
+    wiperY: 0.95,
+    wiperZ: -0.92,
+    wiperLen: 0.46,
+  });
+  car.add(grille(0.9, 0.16, 0.16, { y: 0.5, z: -2.2, bars: 5, frame: MAT.darkMetal }));
+  for (const side of [-1, 1]) {
+    car.add(lampCluster(0.5, 0.15, { x: side * 0.46, y: 0.62, z: -2.19, pods: 2 }));
+  }
   return car;
 }
 
@@ -323,7 +406,7 @@ export function buildLandYacht(color = '#5d2733') {
   for (const side of [-1, 1]) {
     for (const dy of [-0.13, 0.13]) {
       car.add(part(0.3, 0.22, 0.1, MAT.chrome, side * 0.72, 1.02 + dy, -2.83));
-      car.add(part(0.24, 0.17, 0.06, MAT.headlight, side * 0.72, 1.02 + dy, -2.87));
+      car.add(part(0.16, 0.12, 0.04, MAT.headlight, side * 0.72, 1.02 + dy, -2.85));
     }
     car.add(part(0.26, 0.1, 0.06, MAT.amber, side * 0.72, 0.76, -2.86));
     car.add(wingMirror(side, side * flankX(2.06, sculpt, 1.16, -1.05), 1.16, -1.05, MAT.chrome, { scale: 1.1 }));
@@ -354,6 +437,28 @@ export function buildLandYacht(color = '#5d2733') {
   ];
   mountWheels(car, wheels);
   dressArches(car, wheels, body, { grow: 0.05, thickness: 0.05 });
+  dressCabin(car, wheels, {
+    sculpt,
+    bodyWidth: 2.1,
+    width: 1.72,
+    floorY: 0.62,
+    dashZ: -0.5,
+    wheelZ: -0.24,
+    seatZ: 0.42,
+    seatH: 0.44,
+    shut: [-0.15, 1.0],
+    shutY: [0.55, 1.16],
+    wiperX: 0.36,
+    wiperY: 1.16,
+    wiperZ: -0.82,
+    wiperLen: 0.56,
+    springColor: '#7b7f86',
+  });
+  car.add(grille(1.5, 0.24, 0.14, { y: 0.78, z: -2.66, bars: 11, dir: 'v', frame: MAT.chrome }));
+  for (const side of [-1, 1]) {
+    car.add(lampCluster(0.3, 0.42, { x: side * 0.72, y: 1.02, z: -2.88, pods: 2, depth: 0.1 }));
+  }
+  car.add(aerial(0.86, 1.02, -1.0, { len: 0.72, lean: 0.42 }));
   return car;
 }
 
@@ -444,13 +549,7 @@ export function buildTrophyTruck(color = '#d9d2c4') {
   // Light bar across the cage.
   car.add(part(1.66, 0.16, 0.16, cage, 0, 2.44, -0.52));
   for (let i = -3; i <= 3; i++) {
-    const lamp = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.085, 0.085, 0.06, 14),
-      MAT.headlight
-    );
-    lamp.rotation.x = Math.PI / 2;
-    lamp.position.set(i * 0.23, 2.44, -0.6);
-    car.add(lamp);
+    car.add(spotLamp(i * 0.23, 2.44, -0.6, { radius: 0.09, depth: 0.08 }));
   }
 
   // Nose: skid plate, mesh and a pair of lamps low down.
@@ -460,13 +559,7 @@ export function buildTrophyTruck(color = '#d9d2c4') {
     car.add(part(0.04, 0.46, 0.05, MAT.darkMetal, i * 0.16, 1.24, -2.66));
   }
   for (const side of [-1, 1]) {
-    const lamp = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.17, 0.17, 0.1, 16),
-      MAT.headlight
-    );
-    lamp.rotation.x = Math.PI / 2;
-    lamp.position.set(side * 0.62, 1.24, -2.66);
-    car.add(lamp);
+    car.add(spotLamp(side * 0.62, 1.24, -2.66, { radius: 0.18, depth: 0.12 }));
     car.add(part(0.2, 0.09, 0.06, MAT.amber, side * 0.62, 1.02, -2.62));
     // Mudflap behind each wheel.
     car.add(part(0.36, 0.5, 0.03, cage, side * 0.98, 0.55, 2.5));
@@ -502,6 +595,21 @@ export function buildTrophyTruck(color = '#d9d2c4') {
     }
     car.add(tube(0.055, 0.8, MAT.chrome, w.x * 0.72, w.radius + 0.5, w.z, [0, 0, Math.sign(w.x) * 0.42]));
   }
+  dressCabin(car, wheels, {
+    sculpt,
+    bodyWidth: 1.9,
+    width: 1.42,
+    floorY: 0.92,
+    dashZ: -0.5,
+    wheelZ: -0.26,
+    seatZ: 0.34,
+    seatH: 0.56,
+    shut: [-0.3],
+    shutY: [0.9, 1.5],
+    wipers: false,
+    suspension: false,
+  });
+  car.add(grille(1.1, 0.3, 0.16, { y: 1.06, z: -2.06, bars: 4, frame: MAT.matteBlack }));
   return car;
 }
 
@@ -574,8 +682,30 @@ export function buildSuperbike(color = '#101418') {
     car.add(part(0.06, 0.13, 0.1, black, side * 0.21, 0.44, 0.2));
     car.add(tube(0.02, 0.12, MAT.chrome, side * 0.28, 0.42, 0.2, [0, 0, Math.PI / 2], 6));
   }
+  // Radiator wedged in the nose, where the air actually goes.
+  car.add(radiator(0, 0.52, -0.52, { w: 0.4, h: 0.34, d: 0.06, fins: 20, tilt: 0.22 }));
+  // Inline four: four barrels leaning forward out of the cases.
+  for (let i = 0; i < 4; i++) {
+    car.add(
+      finnedBarrel(-0.15 + i * 0.1, 0.56, -0.16, {
+        radius: 0.045,
+        len: 0.16,
+        fins: 6,
+        finRadius: 0.062,
+      })
+    );
+  }
+  // Final drive down the left, and the swingarm it hangs off.
+  car.add(chainDrive(0.1, REAR_Z, 0.4, { side: -1, rFront: 0.06, rRear: 0.16, teethRear: 42 }));
+  for (const side of [-1, 1]) {
+    car.add(slab(0.07, 0.11, 0.66, MAT.darkMetal, side * 0.15, 0.42, 0.42, [0.08, 0, 0], 0.03));
+  }
   // Shock, header and can.
   car.add(tube(0.04, 0.32, gold, 0, 0.62, 0.3, [0.3, 0, 0], 8));
+  const shock = coilSpring(0.3, 0.055, 6, paint('#c9a227', { metalness: 0.7, roughness: 0.3 }));
+  shock.position.set(0, 0.62, 0.3);
+  shock.rotation.x = 0.3;
+  car.add(shock);
   car.add(tube(0.055, 0.62, MAT.chrome, 0.09, 0.32, 0.36, [1.3, 0.22, 0], 10));
   car.add(slab(0.16, 0.16, 0.36, MAT.darkMetal, 0.17, 0.5, 0.8, [0, 0.16, 0], 0.06));
   car.add(exhaustTip(0.17, 0.5, 1.0, 0.07, 0.2));
@@ -696,29 +826,24 @@ export function buildSuperbike(color = '#101418') {
     steer.add(tube(0.034, 0.4, gold, side * 0.1, 0.44, 0.2, [RAKE, 0, 0], 10));
     steer.add(tube(0.026, 0.15, black, side * GRIP_X, BAR_Y, BAR_Z, [0, 0, Math.PI / 2 - 0.12], 8));
     steer.add(part(0.11, 0.02, 0.03, MAT.chrome, side * 0.22, BAR_Y - 0.03, BAR_Z - 0.09));
-    const disc = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.24, 0.24, 0.012, 22),
-      MAT.chrome
-    );
-    disc.rotation.z = Math.PI / 2;
-    disc.position.set(side * 0.08, 0, 0);
-    steer.add(disc);
-    steer.add(part(0.06, 0.14, 0.1, black, side * 0.11, 0.2, -0.05)); // caliper
+    steer.add(brakeDisc(side * 0.052, 0, 0, { radius: 0.24, side, holes: 22 }));
   }
   steer.add(tube(0.038, 0.2, black, 0, 0.62, 0.28, [RAKE, 0, 0], 10));
   for (const side of [-1, 1]) {
     steer.add(wingMirror(side, side * 0.19, 0.6, -0.14, body, { scale: 0.72 }));
   }
   // Twin projectors stacked in the nose of the fairing.
-  for (const dy of [0, 0.12]) {
-    const lens = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.058, 0.058, 0.03, 16),
-      MAT.headlight
-    );
-    lens.rotation.x = Math.PI / 2;
-    lens.position.set(0, 0.4 + dy, -0.28);
-    steer.add(lens);
-  }
+  steer.add(
+    lampCluster(0.14, 0.26, {
+      x: 0,
+      y: 0.46,
+      z: -0.28,
+      pods: 2,
+      depth: 0.1,
+      vertical: true,
+    })
+  );
+  steer.add(clocks(0, 0.66, -0.16, { dials: 2, radius: 0.05, tilt: 0.75, spread: 0.055 }));
   steer.add(fenderArch(RADIUS + 0.06, 0.2, 0, 0, 0, body, 0.035));
 
   return car;
@@ -796,7 +921,7 @@ export function buildHotHatch(color = '#dcdfe4') {
   car.add(slab(1.62, 0.2, 0.36, trim, 0, 0.5, -1.94, [0, 0, 0], 0.05));
   for (const side of [-1, 1]) {
     car.add(part(0.42, 0.2, 0.1, trim, side * 0.52, 0.94, -1.95));
-    car.add(part(0.38, 0.16, 0.08, MAT.headlight, side * 0.52, 0.94, -1.99));
+    car.add(part(0.28, 0.11, 0.05, MAT.headlight, side * 0.52, 0.94, -1.97));
     car.add(part(0.16, 0.08, 0.06, MAT.amber, side * 0.76, 0.94, -1.96));
     // Tail lamps: tall hatchback clusters up the corners.
     car.add(part(0.16, 0.42, 0.09, MAT.tail, side * 0.7, 0.95, 1.9));
@@ -825,6 +950,26 @@ export function buildHotHatch(color = '#dcdfe4') {
   ];
   mountWheels(car, wheels);
   dressArches(car, wheels, body, { grow: 0.05, thickness: 0.055 });
+  dressCabin(car, wheels, {
+    sculpt,
+    bodyWidth: 1.78,
+    width: 1.44,
+    floorY: 0.5,
+    dashZ: -0.68,
+    wheelZ: -0.42,
+    seatZ: 0.14,
+    shut: [-0.34, 0.62],
+    shutY: [0.42, 1.06],
+    wiperX: 0.32,
+    wiperY: 1.05,
+    wiperZ: -0.96,
+    wiperLen: 0.5,
+  });
+  car.add(grille(0.86, 0.14, 0.14, { y: 0.62, z: -1.94, bars: 4, frame: MAT.darkMetal }));
+  for (const side of [-1, 1]) {
+    car.add(lampCluster(0.42, 0.18, { x: side * 0.52, y: 0.94, z: -2.01, pods: 2 }));
+  }
+  car.add(aerial(0, 1.42, 1.12, { len: 0.4, lean: 0.5 }));
   return car;
 }
 
@@ -909,7 +1054,7 @@ export function buildHypercar(color = '#c8a800') {
   // Nose: splitter, slim lamps, big ducts.
   car.add(slab(1.94, 0.06, 0.6, carbon, 0, 0.11, -2.24, [0, 0, 0], 0.03));
   for (const side of [-1, 1]) {
-    car.add(part(0.44, 0.06, 0.1, MAT.headlight, side * 0.62, 0.55, -2.3, [0.3, 0, 0]));
+    car.add(part(0.34, 0.05, 0.06, MAT.headlight, side * 0.62, 0.55, -2.27, [0.3, 0, 0]));
     car.add(part(0.5, 0.18, 0.16, carbon, side * 0.66, 0.3, -2.2));
     car.add(part(0.22, 0.05, 0.06, MAT.amber, side * 0.86, 0.44, -2.2));
   }
@@ -934,6 +1079,27 @@ export function buildHypercar(color = '#c8a800') {
   ];
   mountWheels(car, wheels);
   dressArches(car, wheels, body, { grow: 0.08, thickness: 0.08 });
+  dressCabin(car, wheels, {
+    sculpt,
+    bodyWidth: 2.0,
+    width: 1.48,
+    floorY: 0.38,
+    dashZ: -0.6,
+    wheelZ: -0.34,
+    seatZ: 0.22,
+    seatH: 0.44,
+    shut: [-0.5, 0.5],
+    shutY: [0.3, 0.94],
+    wiperX: 0.3,
+    wiperY: 0.9,
+    wiperZ: -0.9,
+    wiperLen: 0.44,
+    springColor: '#e0b53a',
+  });
+  car.add(grille(0.8, 0.13, 0.18, { y: 0.42, z: -2.06, bars: 3, frame: MAT.carbon }));
+  for (const side of [-1, 1]) {
+    car.add(lampCluster(0.48, 0.12, { x: side * 0.62, y: 0.56, z: -2.32, pods: 3, depth: 0.1 }));
+  }
   return car;
 }
 
@@ -1007,10 +1173,14 @@ export function buildMoped(color = '#2e6f4e') {
 
   // Engine, cylinder head and the crankcase behind the pedals.
   car.add(slab(0.26, 0.24, 0.34, black, 0.08, 0.34, 0.28, [0, 0, 0], 0.05));
-  const barrel = tube(0.075, 0.2, MAT.darkMetal, 0, 0.44, 0.16, [0, 0, Math.PI / 2], 12);
-  car.add(barrel);
-  for (let i = 0; i < 5; i++) {
-    car.add(tube(0.1, 0.016, MAT.darkMetal, -0.06 + i * 0.04, 0.44, 0.16, [0, 0, Math.PI / 2], 12));
+  car.add(finnedBarrel(0, 0.44, 0.16, { radius: 0.07, len: 0.2, fins: 7, finRadius: 0.105 }));
+  // Pedal chain to the back wheel, exactly the sad little thing it is.
+  car.add(chainDrive(0.24, REAR_Z, 0.26, { side: -1, rFront: 0.055, rRear: 0.115, teethFront: 11, teethRear: 34 }));
+  for (const side of [-1, 1]) {
+    const spring = coilSpring(0.3, 0.036, 6, MAT.chrome, { wire: 0.009 });
+    spring.position.set(side * 0.11, 0.52, 0.5);
+    spring.rotation.x = 0.35;
+    car.add(spring);
   }
 
   // Exhaust: header curling down the right side into a stubby silencer.
@@ -1110,6 +1280,8 @@ export function buildMoped(color = '#2e6f4e') {
   for (const side of [-1, 1]) {
     steer.add(tube(0.026, 0.64, MAT.chrome, side * 0.085, 0.31, 0.075, [RAKE, 0, 0], 8));
   }
+  // One small disc on the left, drum on the back: a moped's whole brake budget.
+  steer.add(brakeDisc(-0.048, 0, 0, { radius: 0.155, side: -1, holes: 14 }));
   steer.add(tube(0.036, 0.2, MAT.chrome, 0, 0.6, 0.15, [RAKE, 0, 0], 8));
 
   // Handlebars, grips, levers and mirrors.
@@ -1133,13 +1305,9 @@ export function buildMoped(color = '#2e6f4e') {
   shell.position.set(0, 0.5, -0.02);
   shell.castShadow = true;
   steer.add(shell);
-  const lens = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.1, 0.1, 0.03, 18),
-    MAT.headlight
-  );
-  lens.rotation.x = Math.PI / 2;
-  lens.position.set(0, 0.5, -0.08);
-  steer.add(lens);
+  // One reflector, one bulb, one chrome ring and a glass over it — a flat
+  // white disc in a chrome tin reads as a hole, not a headlamp.
+  steer.add(lampCluster(0.21, 0.21, { x: 0, y: 0.5, z: -0.08, pods: 1, depth: 0.11 }));
   const clock = new THREE.Mesh(
     new THREE.CylinderGeometry(0.055, 0.055, 0.05, 14),
     black
@@ -1311,7 +1479,7 @@ export function buildRaceCar(color = '#1c6fd8') {
 
   // Lights.
   for (const side of [-1, 1]) {
-    car.add(part(0.46, 0.14, 0.1, MAT.headlight, side * 0.6, 0.6, -2.28, [0.25, 0, 0]));
+    car.add(part(0.34, 0.1, 0.06, MAT.headlight, side * 0.6, 0.6, -2.25, [0.25, 0, 0]));
     car.add(part(0.16, 0.09, 0.08, MAT.amber, side * 0.9, 0.54, -2.2));
     car.add(part(0.4, 0.11, 0.06, MAT.tail, side * 0.56, 0.76, 2.36));
   }
@@ -1343,6 +1511,27 @@ export function buildRaceCar(color = '#1c6fd8') {
   ];
   mountWheels(car, wheels);
   dressArches(car, wheels, body, { grow: 0.08, thickness: 0.08 });
+  dressCabin(car, wheels, {
+    sculpt,
+    bodyWidth: 1.98,
+    width: 1.4,
+    floorY: 0.4,
+    dashZ: -0.5,
+    wheelZ: -0.26,
+    seatZ: 0.28,
+    seats: 1,
+    shut: [-0.4, 0.55],
+    shutY: [0.32, 0.96],
+    wiperX: 0,
+    wiperY: 0.94,
+    wiperZ: -0.86,
+    wiperLen: 0.52,
+    springColor: '#e0b53a',
+  });
+  car.add(grille(0.9, 0.14, 0.18, { y: 0.4, z: -2.1, bars: 4, frame: MAT.carbon }));
+  for (const side of [-1, 1]) {
+    car.add(lampCluster(0.5, 0.16, { x: side * 0.6, y: 0.61, z: -2.3, pods: 2, depth: 0.11 }));
+  }
   return car;
 }
 
@@ -1460,13 +1649,7 @@ export function build4x4(color = '#c8791f') {
   car.add(part(0.9, 0.28, 0.62, MAT.darkMetal, 0, 2.42, 0.3)); // gear box
   car.add(part(1.36, 0.14, 0.1, trim, 0, 2.4, -1.02));
   for (let i = -3; i <= 3; i++) {
-    const lamp = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.075, 0.075, 0.05, 14),
-      MAT.headlight
-    );
-    lamp.rotation.x = Math.PI / 2;
-    lamp.position.set(i * 0.19, 2.4, -1.08);
-    car.add(lamp);
+    car.add(spotLamp(i * 0.19, 2.4, -1.08, { radius: 0.08, depth: 0.07 }));
   }
 
   // Front end: grille, round lamps, bull bar and winch.
@@ -1475,13 +1658,7 @@ export function build4x4(color = '#c8791f') {
     car.add(part(1.46, 0.04, 0.06, MAT.chrome, 0, 0.9 + i * 0.1, -2.75));
   }
   for (const side of [-1, 1]) {
-    const round = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.2, 0.2, 0.12, 18),
-      MAT.headlight
-    );
-    round.rotation.x = Math.PI / 2;
-    round.position.set(side * 0.68, 1.02, -2.74);
-    car.add(round);
+    car.add(spotLamp(side * 0.68, 1.02, -2.74, { radius: 0.21, depth: 0.13 }));
     car.add(part(0.4, 0.09, 0.06, MAT.amber, side * 0.68, 0.78, -2.74));
     car.add(part(0.1, 0.86, 0.1, MAT.darkMetal, side * 0.82, 0.9, -2.9));
     car.add(part(0.1, 0.5, 0.1, MAT.darkMetal, side * 0.34, 1.06, -2.86, [0.4, 0, 0]));
@@ -1547,5 +1724,25 @@ export function build4x4(color = '#c8791f') {
   ];
   mountWheels(car, wheels);
   dressArches(car, wheels, trim, { grow: 0.09, thickness: 0.09 });
+  dressCabin(car, wheels, {
+    sculpt,
+    bodyWidth: 2.0,
+    width: 1.62,
+    floorY: 1.0,
+    dashZ: -0.86,
+    wheelZ: -0.6,
+    seatZ: -0.06,
+    seatH: 0.56,
+    shut: [-0.28, 0.72],
+    shutY: [0.95, 1.72],
+    wiperX: 0.38,
+    wiperY: 1.72,
+    wiperZ: -1.1,
+    wiperLen: 0.6,
+    wiperTilt: -0.35,
+    springColor: '#8a5a1e',
+  });
+  car.add(grille(1.24, 0.36, 0.16, { y: 1.32, z: -2.08, bars: 6, dir: 'v', frame: MAT.chrome }));
+  car.add(aerial(0.92, 1.5, -1.2, { len: 0.85, lean: 0.3 }));
   return car;
 }
