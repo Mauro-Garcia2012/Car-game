@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>Desert Run — Fuel or Die</title>
+    <meta name="description" content="A 3D desert highway driving game: pick your car, watch the gauge, and never skip a gas station." />
+    <link rel="stylesheet" href="./styles.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🏜️</text></svg>"
+    />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./vendor/three/three.module.min.js",
+          "three/addons/": "./vendor/three/addons/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <canvas id="scene"></canvas>
+
+    <!-- Loading ------------------------------------------------------->
+    <div id="loading" class="screen">
+      <div class="loading-inner">
+        <div class="logo">DESERT<span>RUN</span></div>
+        <div class="bar"><i></i></div>
+        <p data-i18n="loading.text">Building the highway…</p>
+      </div>
+    </div>
+
+    <!-- Main menu ----------------------------------------------------->
+    <div id="menu" class="screen hidden">
+      <div class="menu-panel">
+        <header>
+          <div class="logo">DESERT<span>RUN</span></div>
+          <p class="strap" data-i18n="menu.strap" data-i18n-html>
+            Route 66, high noon, no cell service. Every gas station is a
+            checkpoint — <b>skip one and you die out there.</b>
+          </p>
+          <div class="lang-switch" role="group" aria-label="Language">
+            <button type="button" data-lang="en">EN</button>
+            <button type="button" data-lang="es">ES</button>
+          </div>
+        </header>
+
+        <div class="car-picker" id="car-picker"></div>
+
+        <div class="spec-sheet" id="spec-sheet"></div>
+
+        <button id="resume-run-btn" class="primary resume hidden">
+          <b data-i18n="menu.resume">BACK ON THE ROAD</b>
+          <em id="resume-summary"></em>
+        </button>
+
+        <div class="quality-switch" role="group" aria-label="Graphics">
+          <label data-i18n="quality.label">GRAPHICS</label>
+          <div class="pills">
+            <button type="button" data-quality="low" data-i18n="quality.low">LOW</button>
+            <button type="button" data-quality="medium" data-i18n="quality.medium">MED</button>
+            <button type="button" data-quality="high" data-i18n="quality.high">HIGH</button>
+            <button type="button" data-quality="ultra" data-i18n="quality.ultra">ULTRA</button>
+          </div>
+          <em id="quality-note"></em>
+        </div>
+
+        <button id="start-btn" class="primary" data-i18n="menu.start">
+          START ENGINE
+        </button>
+
+        <div class="controls-hint">
+          <span
+            ><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>
+            <i data-i18n="controls.drive">/ arrows drive</i></span
+          >
+          <span><kbd>Space</kbd> <i data-i18n="controls.handbrake">handbrake</i></span>
+          <span><kbd>E</kbd> <i data-i18n="controls.fare">take a fare</i></span>
+          <span><kbd>C</kbd> <i data-i18n="controls.camera">camera</i></span>
+          <span><kbd>P</kbd> <i data-i18n="controls.pause">pause</i></span>
+          <span><kbd>H</kbd> <i data-i18n="controls.horn">horn</i></span>
+          <span><kbd>M</kbd> <i data-i18n="controls.mute">mute</i></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tunnel vision as the driver nods off ------------------------->
+    <div id="drowsy-veil"></div>
+
+    <!-- The speed camera going off -------------------------------------->
+    <div id="camera-flash"></div>
+
+    <!-- HUD ----------------------------------------------------------->
+    <div id="hud" class="hidden">
+      <div class="hud-top">
+        <div class="stat day">
+          <label data-i18n="hud.day">Day</label>
+          <strong id="hud-day">1</strong>
+        </div>
+        <div class="stat clock" id="clock-chip">
+          <label data-i18n="hud.time">Time</label>
+          <strong id="hud-clock">07:00</strong>
+        </div>
+        <div class="stat fare hidden" id="fare-chip">
+          <label data-i18n="hud.passenger">Passenger</label>
+          <strong id="fare-remaining">—</strong>
+        </div>
+        <div class="stat">
+          <label data-i18n="hud.distance">Distance</label>
+          <strong id="hud-distance">0.00 km</strong>
+        </div>
+        <div class="stat">
+          <label data-i18n="hud.stops">Stops made</label>
+          <strong id="hud-stops">0</strong>
+        </div>
+        <div class="stat">
+          <label data-i18n="hud.cash">Cash</label>
+          <strong id="hud-cash">$500</strong>
+        </div>
+        <div class="stat">
+          <label data-i18n="hud.best">Best</label>
+          <strong id="hud-best">0.00 km</strong>
+        </div>
+      </div>
+
+      <div id="hud-message" class="hud-message"></div>
+
+      <div id="refuel-panel" class="refuel-panel hidden">
+        <label data-i18n="hud.refuelling">REFUELLING</label>
+        <div class="refuel-bar"><i id="refuel-fill"></i></div>
+        <span id="refuel-litres">0 L</span>
+        <em id="refuel-price"></em>
+      </div>
+
+      <div id="fare-panel" class="refuel-panel fare-panel hidden">
+        <label data-i18n="hud.passenger">PASSENGER</label>
+        <div class="fare-rows">
+          <div>
+            <span data-i18n="hud.fareTo">Ride to</span
+            ><strong id="fare-dest">—</strong>
+          </div>
+          <div>
+            <span data-i18n="hud.fareDistance">Distance</span
+            ><strong id="fare-distance">—</strong>
+          </div>
+          <div>
+            <span data-i18n="hud.farePay">Pays</span
+            ><strong id="fare-pay" class="pay">—</strong>
+          </div>
+          <div>
+            <span data-i18n="hud.fareUpFront">Half up front</span
+            ><strong id="fare-advance" class="pay">—</strong>
+          </div>
+          <div>
+            <span data-i18n="hud.fareFuel">Extra fuel</span
+            ><strong id="fare-fuel" class="burn">—</strong>
+          </div>
+        </div>
+        <button id="fare-accept" type="button">TAKE IT</button>
+      </div>
+
+      <div id="shop-panel" class="refuel-panel shop-panel hidden">
+        <label data-i18n="hud.workshop">WORKSHOP</label>
+        <div id="shop-rows" class="shop-rows"></div>
+        <em data-i18n="hud.shopHint">number keys, or click</em>
+      </div>
+
+      <div id="checkin-panel" class="refuel-panel hidden">
+        <label data-i18n="hud.checkin">CHECKING IN</label>
+        <div class="refuel-bar"><i id="checkin-fill"></i></div>
+        <span data-i18n="hud.freeBed">FREE BED</span>
+      </div>
+
+      <div class="hud-bottom">
+        <div class="hud-left">
+          <!-- Replica of the R2-1 sign posted on this stretch of highway. -->
+          <div class="limit-sign" id="limit-sign" aria-hidden="true">
+            <b>SPEED<br />LIMIT</b>
+            <strong id="limit-value">70</strong>
+          </div>
+
+          <!-- A real dial: no digits, and the scale belongs to whatever you
+               are driving. Ticks, numbers and the red band are drawn by
+               ui.js when the car changes. -->
+          <div class="gauge speedo">
+            <svg viewBox="0 0 200 200" aria-hidden="true">
+              <circle class="face" cx="100" cy="100" r="95" />
+              <g id="speedo-scale"></g>
+              <line id="speed-needle" x1="100" y1="100" x2="100" y2="26" />
+              <circle cx="100" cy="100" r="9" class="hub" />
+              <circle cx="100" cy="100" r="4" class="hub-pin" />
+              <text class="unit" x="100" y="132">km/h</text>
+              <text id="hud-gear" class="gear" x="100" y="160">N</text>
+            </svg>
+          </div>
+        </div>
+
+        <div class="fuel-block">
+          <div class="fuel-head">
+            <label data-i18n="hud.fuel">FUEL</label>
+            <span id="hud-litres">0 L</span>
+          </div>
+          <div class="fuel-bar"><i id="fuel-fill"></i></div>
+          <div class="range-bar" data-i18n-title="hud.rangeTitle">
+            <i id="range-fill"></i>
+            <b id="station-marker"></b>
+          </div>
+          <div class="fuel-foot">
+            <span
+              ><i data-i18n="hud.nextStop">Next stop</i>
+              <strong id="hud-next">—</strong></span
+            >
+            <span
+              ><i data-i18n="hud.range">Range</i>
+              <strong id="hud-range">—</strong></span
+            >
+          </div>
+          <div class="damage">
+            <label data-i18n="hud.damage">DAMAGE</label>
+            <div class="damage-bar"><i id="damage-fill"></i></div>
+          </div>
+          <div class="damage">
+            <label data-i18n="hud.tyres">TYRES</label>
+            <div class="damage-bar"><i id="tyre-fill"></i></div>
+          </div>
+          <div class="damage sleep">
+            <label data-i18n="hud.sleep">SLEEP</label>
+            <div class="damage-bar" id="sleep-bar"><i id="sleep-fill"></i></div>
+            <span id="hud-motel">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="touch-controls" id="touch-controls">
+        <div class="pad-left">
+          <button data-control="left">◀</button>
+          <button data-control="right">▶</button>
+        </div>
+        <div class="pad-right">
+          <button data-control="down" data-i18n="touch.brake">BRAKE</button>
+          <button data-control="up" data-i18n="touch.gas">GAS</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pause --------------------------------------------------------->
+    <div id="pause" class="screen overlay hidden">
+      <div class="card">
+        <h2 data-i18n="pause.title">PAUSED</h2>
+        <p data-i18n="pause.text">Take a breath. The desert isn't going anywhere.</p>
+        <button id="resume-btn" class="primary" data-i18n="pause.resume">
+          RESUME
+        </button>
+        <button id="quit-btn" class="ghost" data-i18n="pause.garage">
+          BACK TO GARAGE
+        </button>
+        <div class="lang-switch centred" role="group" aria-label="Language">
+          <button type="button" data-lang="en">EN</button>
+          <button type="button" data-lang="es">ES</button>
+        </div>
+        <div class="quality-switch centred" role="group" aria-label="Graphics">
+          <label data-i18n="quality.label">Graphics</label>
+          <div class="pills">
+            <button type="button" data-quality="low" data-i18n="quality.low">LOW</button>
+            <button type="button" data-quality="medium" data-i18n="quality.medium">MEDIUM</button>
+            <button type="button" data-quality="high" data-i18n="quality.high">HIGH</button>
+            <button type="button" data-quality="ultra" data-i18n="quality.ultra">ULTRA</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game over ----------------------------------------------------->
+    <div id="gameover" class="screen overlay hidden">
+      <div class="card">
+        <h2 id="over-title">OUT OF FUEL</h2>
+        <p id="over-text"></p>
+        <div class="result-grid">
+          <div>
+            <label data-i18n="over.distance">Distance</label
+            ><strong id="over-distance">—</strong>
+          </div>
+          <div>
+            <label data-i18n="over.stops">Fuel stops</label
+            ><strong id="over-stops">—</strong>
+          </div>
+          <div>
+            <label data-i18n="over.days">Days</label
+            ><strong id="over-days">—</strong>
+          </div>
+          <div>
+            <label data-i18n="over.best">Best run</label
+            ><strong id="over-best">—</strong>
+          </div>
+          <div>
+            <label data-i18n="over.earned">Earned</label
+            ><strong id="over-earned" class="pay">—</strong>
+          </div>
+          <div>
+            <label data-i18n="over.spent">Spent</label
+            ><strong id="over-spent" class="burn">—</strong>
+          </div>
+          <div>
+            <label data-i18n="over.fares">Passengers</label
+            ><strong id="over-fares">—</strong>
+          </div>
+          <div>
+            <label data-i18n="over.topSpeed">Fastest</label
+            ><strong id="over-top">—</strong>
+          </div>
+        </div>
+        <button id="retry-btn" class="primary" data-i18n="over.retry">
+          DRIVE AGAIN
+        </button>
+        <button id="garage-btn" class="ghost" data-i18n="over.changeCar">
+          CHANGE CAR
+        </button>
+      </div>
+    </div>
+
+    <!-- Route map ------------------------------------------------------
+         The atlas out of the glovebox: the road ahead, and how far the fuel
+         and the daylight reach along it. -->
+    <button id="map-btn" type="button" title="Map">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M9 4.5 3 6.8v12.7l6-2.3 6 2.3 6-2.3V4.5l-6 2.3z" />
+        <path d="M9 4.5v12.7M15 6.8v12.7" />
+      </svg>
+      <span class="sr-only" data-i18n="map.open">Route map</span>
+    </button>
+
+    <div id="map-panel" class="screen overlay hidden">
+      <div class="map-inner">
+        <header>
+          <h2 data-i18n="map.title">THE ROAD AHEAD</h2>
+          <span id="map-sub"></span>
+        </header>
+        <div id="map-strip" class="map-strip"></div>
+        <div class="map-legend" id="map-legend"></div>
+        <button type="button" id="map-close" class="ghost" data-i18n="map.close">
+          CLOSE
+        </button>
+      </div>
+    </div>
+
+    <!-- Cheats ---------------------------------------------------------
+         A debug tool, behind a PIN that is not remembered between page
+         loads, and nothing it grants is ever written to storage. -->
+    <button id="cheat-btn" type="button" title="Debug">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 7h16M4 12h16M4 17h16" />
+        <circle cx="9" cy="7" r="2" />
+        <circle cx="15" cy="12" r="2" />
+        <circle cx="8" cy="17" r="2" />
+      </svg>
+      <span class="sr-only" data-i18n="cheat.open">Debug menu</span>
+    </button>
+
+    <div id="cheat-panel" class="screen overlay hidden">
+      <div class="cheat-inner">
+        <h2 data-i18n="cheat.title">DEBUG</h2>
+        <p id="cheat-hint" data-i18n="cheat.pinHint">
+          Enter the four-digit PIN.
+        </p>
+        <form id="cheat-form" autocomplete="off">
+          <input
+            id="cheat-input"
+            type="text"
+            maxlength="4"
+            spellcheck="false"
+            autocapitalize="characters"
+            aria-label="code"
+          />
+          <button type="submit" id="cheat-go" data-i18n="cheat.go">ENTER</button>
+        </form>
+        <p id="cheat-echo" class="cheat-echo"></p>
+        <div id="cheat-codes" class="cheat-codes hidden"></div>
+        <div class="cheat-actions">
+          <button type="button" id="cheat-unlock" class="ghost hidden" data-i18n="cheat.unlockAll">
+            UNLOCK EVERYTHING
+          </button>
+          <button type="button" id="cheat-close" class="ghost" data-i18n="cheat.close">
+            CLOSE
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sound ---------------------------------------------------------
+         Outside every screen on purpose: it has to be reachable from the
+         garage, mid-drive and on the game-over card alike. -->
+    <button id="mute-btn" type="button" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          class="cone"
+          d="M4 9.5h3.2L12 5.2v13.6L7.2 14.5H4z"
+        />
+        <g class="waves">
+          <path d="M15.4 9.1a4 4 0 0 1 0 5.8" />
+          <path d="M17.9 6.9a7.4 7.4 0 0 1 0 10.2" />
+        </g>
+        <path class="cross" d="M16.2 9.6l5.4 4.8M21.6 9.6l-5.4 4.8" />
+      </svg>
+      <span class="sr-only" data-i18n="controls.mute">mute</span>
+    </button>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
