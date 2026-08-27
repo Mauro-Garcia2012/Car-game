@@ -76,6 +76,18 @@ import { roadPoint, roadYaw } from './track.js';
 import { onLanguageChange } from './i18n.js';
 import { terrainHeight } from './world/road.js';
 
+/**
+ * Metres between the things a passenger says, and how many they can say.
+ *
+ * These live here because `handleChat` does. They were carried off to
+ * workshop.js along with the body-repair constants in the commit that split
+ * that module out, which left every accepted fare throwing a ReferenceError
+ * on the very next frame — the one frame where there is somebody in the car
+ * to have an opinion.
+ */
+const CHAT_EVERY = 2000;
+const CHAT_LINES = 12;
+
 /** How hard the wind pushes, in metres per second of drift, at full storm. */
 const WIND_DRIFT = 1.5;
 
